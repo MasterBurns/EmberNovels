@@ -1927,6 +1927,7 @@ async function loadProjectLanguages(projectId) {
                 loadProjectLanguages(projectId);
             });
             list.appendChild(el);
+        });
     } catch (e) {
         list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('error_loading', 'Fehler beim Laden.')}</div>`;
     }
