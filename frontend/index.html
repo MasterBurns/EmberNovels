@@ -62,10 +62,10 @@
             <header class="header">
                 <div class="header-title-container">
                     <button id="btn-back-to-projects" class="back-btn" style="display: none;">
-                        <span>←</span> Zurück zu Projekten
+                        <span>←</span> <span data-i18n="btn_back_to_projects">Zurück zu Projekten</span>
                     </button>
                     <button id="btn-back-to-project-details" class="back-btn" style="display: none;">
-                        <span>←</span> Zum Projekt
+                        <span>←</span> <span data-i18n="btn_back_to_project_details">Zum Projekt</span>
                     </button>
                     <h1 id="header-title" class="header-title">Meine Romanprojekte</h1>
                 </div>
@@ -82,8 +82,8 @@
                 <!-- 1. PROJECTS VIEW -->
                 <section id="view-projects" class="view-section active-view">
                     <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                        <h2 class="section-title" style="margin-bottom: 0;">Deine Buchprojekte</h2>
-                        <button id="btn-open-import" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        <h2 class="section-title" style="margin-bottom: 0;" data-i18n="title_projects">Deine Buchprojekte</h2>
+                        <button id="btn-open-import" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px;" data-i18n="btn_import_wizard">
                             <span>📥</span> Import-Assistent
                         </button>
                     </div>
@@ -92,7 +92,7 @@
                         <div id="card-create-project" class="card create-card">
                             <div class="create-card-content">
                                 <span class="create-card-icon">+</span>
-                                <span>Neues Projekt anlegen</span>
+                                <span data-i18n="btn_create_project_card">Neues Projekt anlegen</span>
                             </div>
                         </div>
                     </div>
@@ -105,22 +105,22 @@
                             <div class="list-container">
                                 <div class="list-header" style="flex-wrap: wrap; gap: 12px;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <h3 class="list-title" style="margin-bottom: 0;">Kapitel</h3>
+                                        <h3 class="list-title" style="margin-bottom: 0;" data-i18n="chapters_header">Kapitel</h3>
                                         <select id="project-branch-select" class="form-input" style="width: auto; height: auto; padding: 4px 8px; font-size: 12px; border-radius: 6px; font-weight: 500;">
-                                            <option value="original">🇩🇪 Original (Deutsch)</option>
+                                            <option value="original" data-i18n="branch_original">🇩🇪 Original (Deutsch)</option>
                                         </select>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <button id="btn-sort-chapters" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;">
+                                        <button id="btn-sort-chapters" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" data-i18n="btn_sort_chapters_asc">
                                             Sortierung: ⬆️ Alt zuerst
                                         </button>
-                                        <button id="btn-create-chapter" class="btn btn-secondary">
+                                        <button id="btn-create-chapter" class="btn btn-secondary" data-i18n="btn_add_chapter">
                                             <span>+</span> Kapitel hinzufügen
                                         </button>
                                     </div>
                                 </div>
                                 <div id="project-branch-warning-banner" style="display: none; align-items: center; gap: 8px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; border: 1px solid var(--border-color);">
-                                    <span>🌐</span> Du befindest dich im Sprachzweig: <strong id="active-branch-banner-name">EN</strong>. Kapitel werden in dieser Sprache geöffnet und editiert.
+                                    <span>🌐</span> <span data-i18n="branch_warning_prefix">Du befindest dich im Sprachzweig:</span> <strong id="active-branch-banner-name">EN</strong>. <span data-i18n="branch_warning_suffix">Kapitel werden in dieser Sprache geöffnet und editiert.</span>
                                 </div>
                                 <div id="chapters-list" class="list-items">
                                     <!-- Chapters will be rendered here -->
@@ -131,45 +131,45 @@
                         <div class="details-sidebar">
                             <div class="list-container">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <h3 class="list-title" style="margin-bottom: 0;">Projekt-Statistiken</h3>
+                                    <h3 class="list-title" style="margin-bottom: 0;" data-i18n="stats_title">Projekt-Statistiken</h3>
                                     <button id="btn-edit-project-stats" class="btn btn-secondary" style="padding: 4px 8px; font-size: 13px;" title="Statistiken & Ziele anpassen">⚙️</button>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: var(--text-secondary);">Wörter gesamt:</span>
+                                        <span style="color: var(--text-secondary);" data-i18n="stats_words_total">Wörter gesamt:</span>
                                         <strong id="stat-total-words">0</strong>
                                     </div>
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: var(--text-secondary);">Ziel (Wörter):</span>
+                                        <span style="color: var(--text-secondary);" data-i18n="stats_target_words">Ziel Wortanzahl:</span>
                                         <strong id="stat-word-goal">50.000</strong>
                                     </div>
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: var(--text-secondary);">Tagesziel:</span>
+                                        <span style="color: var(--text-secondary);" data-i18n="stats_daily_target">Tägliches Ziel:</span>
                                         <strong id="stat-daily-goal">500 Wörter</strong>
                                     </div>
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: var(--text-secondary);">Erstellt am:</span>
+                                        <span style="color: var(--text-secondary);" data-i18n="stats_created_at">Erstellt am:</span>
                                         <strong id="stat-created-at">-</strong>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="list-container">
-                                <h3 class="list-title" style="margin-bottom: 16px;">Lore-Datenbank</h3>
-                                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+                                <h3 class="list-title" style="margin-bottom: 16px;" data-i18n="nav_lore">Lore-Datenbank</h3>
+                                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;" data-i18n="lore_card_desc">
                                     Deine Enzyklopädie für Charaktere, Schauplätze und Begriffe.
                                 </p>
-                                <button id="btn-view-lore" class="btn btn-secondary" style="width: 100%;">
+                                <button id="btn-view-lore" class="btn btn-secondary" style="width: 100%;" data-i18n="btn_open_wiki">
                                     📖 Wiki öffnen
                                 </button>
                             </div>
 
                             <div class="list-container" style="margin-top: 16px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <h3 class="list-title" style="margin-bottom: 0;">Sprachzweige (Branches)</h3>
-                                    <button id="btn-create-language" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">+ Neu</button>
+                                    <h3 class="list-title" style="margin-bottom: 0;" data-i18n="branches_title">Sprachzweige (Branches)</h3>
+                                    <button id="btn-create-language" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" data-i18n="lore_btn_new">+ Neu</button>
                                 </div>
-                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;" data-i18n="branches_desc">
                                     Übersetzungen dieses Projekts in andere Sprachen.
                                 </p>
                                 <div id="project-languages-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
@@ -178,11 +178,11 @@
                             </div>
 
                             <div class="list-container" style="margin-top: 16px;">
-                                <h3 class="list-title" style="margin-bottom: 16px;">Buch exportieren</h3>
-                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                                <h3 class="list-title" style="margin-bottom: 16px;" data-i18n="modal_export_title">Buch exportieren</h3>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;" data-i18n="export_card_desc">
                                     Exportiere ausgewählte Kapitel in dein Wunschformat.
                                 </p>
-                                <button id="btn-open-export-modal" class="btn" style="width: 100%; padding: 10px 14px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <button id="btn-open-export-modal" class="btn" style="width: 100%; padding: 10px 14px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;" data-i18n="btn_open_export_wizard">
                                     <span>📤</span> Export-Assistent öffnen
                                 </button>
                             </div>
@@ -198,12 +198,12 @@
                             <!-- Recovery Banner (hidden by default) -->
                             <div id="recovery-banner" class="recovery-banner" style="display: none; border-radius: 0; margin-bottom: 0; border-left: none; border-right: none; border-top: none;">
                                 <div class="recovery-banner-info">
-                                    <div class="recovery-banner-title">Ungespeicherte Änderungen gefunden!</div>
-                                    <div class="recovery-banner-text">Für das aktuelle Kapitel existiert eine neuere, automatisch gespeicherte Sicherung. Möchtest du sie vergleichen und wiederherstellen?</div>
+                                    <div class="recovery-banner-title" data-i18n="recovery_banner_title">Ungespeicherte Änderungen gefunden!</div>
+                                    <div class="recovery-banner-text" data-i18n="recovery_banner_text">Für das aktuelle Kapitel existiert eine neuere, automatisch gespeicherte Sicherung. Möchtest du sie vergleichen und wiederherstellen?</div>
                                 </div>
                                 <div class="recovery-banner-actions">
-                                    <button id="btn-recovery-keep" class="btn btn-warning" style="background-color: var(--color-warning); color: #fff;">Zusammenführen & Wiederherstellen</button>
-                                    <button id="btn-recovery-discard" class="btn btn-secondary">Verwerfen</button>
+                                    <button id="btn-recovery-keep" class="btn btn-warning" style="background-color: var(--color-warning); color: #fff;" data-i18n="btn_recovery_keep">Zusammenführen & Wiederherstellen</button>
+                                    <button id="btn-recovery-discard" class="btn btn-secondary" data-i18n="btn_recovery_discard">Verwerfen</button>
                                 </div>
                             </div>
                             <div class="editor-toolbar" style="flex-wrap: wrap; gap: 8px;">
@@ -443,11 +443,11 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label" for="project-title" data-i18n="modal_project_title_lbl">Titel des Romans</label>
-                    <input type="text" id="project-title" class="form-input" placeholder="z.B. Die Flamme von Ember">
+                    <input type="text" id="project-title" class="form-input" placeholder="z.B. Die Flamme von Ember" data-i18n="placeholder_project_title">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="project-author" data-i18n="modal_project_author_lbl">Autor / Autorin</label>
-                    <input type="text" id="project-author" class="form-input" placeholder="z.B. Johanna Doe">
+                    <input type="text" id="project-author" class="form-input" placeholder="z.B. Johanna Doe" data-i18n="placeholder_project_author">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="project-language" data-i18n="modal_project_lang_lbl">Original-Sprache (Hauptsprache)</label>
@@ -461,7 +461,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="project-description" data-i18n="modal_project_desc_lbl">Kurzbeschreibung (Optional)</label>
-                    <textarea id="project-description" class="form-textarea" rows="3" placeholder="Ein epischer Fantasyroman über..."></textarea>
+                    <textarea id="project-description" class="form-textarea" rows="3" placeholder="Ein epischer Fantasyroman über..." data-i18n="placeholder_project_desc"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -481,7 +481,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label" for="chapter-title" data-i18n="modal_chapter_title_lbl">Kapiteltitel</label>
-                    <input type="text" id="chapter-title" class="form-input" placeholder="z.B. Kapitel 1: Ein unerwarteter Besuch">
+                    <input type="text" id="chapter-title" class="form-input" placeholder="z.B. Kapitel 1: Ein unerwarteter Besuch" data-i18n="placeholder_chapter_title">
                 </div>
             </div>
             <div class="modal-footer">
@@ -501,7 +501,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label" for="lore-name" data-i18n="lore_name_lbl">Name des Eintrags</label>
-                    <input type="text" id="lore-name" class="form-input" placeholder="z.B. Erzmagier oder Flammenwüste">
+                    <input type="text" id="lore-name" class="form-input" placeholder="z.B. Erzmagier oder Flammenwüste" data-i18n="placeholder_lore_name">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="lore-category" data-i18n="lore_category_lbl">Kategorie</label>
@@ -520,15 +520,15 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="lore-keywords" data-i18n="lore_keywords_lbl">Schlüsselwörter (Kommagetrennt für Smart-Hover)</label>
-                    <input type="text" id="lore-keywords" class="form-input" placeholder="z.B. Erzmagier, Konzil der Flamme">
+                    <input type="text" id="lore-keywords" class="form-input" placeholder="z.B. Erzmagier, Konzil der Flamme" data-i18n="placeholder_lore_keywords">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="lore-short-desc" data-i18n="lore_short_desc_lbl">Kurzbeschreibung (Tooltip)</label>
-                    <input type="text" id="lore-short-desc" class="form-input" placeholder="z.B. Der höchste spirituelle Rang im Reich Ember.">
+                    <input type="text" id="lore-short-desc" class="form-input" placeholder="z.B. Der höchste spirituelle Rang im Reich Ember." data-i18n="placeholder_lore_short_desc">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="lore-desc" data-i18n="lore_desc_lbl">Beschreibung (Vollständiger Artikel - Markdown möglich)</label>
-                    <textarea id="lore-desc" class="form-textarea" rows="8" placeholder="Beschreibe die Herkunft, Fähigkeiten, Bedeutung..."></textarea>
+                    <textarea id="lore-desc" class="form-textarea" rows="8" placeholder="Beschreibe die Herkunft, Fähigkeiten, Bedeutung..." data-i18n="placeholder_lore_desc"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -542,7 +542,7 @@
     <div id="modal-merge" class="modal-overlay" style="z-index: 110;">
         <div class="modal" style="max-width: 900px; width: 90%; height: 85vh; display: flex; flex-direction: column;">
             <div class="modal-header">
-                <h3 class="modal-title">Sicherungs-Vergleich (Änderungen zusammenführen)</h3>
+                <h3 class="modal-title" data-i18n="modal_merge_title">Sicherungs-Vergleich (Änderungen zusammenführen)</h3>
                 <button class="modal-close" onclick="closeModal('modal-merge')">×</button>
             </div>
             <div class="modal-body" style="flex-grow: 1; overflow-y: auto; padding: 0;">
@@ -611,7 +611,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label" for="new-language-code" data-i18n="modal_branch_lang_lbl">Sprachcode (z.B. en, fr, es, it)</label>
-                    <input type="text" id="new-language-code" class="form-input" placeholder="en" maxlength="5">
+                    <input type="text" id="new-language-code" class="form-input" placeholder="en" maxlength="5" data-i18n="placeholder_new_language_code">
                     <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;" data-i18n="modal_branch_hint">
                         Erstellt eine Kopie aller Kapitel und übersetzt sie automatisch im Hintergrund.
                     </small>

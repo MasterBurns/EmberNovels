@@ -151,7 +151,7 @@ function navigateTo(view, params = {}) {
             btnBackDetails.onclick = () => {
                 // Warn user if uncommitted changes
                 if (state.isDirty) {
-                    showConfirm("Ungespeicherte Änderungen", "Du hast ungespeicherte Änderungen! Möchtest du wirklich zurückgehen?", () => {
+                    showConfirm(t('unsaved_changes_title', 'Ungespeicherte Änderungen'), t('unsaved_changes_body', 'Du hast ungespeicherte Änderungen! Möchtest du wirklich zurückgehen?'), () => {
                         state.isDirty = false;
                         navigateTo('project-details', { projectId: state.currentProject.id });
                     });
@@ -478,7 +478,7 @@ async function loadProjects() {
             // Delete listener
             card.querySelector('.btn-delete').addEventListener('click', (e) => {
                 e.stopPropagation();
-                showConfirm("Projekt löschen", `Möchtest du das Projekt "${p.title}" wirklich in den Papierkorb verschieben?`, () => {
+                showConfirm(t('delete_project_title', 'Projekt löschen'), `${t('delete_project_body', 'Möchtest du das Projekt wirklich in den Papierkorb verschieben?')} "${p.title}"`, () => {
                     deleteProject(p.id);
                 });
             });
@@ -558,16 +558,16 @@ async function loadProjectDetails(projectId) {
         
         document.getElementById('stat-total-words').textContent = totalWords.toLocaleString();
         document.getElementById('stat-word-goal').textContent = project.word_count_goal.toLocaleString();
-        document.getElementById('stat-daily-goal').textContent = `${project.daily_word_count_goal} Wörter`;
+        document.getElementById('stat-daily-goal').textContent = `${project.daily_word_count_goal} ${t('words_lbl', 'Wörter')}`;
         
-        const dateStr = new Date(project.created_at).toLocaleDateString('de-DE');
+        const dateStr = new Date(project.created_at).toLocaleDateString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US');
         document.getElementById('stat-created-at').textContent = dateStr;
         
         // Populate the dropdown selector with original + all branches
         const branchSelect = document.getElementById('project-branch-select');
         if (branchSelect) {
             const currentSelected = state.activeLanguage;
-            branchSelect.innerHTML = '<option value="original">🇩🇪 Original (Deutsch)</option>';
+            branchSelect.innerHTML = `<option value="original">🇩🇪 Original (${t('branch_original_badge', 'Deutsch')})</option>`;
             
             try {
                 const langRes = await fetch(`${API_URL}/projects/${projectId}/languages`);
@@ -576,7 +576,7 @@ async function loadProjectDetails(projectId) {
                     langs.forEach(lang => {
                         const opt = document.createElement('option');
                         opt.value = lang;
-                        opt.textContent = `Übersetzung: ${lang.toUpperCase()}`;
+                        opt.textContent = `${t('translation_lbl', 'Übersetzung')}: ${lang.toUpperCase()}`;
                         branchSelect.appendChild(opt);
                     });
                 }
@@ -607,7 +607,7 @@ async function loadProjectDetails(projectId) {
         }
         
         if (chaptersCopy.length === 0) {
-            list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Keine Kapitel angelegt. Erstelle dein erstes Kapitel!</div>`;
+            list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">${t('no_chapters_placeholder', 'Keine Kapitel angelegt. Erstelle dein erstes Kapitel!')}</div>`;
         } else {
             chaptersCopy.forEach((c, index) => {
                 const item = document.createElement('div');
@@ -617,9 +617,9 @@ async function loadProjectDetails(projectId) {
                     item.style.borderColor = 'var(--color-warning)';
                 }
                 
-                let metaText = `${c.word_count} Wörter · Letzte Änderung: ${new Date(c.updated_at).toLocaleString('de-DE')}`;
+                let metaText = `${c.word_count} ${t('words_lbl', 'Wörter')} · ${t('last_modified', 'Letzte Änderung')}: ${new Date(c.updated_at).toLocaleString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US')}`;
                 if (state.activeLanguage !== 'original') {
-                    metaText = `Bearbeitete Übersetzung (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
+                    metaText = `${t('edited_translation', 'Bearbeitete Übersetzung')} (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
                 }
                 
                 // Determine layout sequence number
@@ -629,8 +629,8 @@ async function loadProjectDetails(projectId) {
                     <div class="list-item-info">
                         <div class="list-item-title">
                             <strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong> ${escapeHtml(c.title)} 
-                            ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">Branch: ${state.activeLanguage.toUpperCase()}</span>` : ''}
-                            ${c.has_recovery && state.activeLanguage === 'original' ? '<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ Wiederherstellung verfügbar</span>' : ''}
+                            ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">${t('branch_badge', 'Branch')}: ${state.activeLanguage.toUpperCase()}</span>` : ''}
+                            ${c.has_recovery && state.activeLanguage === 'original' ? `<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ ${t('recovery_available', 'Wiederherstellung verfügbar')}</span>` : ''}
                         </div>
                         <div class="list-item-meta">${metaText}</div>
                     </div>
@@ -647,7 +647,7 @@ async function loadProjectDetails(projectId) {
                 // Chapter Delete listener
                 item.querySelector('.btn-delete').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showConfirm("Kapitel löschen", `Möchtest du das Kapitel "${c.title}" wirklich in den Papierkorb verschieben?`, () => {
+                    showConfirm(t('delete_chapter_title', 'Kapitel löschen'), `${t('delete_chapter_body', 'Möchtest du das Kapitel wirklich in den Papierkorb verschieben?')} "${c.title}"`, () => {
                         deleteChapter(project.id, c.id);
                     });
                 });
@@ -929,7 +929,7 @@ async function resolveRecovery(keep) {
 
 function updateWordCount(text) {
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    document.getElementById('editor-word-count').textContent = `Wörter: ${words}`;
+    document.getElementById('editor-word-count').textContent = `${t('words_lbl', 'Wörter')}: ${words}`;
 }
 
 // Editor visual configurations
@@ -1025,7 +1025,7 @@ async function loadTrashedProjects() {
                 // Permanent Delete listener
                 card.querySelector('.btn-permanent').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showConfirm("Projekt endgültig löschen", `ACHTUNG: Möchtest du das Projekt "${p.title}" wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden!`, () => {
+                    showConfirm(t('delete_project_perm_title', 'Projekt endgültig löschen'), `${t('delete_project_perm_body', 'ACHTUNG: Möchtest du das Projekt wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden!')} "${p.title}"`, () => {
                         permanentDeleteProject(p.id);
                     });
                 });
@@ -1435,21 +1435,21 @@ async function handleSaveLore() {
 }
 
 async function deleteLoreEntry(loreId) {
-    showConfirm("Lore-Eintrag löschen", "Möchtest du diesen Lore-Eintrag wirklich in den Papierkorb verschieben?", async () => {
+    showConfirm(t('delete_lore_title', 'Lore-Eintrag löschen'), t('delete_lore_body', 'Möchtest du diesen Lore-Eintrag wirklich in den Papierkorb verschieben?'), async () => {
         try {
             const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/${loreId}`, {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error("Could not delete lore entry");
             
-            showToast("Eintrag gelöscht.", "success");
+            showToast(t('lore_deleted_toast', 'Eintrag gelöscht.'), "success");
             
             // Reset article panel
             const container = document.getElementById('wiki-article-container');
             container.innerHTML = `
                 <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
                     <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
-                    <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
+                    <p>${t('lore_empty_state_text', 'Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.')}</p>
                 </div>
             `;
             
@@ -1472,12 +1472,12 @@ function showLoreDetail(loreId) {
                 <span style="font-size: 11px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 3px 8px; border-radius: 4px; font-weight: 600;">${translateCategory(entry.category)}</span>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button id="btn-wiki-edit-act" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">✏️ Bearbeiten</button>
-                <button id="btn-wiki-delete-act" class="btn btn-secondary btn-danger" style="padding: 6px 12px; font-size: 13px; color: #fff;">🗑️ Löschen</button>
+                <button id="btn-wiki-edit-act" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">✏️ ${t('btn_edit', 'Bearbeiten')}</button>
+                <button id="btn-wiki-delete-act" class="btn btn-secondary btn-danger" style="padding: 6px 12px; font-size: 13px; color: #fff;">🗑️ ${t('btn_delete', 'Löschen')}</button>
             </div>
         </div>
         <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; font-style: italic;">
-            ${escapeHtml(entry.short_description || "Keine Kurzbeschreibung.")}
+            ${escapeHtml(entry.short_description || t('no_short_desc', 'Keine Kurzbeschreibung.'))}
         </div>
         <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
             <strong>Keywords:</strong> ${entry.keywords.map(k => `<span style="background-color: var(--bg-base); border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">${escapeHtml(k)}</span>`).join('')}
@@ -1494,7 +1494,7 @@ function showLoreDetail(loreId) {
     toastui.Editor.factory({
         el: document.getElementById('wiki-rendered-markdown'),
         viewer: true,
-        initialValue: entry.description || '_Keine ausführliche Beschreibung vorhanden._',
+        initialValue: entry.description || '_' + t('no_description_available', 'Keine ausführliche Beschreibung vorhanden.') + '_',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
     });
 }
@@ -1523,7 +1523,7 @@ function showLoreQuickviewById(loreId) {
     toastui.Editor.factory({
         el: descEl,
         viewer: true,
-        initialValue: entry.description || entry.short_description || '_Keine Beschreibung vorhanden._',
+        initialValue: entry.description || entry.short_description || '_' + t('no_description_available', 'Keine Beschreibung vorhanden.') + '_',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
     });
     
@@ -1540,11 +1540,11 @@ function showLoreQuickviewById(loreId) {
 
 function translateCategory(cat) {
     switch (cat) {
-        case 'character': return 'Charakter';
-        case 'location': return 'Ort / Schauplatz';
-        case 'item': return 'Objekt / Gegenstand';
-        case 'lore': return 'Begriff / Sonstiges';
-        default: return 'Lore';
+        case 'character': return t('lore_cat_character', 'Charakter');
+        case 'location': return t('lore_cat_location', 'Ort / Schauplatz');
+        case 'item': return t('lore_cat_item', 'Objekt / Gegenstand');
+        case 'lore': return t('lore_cat_lore', 'Begriff / Sonstiges');
+        default: return t('lore_lbl', 'Lore');
     }
 }
 
@@ -1859,7 +1859,7 @@ async function handleSaveSettings() {
 
 async function loadProjectLanguages(projectId) {
     const list = document.getElementById('project-languages-list');
-    list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Lade Sprachen...</div>';
+    list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('loading_languages', 'Lade Sprachen...')}</div>`;
     
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}/languages`);
@@ -1883,8 +1883,8 @@ async function loadProjectLanguages(projectId) {
         }
         
         origEl.innerHTML = `
-            <span style="font-size: 13px; font-weight: 500;">🇩🇪 Deutsch (Original)</span>
-            <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Original</span>
+            <span style="font-size: 13px; font-weight: 500;">🇩🇪 Deutsch (${t('branch_original_badge', 'Original')})</span>
+            <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">${t('branch_original_badge', 'Original')}</span>
         `;
         
         origEl.addEventListener('click', () => {
@@ -2019,10 +2019,10 @@ async function reloadEditorChapterContent(projectId, chapterId) {
 async function handleManualTranslate() {
     if (!state.currentProject || !state.currentChapter || state.activeLanguage === 'original') return;
     
-    showConfirm("Kapitel übersetzen", `Möchtest du dieses Kapitel jetzt neu aus dem Original in '${state.activeLanguage.toUpperCase()}' übersetzen? Eigene Änderungen an dieser Übersetzung werden überschrieben.`, async () => {
+    showConfirm(t('translate_chapter_title', 'Kapitel übersetzen'), `${t('translate_chapter_body', 'Möchtest du dieses Kapitel jetzt neu aus dem Original übersetzen? Eigene Änderungen an dieser Übersetzung werden überschrieben.')} (${state.activeLanguage.toUpperCase()})`, async () => {
         const saveStatus = document.getElementById('save-status');
         saveStatus.style.display = 'inline-block';
-        saveStatus.textContent = 'Übersetze...';
+        saveStatus.textContent = t('translating', 'Übersetze...');
         
         try {
             const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${state.currentChapter.id}/translate`, {
