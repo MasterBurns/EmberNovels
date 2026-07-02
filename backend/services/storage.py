@@ -1,0 +1,460 @@
+import os
+import json
+import shutil
+import re
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Any
+from backend.config import PROJECTS_DIR
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitizes a string to be a safe folder/file name."""
+    # Replace spaces with underscores, remove non-alphanumeric characters
+    s = re.sub(r'[^\w\s-]', '', filename).strip().replace(' ', '_')
+    return re.sub(r'[-\s]+', '_', s).lower()
+
+class StorageService:
+    @staticmethod
+    def get_projects_dir() -> Path:
+        PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+        return PROJECTS_DIR
+
+    @staticmethod
+    def get_trash_dir() -> Path:
+        trash = PROJECTS_DIR / ".trash"
+        trash.mkdir(parents=True, exist_ok=True)
+        return trash
+
+    @classmethod
+    def list_projects(cls) -> List[Dict[str, Any]]:
+        """List all active (non-deleted) projects."""
+        projects_dir = cls.get_projects_dir()
+        projects = []
+        
+        for p_dir in projects_dir.iterdir():
+            if p_dir.is_dir() and not p_dir.name.startswith('.'):
+                meta_path = p_dir / "project.json"
+                if meta_path.exists():
+                    try:
+                        with open(meta_path, 'r', encoding='utf-8') as f:
+                            meta = json.load(f)
+                            # Ensure id is in metadata
+                            meta['id'] = p_dir.name
+                            projects.append(meta)
+                    except Exception as e:
+                        # Log error or skip corrupted project files
+                        pass
+        return sorted(projects, key=lambda x: x.get('updated_at', ''), reverse=True)
+
+    @classmethod
+    def list_trashed_projects(cls) -> List[Dict[str, Any]]:
+        """List all soft-deleted projects."""
+        trash_dir = cls.get_trash_dir()
+        projects = []
+        for p_dir in trash_dir.iterdir():
+            if p_dir.is_dir():
+                meta_path = p_dir / "project.json"
+                if meta_path.exists():
+                    try:
+                        with open(meta_path, 'r', encoding='utf-8') as f:
+                            meta = json.load(f)
+                            meta['id'] = p_dir.name
+                            projects.append(meta)
+                    except Exception:
+                        pass
+        return projects
+
+    @classmethod
+    def create_project(cls, title: str, description: str = "", author: str = "") -> Dict[str, Any]:
+        """Create a new project folder and metadata."""
+        project_id = sanitize_filename(title)
+        projects_dir = cls.get_projects_dir()
+        
+        # Avoid collisions by appending timestamp if folder already exists
+        base_id = project_id
+        counter = 1
+        while (projects_dir / project_id).exists() or (cls.get_trash_dir() / project_id).exists():
+            project_id = f"{base_id}_{counter}"
+            counter += 1
+            
+        project_path = projects_dir / project_id
+        project_path.mkdir(parents=True, exist_ok=True)
+        
+        # Create directories for chapters, lore
+        (project_path / "chapters").mkdir(parents=True, exist_ok=True)
+        (project_path / "chapters" / ".trash").mkdir(parents=True, exist_ok=True)
+        (project_path / "chapters" / ".history").mkdir(parents=True, exist_ok=True)
+        (project_path / "lore").mkdir(parents=True, exist_ok=True)
+        (project_path / "lore" / ".trash").mkdir(parents=True, exist_ok=True)
+        
+        # Initialize metadata
+        now_str = datetime.now().isoformat()
+        metadata = {
+            "id": project_id,
+            "title": title,
+            "description": description,
+            "author": author,
+            "created_at": now_str,
+            "updated_at": now_str,
+            "word_count_goal": 50000,
+            "daily_word_count_goal": 500,
+            "status": "active"
+        }
+        
+        with open(project_path / "project.json", 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+            
+        return metadata
+
+    @classmethod
+    def get_project_metadata(cls, project_id: str) -> Optional[Dict[str, Any]]:
+        """Read project metadata."""
+        meta_path = cls.get_projects_dir() / project_id / "project.json"
+        if not meta_path.exists():
+            # Check trash
+            meta_path = cls.get_trash_dir() / project_id / "project.json"
+            if not meta_path.exists():
+                return None
+        try:
+            with open(meta_path, 'r', encoding='utf-8') as f:
+                meta = json.load(f)
+                meta['id'] = project_id
+                return meta
+        except Exception:
+            return None
+
+    @classmethod
+    def update_project_metadata(cls, project_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update project metadata."""
+        project_path = cls.get_projects_dir() / project_id
+        if not project_path.exists():
+            return None
+        
+        meta_path = project_path / "project.json"
+        meta = cls.get_project_metadata(project_id) or {}
+        
+        for k, v in data.items():
+            if k not in ['id', 'created_at']: # Protect immutable fields
+                meta[k] = v
+        meta['updated_at'] = datetime.now().isoformat()
+        
+        with open(meta_path, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=4, ensure_ascii=False)
+        return meta
+
+    @classmethod
+    def delete_project(cls, project_id: str) -> bool:
+        """Soft delete a project by moving it to the trash folder."""
+        source = cls.get_projects_dir() / project_id
+        if not source.exists() or source.is_file():
+            return False
+            
+        trash_dir = cls.get_trash_dir()
+        destination = trash_dir / project_id
+        
+        # If destination already exists in trash, remove it first
+        if destination.exists():
+            shutil.rmtree(destination)
+            
+        shutil.move(str(source), str(destination))
+        
+        # Update metadata status
+        meta = cls.get_project_metadata(project_id)
+        if meta:
+            meta['status'] = 'deleted'
+            meta['deleted_at'] = datetime.now().isoformat()
+            with open(destination / "project.json", 'w', encoding='utf-8') as f:
+                json.dump(meta, f, indent=4, ensure_ascii=False)
+        return True
+
+    @classmethod
+    def restore_project(cls, project_id: str) -> bool:
+        """Restore a soft-deleted project from trash."""
+        source = cls.get_trash_dir() / project_id
+        if not source.exists() or source.is_file():
+            return False
+            
+        destination = cls.get_projects_dir() / project_id
+        if destination.exists():
+            # If active folder already exists somehow, append suffix to restored
+            suffix = datetime.now().strftime("%Y%m%d%H%M%S")
+            destination = cls.get_projects_dir() / f"{project_id}_{suffix}"
+            project_id = destination.name
+            
+        shutil.move(str(source), str(destination))
+        
+        meta = cls.get_project_metadata(project_id)
+        if meta:
+            meta['status'] = 'active'
+            meta.pop('deleted_at', None)
+            with open(destination / "project.json", 'w', encoding='utf-8') as f:
+                json.dump(meta, f, indent=4, ensure_ascii=False)
+        return True
+
+    @classmethod
+    def permanent_delete_project(cls, project_id: str) -> bool:
+        """Permanently delete a project from trash."""
+        target = cls.get_trash_dir() / project_id
+        if not target.exists():
+            # If not in trash, check if active (should only permanently delete from trash, but let's be safe)
+            target = cls.get_projects_dir() / project_id
+            if not target.exists():
+                return False
+        shutil.rmtree(target)
+        return True
+
+    # CHAPTER MANAGEMENT (Zero-Data-Loss Integrations)
+    
+    @classmethod
+    def get_chapters_dir(cls, project_id: str) -> Path:
+        p_dir = cls.get_projects_dir() / project_id
+        c_dir = p_dir / "chapters"
+        c_dir.mkdir(parents=True, exist_ok=True)
+        (c_dir / ".trash").mkdir(parents=True, exist_ok=True)
+        (c_dir / ".history").mkdir(parents=True, exist_ok=True)
+        return c_dir
+
+    @classmethod
+    def list_chapters(cls, project_id: str) -> List[Dict[str, Any]]:
+        """List active chapters in a project."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        chapters = []
+        
+        # Load chapter list (sorted or we read md files)
+        # To maintain a custom sorting order, we could have a list in project.json,
+        # but let's inspect the files. We'll default sort by filename.
+        for file in chapters_dir.iterdir():
+            if file.is_file() and file.suffix == '.md' and not file.name.startswith('.'):
+                stat = file.stat()
+                chapter_id = file.stem
+                
+                # Check if a newer .tmp file exists for crash recovery
+                tmp_file = chapters_dir / f".{file.name}.tmp"
+                has_recovery = False
+                if tmp_file.exists():
+                    # If tmp file is newer than original file
+                    if tmp_file.stat().st_mtime > stat.st_mtime:
+                        has_recovery = True
+
+                # Word count calculation
+                word_count = 0
+                try:
+                    with open(file, 'r', encoding='utf-8') as f:
+                        text = f.read()
+                        word_count = len(re.findall(r'\b\w+\b', text))
+                except Exception:
+                    pass
+                
+                chapters.append({
+                    "id": chapter_id,
+                    "title": chapter_id.replace('_', ' ').title(),
+                    "word_count": word_count,
+                    "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "has_recovery": has_recovery
+                })
+        return sorted(chapters, key=lambda x: x['id'])
+
+    @classmethod
+    def list_trashed_chapters(cls, project_id: str) -> List[Dict[str, Any]]:
+        """List soft-deleted chapters."""
+        trash_dir = cls.get_chapters_dir(project_id) / ".trash"
+        chapters = []
+        for file in trash_dir.iterdir():
+            if file.is_file() and file.suffix == '.md':
+                stat = file.stat()
+                chapters.append({
+                    "id": file.stem,
+                    "title": file.stem.replace('_', ' ').title(),
+                    "deleted_at": datetime.fromtimestamp(stat.st_mtime).isoformat()
+                })
+        return chapters
+
+    @classmethod
+    def create_chapter(cls, project_id: str, title: str) -> Dict[str, Any]:
+        """Create a new chapter markdown file."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        chapter_id = sanitize_filename(title)
+        
+        base_id = chapter_id
+        counter = 1
+        while (chapters_dir / f"{chapter_id}.md").exists() or (chapters_dir / ".trash" / f"{chapter_id}.md").exists():
+            chapter_id = f"{base_id}_{counter}"
+            counter += 1
+            
+        file_path = chapters_dir / f"{chapter_id}.md"
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(f"# {title}\n\nSchreibe dein Kapitel hier...")
+            
+        stat = file_path.stat()
+        return {
+            "id": chapter_id,
+            "title": title,
+            "word_count": 4, # 'Schreibe dein Kapitel hier...' is 4 words
+            "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+            "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            "has_recovery": False
+        }
+
+    @classmethod
+    def delete_chapter(cls, project_id: str, chapter_id: str) -> bool:
+        """Soft delete a chapter by moving it to the chapters' .trash folder."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        source = chapters_dir / f"{chapter_id}.md"
+        if not source.exists():
+            return False
+            
+        destination = chapters_dir / ".trash" / f"{chapter_id}.md"
+        if destination.exists():
+            destination.unlink()
+            
+        # Move both original and potential tmp file
+        shutil.move(str(source), str(destination))
+        
+        tmp_file = chapters_dir / f".{chapter_id}.md.tmp"
+        if tmp_file.exists():
+            tmp_file.unlink() # Delete temp autosave on delete
+            
+        return True
+
+    @classmethod
+    def restore_chapter(cls, project_id: str, chapter_id: str) -> bool:
+        """Restore a chapter from the projects' .trash folder."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        source = chapters_dir / ".trash" / f"{chapter_id}.md"
+        if not source.exists():
+            return False
+            
+        destination = chapters_dir / f"{chapter_id}.md"
+        if destination.exists():
+            suffix = datetime.now().strftime("%Y%m%d%H%M%S")
+            destination = chapters_dir / f"{chapter_id}_{suffix}.md"
+            
+        shutil.move(str(source), str(destination))
+        return True
+
+    @classmethod
+    def permanent_delete_chapter(cls, project_id: str, chapter_id: str) -> bool:
+        """Permanently delete a chapter."""
+        trash_dir = cls.get_chapters_dir(project_id) / ".trash"
+        target = trash_dir / f"{chapter_id}.md"
+        if not target.exists():
+            return False
+        target.unlink()
+        return True
+
+    # ZERO DATA LOSS READ / WRITE OPERATIONS
+    
+    @classmethod
+    def get_chapter_content(cls, project_id: str, chapter_id: str) -> Dict[str, Any]:
+        """
+        Gets a chapter's content.
+        Checks for a newer .tmp file and returns flags for crash recovery.
+        """
+        chapters_dir = cls.get_chapters_dir(project_id)
+        file_path = chapters_dir / f"{chapter_id}.md"
+        tmp_path = chapters_dir / f".{chapter_id}.md.tmp"
+        
+        if not file_path.exists():
+            # Might be in trash or deleted
+            return {"error": "Chapter not found"}
+            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            original_content = f.read()
+            
+        has_recovery = False
+        tmp_content = ""
+        tmp_mtime = 0.0
+        
+        if tmp_path.exists():
+            orig_mtime = file_path.stat().st_mtime
+            tmp_mtime = tmp_path.stat().st_mtime
+            if tmp_mtime > orig_mtime:
+                has_recovery = True
+                try:
+                    with open(tmp_path, 'r', encoding='utf-8') as f:
+                        tmp_content = f.read()
+                except Exception:
+                    has_recovery = False
+                    
+        return {
+            "id": chapter_id,
+            "content": original_content,
+            "has_recovery": has_recovery,
+            "recovery_content": tmp_content if has_recovery else None,
+            "recovery_timestamp": datetime.fromtimestamp(tmp_mtime).isoformat() if has_recovery else None
+        }
+
+    @classmethod
+    def autosave_chapter(cls, project_id: str, chapter_id: str, content: str) -> bool:
+        """Autosave (Shadow Save) content to a hidden .tmp file."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        tmp_path = chapters_dir / f".{chapter_id}.md.tmp"
+        
+        # Verify parent chapter file exists first
+        if not (chapters_dir / f"{chapter_id}.md").exists():
+            return False
+            
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return True
+
+    @classmethod
+    def save_chapter(cls, project_id: str, chapter_id: str, content: str) -> bool:
+        """
+        Save chapter content explicitly.
+        1. Prepares a snapshot in .history/ with timestamp.
+        2. Writes to the original file.
+        3. Cleans up the .tmp file.
+        """
+        chapters_dir = cls.get_chapters_dir(project_id)
+        file_path = chapters_dir / f"{chapter_id}.md"
+        tmp_path = chapters_dir / f".{chapter_id}.md.tmp"
+        history_dir = chapters_dir / ".history"
+        history_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 1. Create history snapshot of previous version if it exists
+        if file_path.exists():
+            try:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                history_file = history_dir / f"{chapter_id}_{timestamp}.md"
+                shutil.copy2(file_path, history_file)
+            except Exception as e:
+                # Log or handle backup failure, but proceed to save
+                pass
+                
+        # 2. Save original file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        # 3. Remove .tmp file
+        if tmp_path.exists():
+            tmp_path.unlink()
+            
+        # Update project updated_at timestamp
+        cls.update_project_metadata(project_id, {})
+        return True
+
+    @classmethod
+    def resolve_recovery(cls, project_id: str, chapter_id: str, keep_recovery: bool) -> bool:
+        """Resolve crash recovery warning by either restoring or discarding tmp."""
+        chapters_dir = cls.get_chapters_dir(project_id)
+        file_path = chapters_dir / f"{chapter_id}.md"
+        tmp_path = chapters_dir / f".{chapter_id}.md.tmp"
+        
+        if not tmp_path.exists():
+            return False
+            
+        if keep_recovery:
+            # Load recovery content and save explicitly
+            try:
+                with open(tmp_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                cls.save_chapter(project_id, chapter_id, content)
+                return True
+            except Exception:
+                return False
+        else:
+            # Just delete the tmp file
+            tmp_path.unlink()
+            return True
