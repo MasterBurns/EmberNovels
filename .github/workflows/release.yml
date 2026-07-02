@@ -72,7 +72,7 @@ jobs:
       - name: Package Windows Binary
         if: matrix.os == 'windows-latest'
         run: |
-          zip -j EmberNovels-Windows-Portable.zip dist/EmberNovels.exe
+          Compress-Archive -Path dist/EmberNovels.exe -DestinationPath EmberNovels-Windows-Portable.zip
 
       # Upload artifacts using v4
       - name: Upload Windows Setup Artifact
