@@ -144,17 +144,26 @@
                             </div>
 
                             <div class="list-container" style="margin-top: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="list-title" style="margin-bottom: 0;">Sprachzweige (Branches)</h3>
+                                    <button id="btn-create-language" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">+ Neu</button>
+                                </div>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                                    Übersetzungen dieses Projekts in andere Sprachen.
+                                </p>
+                                <div id="project-languages-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                                    <!-- Dynamic languages list -->
+                                </div>
+                            </div>
+
+                            <div class="list-container" style="margin-top: 16px;">
                                 <h3 class="list-title" style="margin-bottom: 16px;">Buch exportieren</h3>
                                 <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
-                                    Exportiere das gesamte Manuskript in dein Wunschformat.
+                                    Exportiere ausgewählte Kapitel in dein Wunschformat.
                                 </p>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <button class="btn btn-secondary btn-export" data-format="txt" style="text-align: left; padding: 10px 14px; font-size: 13px;">📝 Textdatei (.txt)</button>
-                                    <button class="btn btn-secondary btn-export" data-format="html" style="text-align: left; padding: 10px 14px; font-size: 13px;">🌐 HTML-Dokument (.html)</button>
-                                    <button class="btn btn-secondary btn-export" data-format="docx" style="text-align: left; padding: 10px 14px; font-size: 13px;">📄 Word-Dokument (.docx)</button>
-                                    <button class="btn btn-secondary btn-export" data-format="pdf" style="text-align: left; padding: 10px 14px; font-size: 13px;">📕 PDF-Dokument (.pdf)</button>
-                                    <button class="btn btn-secondary btn-export" data-format="epub" style="text-align: left; padding: 10px 14px; font-size: 13px;">📖 eBook-Datei (.epub)</button>
-                                </div>
+                                <button id="btn-open-export-modal" class="btn" style="width: 100%; padding: 10px 14px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span>📤</span> Export-Assistent öffnen
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -176,15 +185,23 @@
                                     <button id="btn-recovery-discard" class="btn btn-secondary">Verwerfen</button>
                                 </div>
                             </div>
-                            <div class="editor-toolbar">
+                            <div class="editor-toolbar" style="flex-wrap: wrap; gap: 8px;">
                                 <div class="toolbar-group">
                                     <button id="btn-editor-view-wysiwyg" class="toolbar-btn active">📝 Rich-Text</button>
                                     <button id="btn-editor-view-markdown" class="toolbar-btn">💻 Markdown</button>
                                     <button id="btn-editor-split" class="toolbar-btn">⚡ Split-Screen</button>
                                     <button id="btn-editor-create-lore" class="toolbar-btn">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
-                                <div class="toolbar-group">
+                                <div class="toolbar-group" style="gap: 6px;">
+                                    <button id="btn-ai-correct" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Markierten Text lektorieren/korrigieren">✍️ Lektorat</button>
+                                    <button id="btn-ai-continue" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Text an Cursorposition weiterschreiben">🤖 Weiterschreiben</button>
+                                </div>
+                                <div class="toolbar-group" style="align-items: center; margin-left: auto;">
                                     <span id="editor-word-count" style="font-size: 13px; color: var(--text-muted); margin-right: 12px;">Wörter: 0</span>
+                                    <select id="editor-language-select" class="form-input" style="width: auto; height: auto; padding: 4px 8px; font-size: 12px; margin-right: 8px; border-radius: 6px;">
+                                        <option value="original">Deutsch (Original)</option>
+                                    </select>
+                                    <button id="btn-editor-translate-now" class="toolbar-btn" style="margin-right: 12px; display: none; padding: 4px 8px;" title="Kapitel jetzt neu aus dem Original übersetzen">🔄 Übersetzen</button>
                                     <button id="btn-editor-save" class="btn" style="padding: 6px 16px;">Speichern (Strg+S)</button>
                                 </div>
                             </div>
@@ -285,20 +302,71 @@
 
                         <hr style="border: 0; border-top: 1px solid var(--border-color);">
                         
-                        <h3 class="list-title">KI-Schnittstellen (Stub)</h3>
+                        <h3 class="list-title">KI-Schnittstellen (Lektorat & Übersetzung)</h3>
                         <div class="form-group">
-                            <label class="form-label" for="setting-ai-provider">KI-Modell Anbieter</label>
+                            <label class="form-label" for="setting-ai-provider">Aktiver KI-Anbieter</label>
                             <select id="setting-ai-provider" class="form-input" style="height: auto;">
-                                <option value="ollama">Lokal: Ollama (z. B. Llama 3)</option>
+                                <option value="none">Keine (Google Translate Free für Übersetzung)</option>
+                                <option value="ollama">Lokal: Ollama (z.B. Llama 3)</option>
                                 <option value="gemini">Google Gemini API</option>
-                                <option value="openai">OpenAI (GPT-4o)</option>
-                                <option value="anthropic">Anthropic Claude</option>
+                                <option value="openai">OpenAI API (GPT-4o-mini)</option>
+                                <option value="anthropic">Anthropic Claude API</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="setting-ai-key">API Key (falls extern)</label>
-                            <input type="password" id="setting-ai-key" class="form-input" placeholder="A1zSy...">
+                        
+                        <!-- Provider specific sub-panels -->
+                        <div id="panel-settings-ollama" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-ollama-url">Ollama Server URL</label>
+                                <input type="text" id="setting-ollama-url" class="form-input" value="http://localhost:11434">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-ollama-model">Ollama Modellname</label>
+                                <input type="text" id="setting-ollama-model" class="form-input" value="llama3">
+                            </div>
                         </div>
+                        
+                        <div id="panel-settings-gemini" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-gemini-key">Gemini API Key</label>
+                                <input type="password" id="setting-gemini-key" class="form-input" placeholder="AIzaSy...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-gemini-model">Gemini Modell</label>
+                                <input type="text" id="setting-gemini-model" class="form-input" value="gemini-1.5-flash">
+                            </div>
+                        </div>
+
+                        <div id="panel-settings-openai" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-openai-key">OpenAI API Key</label>
+                                <input type="password" id="setting-openai-key" class="form-input" placeholder="sk-proj-...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-openai-model">OpenAI Modell</label>
+                                <input type="text" id="setting-openai-model" class="form-input" value="gpt-4o-mini">
+                            </div>
+                        </div>
+
+                        <div id="panel-settings-anthropic" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-anthropic-key">Anthropic API Key</label>
+                                <input type="password" id="setting-anthropic-key" class="form-input" placeholder="sk-ant-...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-anthropic-model">Anthropic Modell</label>
+                                <input type="text" id="setting-anthropic-model" class="form-input" value="claude-3-5-sonnet">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="setting-auto-translate" style="width: auto; cursor: pointer;">
+                            <label for="setting-auto-translate" style="font-size: 14px; cursor: pointer; user-select: none;">
+                                Bei manuellem Speichern (Strg+S) alle Sprachzweige automatisch übersetzen<br>
+                                <span style="font-size: 11px; color: var(--text-muted);">*Achtung: Dies kann bei externen KI-Diensten Kosten verursachen.*</span>
+                            </label>
+                        </div>
+                        
                         <button id="btn-save-settings" class="btn">Einstellungen speichern</button>
                     </div>
                 </section>
@@ -422,6 +490,67 @@
                     <button class="btn btn-secondary" onclick="closeModal('modal-merge')">Abbrechen</button>
                     <button id="btn-merge-submit" class="btn">Auswahl anwenden</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EXPORT -->
+    <div id="modal-export" class="modal-overlay">
+        <div class="modal" style="max-width: 500px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Buch exportieren</h3>
+                <button class="modal-close" onclick="closeModal('modal-export')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="export-format-select">Export-Format</label>
+                    <select id="export-format-select" class="form-input" style="height: auto;">
+                        <option value="txt">📝 Textdatei (.txt)</option>
+                        <option value="html">🌐 HTML-Dokument (.html)</option>
+                        <option value="docx">📄 Word-Dokument (.docx)</option>
+                        <option value="pdf">📕 PDF-Dokument (.pdf)</option>
+                        <option value="epub">📖 eBook-Datei (.epub)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Kapitel auswählen</label>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-export-select-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;">Alle</button>
+                            <button id="btn-export-deselect-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;">Keine</button>
+                        </div>
+                    </div>
+                    <div id="export-chapters-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base);">
+                        <!-- Chapters populated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-export')">Abbrechen</button>
+                <button id="btn-submit-export" class="btn">Export starten</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NEW LANGUAGE BRANCH -->
+    <div id="modal-language" class="modal-overlay">
+        <div class="modal" style="max-width: 400px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Neuer Sprachzweig</h3>
+                <button class="modal-close" onclick="closeModal('modal-language')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="new-language-code">Sprachcode (z.B. en, fr, es, it)</label>
+                    <input type="text" id="new-language-code" class="form-input" placeholder="en" maxlength="5">
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                        Erstellt eine Kopie aller Kapitel und übersetzt sie automatisch im Hintergrund.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-language')">Abbrechen</button>
+                <button id="btn-submit-language" class="btn">Zweig anlegen</button>
             </div>
         </div>
     </div>

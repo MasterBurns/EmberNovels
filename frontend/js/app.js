@@ -14,7 +14,9 @@ let state = {
     editor: null,
     loreList: [],
     editingLoreId: null,
-    detectedKeywordsTimeout: null
+    detectedKeywordsTimeout: null,
+    activeLanguage: 'original',
+    aiSettings: {}
 };
 
 // Base API URL
@@ -133,6 +135,7 @@ function navigateTo(view, params = {}) {
             headerAction.onclick = () => openModal('modal-chapter');
             if (params.projectId) {
                 loadProjectDetails(params.projectId);
+                loadProjectLanguages(params.projectId);
             }
             break;
             
@@ -175,6 +178,7 @@ function navigateTo(view, params = {}) {
             document.getElementById('nav-settings').classList.add('active');
             headerTitle.textContent = 'Einstellungen';
             headerAction.style.display = 'none';
+            loadAISettingsInForm();
             break;
     }
 }
@@ -211,11 +215,15 @@ function setupEventListeners() {
     document.getElementById('btn-submit-chapter').addEventListener('click', handleCreateChapter);
     
     // Settings save
-    document.getElementById('btn-save-settings').addEventListener('click', () => {
-        const interval = document.getElementById('setting-autosave-interval').value;
-        localStorage.setItem('ember_autosave_interval', interval);
-        state.autosaveInterval = parseInt(interval, 10) * 1000;
-        showToast('Einstellungen gespeichert!', 'success');
+    document.getElementById('btn-save-settings').addEventListener('click', handleSaveSettings);
+    
+    // AI Settings provider change panel display toggle
+    document.getElementById('setting-ai-provider').addEventListener('change', (e) => {
+        const val = e.target.value;
+        document.getElementById('panel-settings-ollama').style.display = val === 'ollama' ? 'flex' : 'none';
+        document.getElementById('panel-settings-gemini').style.display = val === 'gemini' ? 'flex' : 'none';
+        document.getElementById('panel-settings-openai').style.display = val === 'openai' ? 'flex' : 'none';
+        document.getElementById('panel-settings-anthropic').style.display = val === 'anthropic' ? 'flex' : 'none';
     });
     
     // Editor controls
@@ -312,13 +320,36 @@ function setupEventListeners() {
         });
     }
 
-    // Bind export buttons
-    document.querySelectorAll('.btn-export').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const format = e.currentTarget.getAttribute('data-format');
-            handleExport(format);
-        });
+    // Bind export wizard
+    document.getElementById('btn-open-export-modal').addEventListener('click', openExportModal);
+    document.getElementById('btn-export-select-all').addEventListener('click', () => {
+        document.querySelectorAll('.export-chapter-chk').forEach(c => c.checked = true);
     });
+    document.getElementById('btn-export-deselect-all').addEventListener('click', () => {
+        document.querySelectorAll('.export-chapter-chk').forEach(c => c.checked = false);
+    });
+    document.getElementById('btn-submit-export').addEventListener('click', () => {
+        const format = document.getElementById('export-format-select').value;
+        const selectedChapterIds = [];
+        document.querySelectorAll('.export-chapter-chk:checked').forEach(c => selectedChapterIds.push(c.value));
+        if (selectedChapterIds.length === 0) {
+            showToast("Bitte wähle mindestens ein Kapitel für den Export aus.", "warning");
+            return;
+        }
+        closeModal('modal-export');
+        handleExport(format, selectedChapterIds);
+    });
+
+    // Language Branch triggers
+    document.getElementById('btn-create-language').addEventListener('click', () => openModal('modal-language'));
+    document.getElementById('btn-submit-language').addEventListener('click', handleCreateLanguageBranch);
+    
+    // AI assistance triggers
+    document.getElementById('btn-ai-correct').addEventListener('click', () => handleAIAssistant('correct'));
+    document.getElementById('btn-ai-continue').addEventListener('click', () => handleAIAssistant('continue'));
+    
+    // Manual Translate Trigger
+    document.getElementById('btn-editor-translate-now').addEventListener('click', handleManualTranslate);
 }
 
 // 1. PROJECTS LOGIC
@@ -525,13 +556,38 @@ async function deleteChapter(projectId, chapterId) {
 
 // 3. EDITOR & ZERO DATA LOSS LOGIC
 async function openEditor(projectId, chapterId) {
-    const banner = document.getElementById('recovery-banner');
-    banner.style.display = 'none';
+    // Populate language selection dropdown
+    const langSelect = document.getElementById('editor-language-select');
+    langSelect.innerHTML = '<option value="original">Deutsch (Original)</option>';
+    state.activeLanguage = 'original';
+    document.getElementById('btn-editor-translate-now').style.display = 'none';
     
-    const saveStatus = document.getElementById('save-status');
-    saveStatus.style.display = 'inline-block';
-    saveStatus.textContent = 'Lade Kapitel...';
+    try {
+        const langResponse = await fetch(`${API_URL}/projects/${projectId}/languages`);
+        if (langResponse.ok) {
+            const languages = await langResponse.json();
+            languages.forEach(lang => {
+                const opt = document.createElement('option');
+                opt.value = lang;
+                opt.textContent = `Übersetzung: ${lang.toUpperCase()}`;
+                langSelect.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error("Could not fetch languages for dropdown", e);
+    }
     
+    langSelect.onchange = async () => {
+        state.activeLanguage = langSelect.value;
+        const translateBtn = document.getElementById('btn-editor-translate-now');
+        if (state.activeLanguage === 'original') {
+            translateBtn.style.display = 'none';
+        } else {
+            translateBtn.style.display = 'block';
+        }
+        await reloadEditorChapterContent(projectId, chapterId);
+    };
+
     // Fetch project's lore entries for keyword highlighting
     try {
         const loreResponse = await fetch(`${API_URL}/projects/${projectId}/lore`);
@@ -542,14 +598,6 @@ async function openEditor(projectId, chapterId) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/projects/${projectId}/chapters/${chapterId}`);
-        if (!response.ok) throw new Error("Could not load chapter content");
-        const data = await response.json();
-        
-        state.currentChapter = data;
-        state.lastSavedContent = data.content;
-        state.isDirty = false;
-        
         // Initialize Toast UI Editor if not done yet
         if (!state.editor) {
             state.editor = new toastui.Editor({
@@ -587,8 +635,8 @@ async function openEditor(projectId, chapterId) {
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateEditorTheme(currentTheme);
 
-        // Load chapter content
-        state.editor.setMarkdown(data.content);
+        // Load chapter content depending on active branch
+        await reloadEditorChapterContent(projectId, chapterId);
         
         // Initial highlight & scanning
         setTimeout(() => {
@@ -629,6 +677,7 @@ function handleEditorInput(content) {
 
 // Tick-based shadow saving to backend (.tmp file)
 async function handleAutosaveTick() {
+    if (state.activeLanguage !== 'original') return; // Skip autosave for translated branches
     if (!state.isDirty || !state.currentChapter) return;
     
     const content = state.editor ? state.editor.getMarkdown() : '';
@@ -660,7 +709,11 @@ async function handleExplicitSave() {
     saveStatus.textContent = 'Speichere endgültig...';
     
     try {
-        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/save`, {
+        const url = state.activeLanguage === 'original'
+            ? `${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/save`
+            : `${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${state.currentChapter.id}`;
+            
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content })
@@ -1278,8 +1331,9 @@ function showLoreDetail(loreId) {
     document.getElementById('btn-wiki-delete-act').addEventListener('click', () => deleteLoreEntry(entry.id));
     
     // Render Markdown full article using Toast UI Viewer
-    new toastui.Editor.onlyViewer({
+    toastui.Editor.factory({
         el: document.getElementById('wiki-rendered-markdown'),
+        viewer: true,
         initialValue: entry.description || '_Keine ausführliche Beschreibung vorhanden._',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
     });
@@ -1306,8 +1360,9 @@ function showLoreQuickviewById(loreId) {
     descEl.innerHTML = '';
     
     // Render detail Markdown in quickview sidebar using Toast UI Viewer
-    new toastui.Editor.onlyViewer({
+    toastui.Editor.factory({
         el: descEl,
+        viewer: true,
         initialValue: entry.description || entry.short_description || '_Keine Beschreibung vorhanden._',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
     });
@@ -1421,14 +1476,18 @@ window.deleteLoreEntry = deleteLoreEntry;
 // C. EXPORT & DETECTED KEYWORDS ENGINE
 // ==========================================
 
-async function handleExport(format) {
+async function handleExport(format, chapterIds = null) {
     if (!state.currentProject) return;
     
     showToast(`Exportiere Buch als ${format.toUpperCase()}...`, 'info');
     
     try {
         const url = `${API_URL}/projects/${state.currentProject.id}/export/${format}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chapter_ids: chapterIds })
+        });
         
         if (!response.ok) {
             const errData = await response.json();
@@ -1461,6 +1520,44 @@ async function handleExport(format) {
     } catch (e) {
         showToast(`Fehler beim Export: ${e.message}`, 'danger');
     }
+}
+
+function openExportModal() {
+    if (!state.currentProject) return;
+    
+    const list = document.getElementById('export-chapters-list');
+    list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Lade Kapitel...</div>';
+    
+    fetch(`${API_URL}/projects/${state.currentProject.id}/chapters`)
+        .then(res => res.json())
+        .then(chapters => {
+            list.innerHTML = '';
+            if (chapters.length === 0) {
+                list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Keine aktiven Kapitel vorhanden.</div>';
+                return;
+            }
+            
+            chapters.forEach(ch => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '8px';
+                item.style.marginBottom = '6px';
+                
+                item.innerHTML = `
+                    <input type="checkbox" id="export-ch-${ch.id}" class="export-chapter-chk" value="${ch.id}" checked>
+                    <label for="export-ch-${ch.id}" style="font-size: 13px; cursor: pointer; user-select: none;">
+                        ${escapeHtml(ch.title)}
+                    </label>
+                `;
+                list.appendChild(item);
+            });
+            
+            openModal('modal-export');
+        })
+        .catch(e => {
+            showToast("Kapitel konnten nicht geladen werden.", "danger");
+        });
 }
 
 function updateDetectedKeywords() {
@@ -1506,3 +1603,319 @@ function updateDetectedKeywords() {
         detectedSection.style.display = 'none';
     }
 }
+
+// ==========================================
+// D. AI SETTINGS, ASSISTANT & TRANSLATIONS
+// ==========================================
+
+async function loadAISettingsInForm() {
+    try {
+        const response = await fetch(`${API_URL}/ai/settings`);
+        if (!response.ok) throw new Error("Could not load AI settings");
+        const settings = await response.json();
+        
+        state.aiSettings = settings;
+        
+        // General Interval
+        const savedInterval = localStorage.getItem('ember_autosave_interval') || '3';
+        document.getElementById('setting-autosave-interval').value = savedInterval;
+        
+        // AI Provider Select
+        const providerSelect = document.getElementById('setting-ai-provider');
+        providerSelect.value = settings.ai_provider || 'none';
+        
+        // Fill Provider Sub-panels
+        document.getElementById('setting-ollama-url').value = settings.ollama_url || 'http://localhost:11434';
+        document.getElementById('setting-ollama-model').value = settings.ollama_model || 'llama3';
+        
+        document.getElementById('setting-gemini-key').value = settings.gemini_api_key || '';
+        document.getElementById('setting-gemini-model').value = settings.gemini_model || 'gemini-1.5-flash';
+        
+        document.getElementById('setting-openai-key').value = settings.openai_api_key || '';
+        document.getElementById('setting-openai-model').value = settings.openai_model || 'gpt-4o-mini';
+        
+        document.getElementById('setting-anthropic-key').value = settings.anthropic_api_key || '';
+        document.getElementById('setting-anthropic-model').value = settings.anthropic_model || 'claude-3-5-sonnet';
+        
+        // Auto translate check
+        document.getElementById('setting-auto-translate').checked = settings.auto_translate_on_save !== false;
+        
+        // Trigger visibility
+        providerSelect.dispatchEvent(new Event('change'));
+        
+    } catch (e) {
+        showToast("Fehler beim Laden der Einstellungen: " + e.message, "danger");
+    }
+}
+
+async function handleSaveSettings() {
+    // Save general interval to localStorage
+    const interval = document.getElementById('setting-autosave-interval').value;
+    localStorage.setItem('ember_autosave_interval', interval);
+    state.autosaveInterval = parseInt(interval, 10) * 1000;
+    
+    // Gather AI settings payload
+    const payload = {
+        ai_provider: document.getElementById('setting-ai-provider').value,
+        ollama_url: document.getElementById('setting-ollama-url').value,
+        ollama_model: document.getElementById('setting-ollama-model').value,
+        gemini_api_key: document.getElementById('setting-gemini-key').value,
+        gemini_model: document.getElementById('setting-gemini-model').value,
+        openai_api_key: document.getElementById('setting-openai-key').value,
+        openai_model: document.getElementById('setting-openai-model').value,
+        anthropic_api_key: document.getElementById('setting-anthropic-key').value,
+        anthropic_model: document.getElementById('setting-anthropic-model').value,
+        auto_translate_on_save: document.getElementById('setting-auto-translate').checked
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/ai/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) throw new Error("API request failed");
+        
+        showToast('Einstellungen erfolgreich gespeichert!', 'success');
+        
+    } catch (e) {
+        showToast('KI-Einstellungen konnten nicht gespeichert werden: ' + e.message, 'danger');
+    }
+}
+
+async function loadProjectLanguages(projectId) {
+    const list = document.getElementById('project-languages-list');
+    list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Lade Sprachen...</div>';
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${projectId}/languages`);
+        if (!response.ok) throw new Error("Languages load failed");
+        const langs = await response.json();
+        
+        list.innerHTML = '';
+        
+        // Add German (Original) always as static
+        const origEl = document.createElement('div');
+        origEl.className = 'list-item';
+        origEl.style.padding = '8px 12px';
+        origEl.style.display = 'flex';
+        origEl.style.justifyContent = 'space-between';
+        origEl.style.alignItems = 'center';
+        origEl.innerHTML = `
+            <span style="font-size: 13px; font-weight: 500;">🇩🇪 Deutsch (Original)</span>
+            <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Original</span>
+        `;
+        list.appendChild(origEl);
+        
+        // Add other branches
+        langs.forEach(lang => {
+            const el = document.createElement('div');
+            el.className = 'list-item';
+            el.style.padding = '8px 12px';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'space-between';
+            el.style.alignItems = 'center';
+            
+            // Map common language flags
+            let flag = '🏳️';
+            if (lang === 'en') flag = '🇬🇧';
+            else if (lang === 'fr') flag = '🇫🇷';
+            else if (lang === 'es') flag = '🇪🇸';
+            else if (lang === 'it') flag = '🇮🇹';
+            
+            el.innerHTML = `
+                <span style="font-size: 13px; font-weight: 500;">${flag} ${lang.toUpperCase()}</span>
+                <span style="font-size: 10px; background-color: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px;">Branch</span>
+            `;
+            list.appendChild(el);
+        });
+        
+    } catch (e) {
+        list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Fehler beim Laden.</div>';
+    }
+}
+
+async function handleCreateLanguageBranch() {
+    if (!state.currentProject) return;
+    
+    const codeEl = document.getElementById('new-language-code');
+    const lang_code = codeEl.value.trim().toLowerCase();
+    
+    if (!lang_code) {
+        showToast("Bitte gib einen Sprachcode ein.", "warning");
+        return;
+    }
+    
+    showToast(`Erstelle Sprachzweig '${lang_code.toUpperCase()}'...`, 'info');
+    closeModal('modal-language');
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/languages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lang_code })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Failed to create language branch");
+        }
+        
+        showToast(`Sprachzweig '${lang_code.toUpperCase()}' wird im Hintergrund übersetzt!`, 'success');
+        codeEl.value = '';
+        
+        // Reload list after short delay
+        setTimeout(() => loadProjectLanguages(state.currentProject.id), 2000);
+        
+    } catch (e) {
+        showToast(e.message, 'danger');
+    }
+}
+
+async function reloadEditorChapterContent(projectId, chapterId) {
+    const banner = document.getElementById('recovery-banner');
+    banner.style.display = 'none';
+    
+    const saveStatus = document.getElementById('save-status');
+    saveStatus.style.display = 'inline-block';
+    saveStatus.textContent = 'Lade Kapitel...';
+    
+    try {
+        let url = `${API_URL}/projects/${projectId}/chapters/${chapterId}`;
+        if (state.activeLanguage !== 'original') {
+            url = `${API_URL}/projects/${projectId}/languages/${state.activeLanguage}/chapters/${chapterId}`;
+        }
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Could not load chapter content");
+        const data = await response.json();
+        
+        state.currentChapter = data;
+        state.lastSavedContent = data.content || '';
+        state.isDirty = false;
+        
+        if (state.editor) {
+            state.editor.setMarkdown(data.content || '');
+        }
+        
+        // Warning banner for original recovery file if it exists
+        if (state.activeLanguage === 'original' && data.has_recovery) {
+            banner.style.display = 'flex';
+        } else {
+            banner.style.display = 'none';
+        }
+        
+        saveStatus.style.display = 'none';
+        
+        setTimeout(() => {
+            highlightKeywordsInPreview();
+            updateDetectedKeywords();
+        }, 150);
+        
+    } catch (e) {
+        showToast(e.message, 'danger');
+    }
+}
+
+async function handleManualTranslate() {
+    if (!state.currentProject || !state.currentChapter || state.activeLanguage === 'original') return;
+    
+    if (!confirm(`Möchtest du dieses Kapitel jetzt neu aus dem deutschen Original in '${state.activeLanguage.toUpperCase()}' übersetzen? Eigene Änderungen an dieser Übersetzung werden überschrieben.`)) return;
+    
+    const saveStatus = document.getElementById('save-status');
+    saveStatus.style.display = 'inline-block';
+    saveStatus.textContent = 'Übersetze...';
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${state.currentChapter.id}/translate`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) throw new Error("Translation failed");
+        const data = await response.json();
+        
+        if (state.editor) {
+            state.editor.setMarkdown(data.content || '');
+        }
+        
+        state.lastSavedContent = data.content || '';
+        state.isDirty = false;
+        showToast("Kapitel erfolgreich neu übersetzt!", "success");
+        
+    } catch (e) {
+        showToast("Fehler bei der Übersetzung: " + e.message, 'danger');
+    } finally {
+        saveStatus.style.display = 'none';
+    }
+}
+
+async function handleAIAssistant(task) {
+    if (!state.editor || !state.currentChapter) return;
+    
+    let text = state.editor.getSelectedText().trim();
+    const isSelection = !!text;
+    
+    if (!text) {
+        if (task === 'correct') {
+            text = state.editor.getMarkdown().trim();
+        } else {
+            // For 'continue', get last 1500 chars of the content
+            text = state.editor.getMarkdown().trim();
+            if (text.length > 1500) {
+                text = text.slice(-1500);
+            }
+        }
+    }
+    
+    if (!text) {
+        showToast("Es gibt keinen Text zum Verarbeiten.", "warning");
+        return;
+    }
+    
+    const saveStatus = document.getElementById('save-status');
+    saveStatus.style.display = 'inline-block';
+    saveStatus.textContent = task === 'correct' ? 'Lektorat läuft...' : 'Schreibe weiter...';
+    
+    try {
+        const response = await fetch(`${API_URL}/ai/assist`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, task })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "AI Request failed");
+        }
+        
+        const data = await response.json();
+        const result = data.result;
+        
+        if (!result) {
+            showToast("Keine Antwort erhalten.", "warning");
+            return;
+        }
+        
+        if (task === 'correct') {
+            if (isSelection) {
+                state.editor.replaceSelection(result);
+            } else {
+                state.editor.setMarkdown(result);
+            }
+            showToast("Text erfolgreich lektoriert!", "success");
+        } else if (task === 'continue') {
+            state.editor.insertText("\n" + result);
+            showToast("Text erfolgreich fortgeführt!", "success");
+        }
+        
+        state.isDirty = true;
+        
+    } catch (e) {
+        showToast("KI-Fehler: " + e.message, "danger");
+    } finally {
+        saveStatus.style.display = 'none';
+    }
+}
+
+

@@ -29,8 +29,8 @@ from backend.services.storage import StorageService
 
 class ExportService:
     @classmethod
-    def get_project_chapters_content(cls, project_id: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-        """Load project metadata and all active chapters with content."""
+    def get_project_chapters_content(cls, project_id: str, chapter_ids: List[str] = None) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """Load project metadata and selected or all active chapters with content."""
         project = StorageService.get_project_metadata(project_id)
         if not project:
             raise ValueError("Projekt nicht gefunden.")
@@ -39,22 +39,29 @@ class ExportService:
         chapters = []
         
         for ch_meta in chapters_meta:
-            ch_data = StorageService.get_chapter(project_id, ch_meta['id'])
-            if ch_data:
+            # Filter by chapter_ids if specified
+            if chapter_ids is not None and ch_meta['id'] not in chapter_ids:
+                continue
+                
+            ch_data = StorageService.get_chapter_content(project_id, ch_meta['id'])
+            if ch_data and "error" not in ch_data:
                 chapters.append({
                     "id": ch_meta['id'],
                     "title": ch_meta['title'],
-                    "content": ch_data['content']
+                    "content": ch_data.get('content', '')
                 })
         return project, chapters
 
     @classmethod
-    def export_project(cls, project_id: str, file_format: str) -> Tuple[Path, str]:
+    def export_project(cls, project_id: str, file_format: str, chapter_ids: List[str] = None) -> Tuple[Path, str]:
         """
         Export project chapters into a single file of the given format.
         Returns: Tuple[Path_to_temp_file, File_name]
         """
-        project, chapters = cls.get_project_chapters_content(project_id)
+        project, chapters = cls.get_project_chapters_content(project_id, chapter_ids)
+        if not chapters:
+            raise ValueError("Keine Kapitel für den Export vorhanden oder ausgewählt.")
+            
         project_title = project.get('title', 'Unbenanntes Buch')
         project_desc = project.get('description', '')
         

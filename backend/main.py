@@ -8,6 +8,8 @@ from backend.routes.projects import router as projects_router
 from backend.routes.chapters import router as chapters_router
 from backend.routes.lore import router as lore_router
 from backend.routes.exports import router as exports_router
+from backend.routes.languages import router as languages_router
+from backend.routes.ai import router as ai_router
 
 app = FastAPI(title=APP_NAME, description="Local web-based writing software")
 
@@ -25,6 +27,8 @@ app.include_router(projects_router, prefix=API_PREFIX)
 app.include_router(chapters_router, prefix=API_PREFIX)
 app.include_router(lore_router, prefix=API_PREFIX)
 app.include_router(exports_router, prefix=API_PREFIX)
+app.include_router(languages_router, prefix=API_PREFIX)
+app.include_router(ai_router, prefix=API_PREFIX)
 
 @app.get("/")
 def read_root():

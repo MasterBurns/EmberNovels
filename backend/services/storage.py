@@ -631,3 +631,81 @@ class StorageService:
             return False
         target.unlink()
         return True
+
+    @classmethod
+    def get_translations_dir(cls, project_id: str, lang: str = None) -> Path:
+        p_dir = cls.get_projects_dir() / project_id
+        t_dir = p_dir / "translations"
+        t_dir.mkdir(parents=True, exist_ok=True)
+        if lang:
+            l_dir = t_dir / lang
+            l_dir.mkdir(parents=True, exist_ok=True)
+            c_dir = l_dir / "chapters"
+            c_dir.mkdir(parents=True, exist_ok=True)
+            return c_dir
+        return t_dir
+
+    @classmethod
+    def list_languages(cls, project_id: str) -> List[str]:
+        """List active translation branch language codes."""
+        t_dir = cls.get_translations_dir(project_id)
+        langs = []
+        for file in t_dir.iterdir():
+            if file.is_dir() and not file.name.startswith('.'):
+                langs.append(file.name)
+        return langs
+
+    @classmethod
+    def create_language_branch(cls, project_id: str, lang_code: str):
+        """Create language branch directory and translate all existing active chapters."""
+        from backend.services.ai import AIService
+        lang_dir = cls.get_translations_dir(project_id, lang_code)
+        
+        # Translate all active chapters
+        chapters = cls.list_chapters(project_id)
+        for ch in chapters:
+            ch_data = cls.get_chapter_content(project_id, ch['id'])
+            original_content = ch_data.get('content', '')
+            
+            # Translate content
+            translated_content = AIService.translate_text(original_content, lang_code)
+            
+            # Save to translated chapter file
+            ch_file = lang_dir / f"{ch['id']}.md"
+            with open(ch_file, 'w', encoding='utf-8') as f:
+                f.write(translated_content)
+
+    @classmethod
+    def get_translated_chapter(cls, project_id: str, lang_code: str, chapter_id: str) -> Dict[str, Any]:
+        """Get translated chapter content."""
+        lang_dir = cls.get_translations_dir(project_id, lang_code)
+        file_path = lang_dir / f"{chapter_id}.md"
+        if not file_path.exists():
+            return {"content": "", "id": chapter_id}
+            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"id": chapter_id, "content": content}
+
+    @classmethod
+    def save_translated_chapter(cls, project_id: str, lang_code: str, chapter_id: str, content: str):
+        """Save manual edits to translated chapter."""
+        lang_dir = cls.get_translations_dir(project_id, lang_code)
+        file_path = lang_dir / f"{chapter_id}.md"
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+    @classmethod
+    def sync_all_translations(cls, project_id: str, chapter_id: str, primary_content: str):
+        """Automatically translates and saves chapter edits to all active language branches."""
+        from backend.services.ai import AIService
+        langs = cls.list_languages(project_id)
+        for lang in langs:
+            try:
+                lang_dir = cls.get_translations_dir(project_id, lang)
+                translated_content = AIService.translate_text(primary_content, lang)
+                ch_file = lang_dir / f"{chapter_id}.md"
+                with open(ch_file, 'w', encoding='utf-8') as f:
+                    f.write(translated_content)
+            except Exception as e:
+                print(f"Failed to auto-translate chapter {chapter_id} to {lang}: {e}")

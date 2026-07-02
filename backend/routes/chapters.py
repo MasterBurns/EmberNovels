@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 from backend.services.storage import StorageService
@@ -56,10 +56,17 @@ def autosave_chapter(project_id: str, chapter_id: str, data: ChapterSave):
     return {"message": "Autosaved successfully to temp file"}
 
 @router.post("/{chapter_id}/save")
-def save_chapter(project_id: str, chapter_id: str, data: ChapterSave):
+def save_chapter(project_id: str, chapter_id: str, data: ChapterSave, background_tasks: BackgroundTasks):
     success = StorageService.save_chapter(project_id, chapter_id, data.content)
     if not success:
         raise HTTPException(status_code=404, detail="Chapter not found or save failed")
+        
+    # Trigger background auto-translation synchronization if enabled
+    from backend.services.ai import AIService
+    settings = AIService.load_settings()
+    if settings.get("auto_translate_on_save", True):
+        background_tasks.add_task(StorageService.sync_all_translations, project_id, chapter_id, data.content)
+        
     return {"message": "Saved successfully with history snapshot"}
 
 @router.delete("/{chapter_id}")
