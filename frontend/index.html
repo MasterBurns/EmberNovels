@@ -27,6 +27,12 @@
                         </a>
                     </li>
                     <li>
+                        <a id="nav-lore" class="nav-item">
+                            <span class="nav-item-icon">📖</span>
+                            <span>Lore-Datenbank</span>
+                        </a>
+                    </li>
+                    <li>
                         <a id="nav-trash" class="nav-item">
                             <span class="nav-item-icon">🗑️</span>
                             <span>Papierkorb</span>
@@ -91,18 +97,6 @@
                 <section id="view-project-details" class="view-section">
                     <div class="project-details-grid">
                         <div class="details-main">
-                            <!-- Recovery Banner (hidden by default) -->
-                            <div id="recovery-banner" class="recovery-banner" style="display: none;">
-                                <div class="recovery-banner-info">
-                                    <div class="recovery-banner-title">Ungespeicherte Änderungen gefunden!</div>
-                                    <div class="recovery-banner-text">Für Kapitel <strong id="recovery-chapter-title">Kapitel 1</strong> existiert eine neuere, automatisch gespeicherte Sicherung. Möchtest du sie wiederherstellen?</div>
-                                </div>
-                                <div class="recovery-banner-actions">
-                                    <button id="btn-recovery-keep" class="btn btn-warning" style="background-color: var(--color-warning); color: #fff;">Wiederherstellen</button>
-                                    <button id="btn-recovery-discard" class="btn btn-secondary">Verwerfen</button>
-                                </div>
-                            </div>
-
                             <div class="list-container">
                                 <div class="list-header">
                                     <h3 class="list-title">Kapitel</h3>
@@ -157,6 +151,17 @@
                     <div class="editor-workspace">
                         <!-- Left Panel: Text-Editor -->
                         <div class="editor-main-panel">
+                            <!-- Recovery Banner (hidden by default) -->
+                            <div id="recovery-banner" class="recovery-banner" style="display: none; border-radius: 0; margin-bottom: 0; border-left: none; border-right: none; border-top: none;">
+                                <div class="recovery-banner-info">
+                                    <div class="recovery-banner-title">Ungespeicherte Änderungen gefunden!</div>
+                                    <div class="recovery-banner-text">Für das aktuelle Kapitel existiert eine neuere, automatisch gespeicherte Sicherung. Möchtest du sie vergleichen und wiederherstellen?</div>
+                                </div>
+                                <div class="recovery-banner-actions">
+                                    <button id="btn-recovery-keep" class="btn btn-warning" style="background-color: var(--color-warning); color: #fff;">Zusammenführen & Wiederherstellen</button>
+                                    <button id="btn-recovery-discard" class="btn btn-secondary">Verwerfen</button>
+                                </div>
+                            </div>
                             <div class="editor-toolbar">
                                 <div class="toolbar-group">
                                     <button id="btn-editor-view-wysiwyg" class="toolbar-btn active">📝 Rich-Text</button>
@@ -186,6 +191,43 @@
                                 <p id="lore-quick-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
                                     Hier wird der Lore-Text geladen, wenn du auf ein Keyword klickst.
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2.5 LORE / WIKI VIEW -->
+                <section id="view-lore" class="view-section">
+                    <div class="project-details-grid">
+                        <!-- Left: Wiki Sidebar List -->
+                        <div class="details-sidebar" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div class="list-container">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="list-title">Einträge</h3>
+                                    <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">+ Neu</button>
+                                </div>
+                                <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." style="margin-bottom: 12px;">
+                                <select id="wiki-filter-category" class="form-input" style="margin-bottom: 16px; height: auto;">
+                                    <option value="all">Alle Kategorien</option>
+                                    <option value="character">Charaktere</option>
+                                    <option value="location">Orte / Schauplätze</option>
+                                    <option value="item">Objekte / Gegenstände</option>
+                                    <option value="lore">Begriffe / Sonstiges</option>
+                                </select>
+                                <div id="wiki-list" class="list-items" style="max-height: 50vh; overflow-y: auto;">
+                                    <!-- Lore items dynamically loaded -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right: Wiki Article Content -->
+                        <div class="details-main">
+                            <div class="list-container" id="wiki-article-container" style="min-height: 400px; display: flex; flex-direction: column; padding: 32px;">
+                                <!-- Will render either empty state or active lore article -->
+                                <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
+                                    <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
+                                    <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -285,6 +327,72 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-chapter')">Abbrechen</button>
                 <button id="btn-submit-chapter" class="btn">Kapitel anlegen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NEW/EDIT LORE ENTRY -->
+    <div id="modal-lore" class="modal-overlay">
+        <div class="modal" style="max-width: 600px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="lore-modal-title">Neuer Lore-Eintrag</h3>
+                <button class="modal-close" onclick="closeModal('modal-lore')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="lore-name">Name des Eintrags</label>
+                    <input type="text" id="lore-name" class="form-input" placeholder="z.B. Erzmagier oder Flammenwüste">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lore-category">Kategorie</label>
+                    <select id="lore-category" class="form-input" style="height: auto;">
+                        <option value="character">Charakter</option>
+                        <option value="location">Ort / Schauplatz</option>
+                        <option value="item">Objekt / Gegenstand</option>
+                        <option value="lore">Begriffe / Sonstiges</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lore-keywords">Schlüsselwörter (Kommagetrennt für Smart-Hover)</label>
+                    <input type="text" id="lore-keywords" class="form-input" placeholder="z.B. Erzmagier, Konzil der Flamme">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lore-short-desc">Kurzbeschreibung (Tooltip)</label>
+                    <input type="text" id="lore-short-desc" class="form-input" placeholder="z.B. Der höchste spirituelle Rang im Reich Ember.">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lore-desc">Beschreibung (Vollständiger Artikel - Markdown möglich)</label>
+                    <textarea id="lore-desc" class="form-textarea" rows="8" placeholder="Beschreibe die Herkunft, Fähigkeiten, Bedeutung..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-lore')">Abbrechen</button>
+                <button id="btn-submit-lore" class="btn">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MERGE RECOVERY (DIFF VIEW) -->
+    <div id="modal-merge" class="modal-overlay" style="z-index: 110;">
+        <div class="modal" style="max-width: 900px; width: 90%; height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">Sicherungs-Vergleich (Änderungen zusammenführen)</h3>
+                <button class="modal-close" onclick="closeModal('modal-merge')">×</button>
+            </div>
+            <div class="modal-body" style="flex-grow: 1; overflow-y: auto; padding: 0;">
+                <div id="merge-diff-container" style="display: flex; flex-direction: column;">
+                    <!-- Diff lines will be generated here -->
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <button id="btn-merge-select-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Alles von Sicherung übernehmen</button>
+                    <button id="btn-merge-deselect-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Alles ablehnen (Original behalten)</button>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="closeModal('modal-merge')">Abbrechen</button>
+                    <button id="btn-merge-submit" class="btn">Auswahl anwenden</button>
+                </div>
             </div>
         </div>
     </div>

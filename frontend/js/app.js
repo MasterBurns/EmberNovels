@@ -11,7 +11,9 @@ let state = {
     autosaveInterval: 3000, // 3 seconds default
     isDirty: false,
     lastSavedContent: "",
-    editor: null
+    editor: null,
+    loreList: [],
+    editingLoreId: null
 };
 
 // Base API URL
@@ -152,6 +154,15 @@ function navigateTo(view, params = {}) {
             }
             break;
             
+        case 'lore':
+            document.getElementById('nav-lore').classList.add('active');
+            btnBackDetails.style.display = 'inline-flex';
+            btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
+            headerAction.style.display = 'none';
+            headerTitle.textContent = `Lore-Datenbank: ${state.currentProject.title}`;
+            loadLoreEntries();
+            break;
+            
         case 'trash':
             document.getElementById('nav-trash').classList.add('active');
             headerTitle.textContent = 'Papierkorb';
@@ -227,8 +238,68 @@ function setupEventListeners() {
     });
     
     // Recovery actions
-    document.getElementById('btn-recovery-keep').addEventListener('click', () => resolveRecovery(true));
+    document.getElementById('btn-recovery-keep').addEventListener('click', () => {
+        if (state.currentChapter && state.currentChapter.has_recovery) {
+            renderDiffMergeView(state.currentChapter.content, state.currentChapter.recovery_content);
+            openModal('modal-merge');
+        }
+    });
     document.getElementById('btn-recovery-discard').addEventListener('click', () => resolveRecovery(false));
+
+    // Merge modal triggers
+    document.getElementById('btn-merge-select-all').addEventListener('click', () => {
+        if (state.mergeLines) {
+            state.mergeLines.forEach(item => {
+                if (item.checkbox) {
+                    if (item.type === 'added') item.checkbox.checked = true;
+                    if (item.type === 'removed') item.checkbox.checked = false;
+                }
+            });
+        }
+    });
+    
+    document.getElementById('btn-merge-deselect-all').addEventListener('click', () => {
+        if (state.mergeLines) {
+            state.mergeLines.forEach(item => {
+                if (item.checkbox) {
+                    if (item.type === 'added') item.checkbox.checked = false;
+                    if (item.type === 'removed') item.checkbox.checked = true;
+                }
+            });
+        }
+    });
+    
+    document.getElementById('btn-merge-submit').addEventListener('click', applyMerge);
+
+    // Lore Database triggers
+    document.getElementById('nav-lore').addEventListener('click', () => {
+        if (state.currentProject) {
+            navigateTo('lore');
+        } else {
+            showToast('Bitte wähle zuerst ein Projekt aus, um auf seine Lore-Datenbank zuzugreifen.', 'warning');
+            navigateTo('projects');
+        }
+    });
+    
+    document.getElementById('btn-wiki-create').addEventListener('click', () => openLoreModal());
+    document.getElementById('btn-view-lore').addEventListener('click', () => navigateTo('lore'));
+    document.getElementById('wiki-search').addEventListener('input', filterLoreEntries);
+    document.getElementById('wiki-filter-category').addEventListener('change', filterLoreEntries);
+    document.getElementById('btn-submit-lore').addEventListener('click', handleSaveLore);
+    
+    // Editor keyword event delegation click listener
+    const editorContainer = document.getElementById('editor-container');
+    if (editorContainer) {
+        editorContainer.addEventListener('click', (e) => {
+            const keywordSpan = e.target.closest('.smart-keyword');
+            if (keywordSpan) {
+                e.preventDefault();
+                e.stopPropagation();
+                const loreId = keywordSpan.getAttribute('data-lore-id');
+                showLoreQuickviewById(loreId);
+            }
+        });
+    }
 }
 
 // 1. PROJECTS LOGIC
@@ -442,6 +513,15 @@ async function openEditor(projectId, chapterId) {
     saveStatus.style.display = 'inline-block';
     saveStatus.textContent = 'Lade Kapitel...';
     
+    // Fetch project's lore entries for keyword highlighting
+    try {
+        const loreResponse = await fetch(`${API_URL}/projects/${projectId}/lore`);
+        state.loreList = loreResponse.ok ? await loreResponse.json() : [];
+    } catch (e) {
+        console.error("Could not fetch lore for editor highlighting", e);
+        state.loreList = [];
+    }
+    
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}/chapters/${chapterId}`);
         if (!response.ok) throw new Error("Could not load chapter content");
@@ -473,6 +553,10 @@ async function openEditor(projectId, chapterId) {
             state.editor.on('change', () => {
                 const content = state.editor.getMarkdown();
                 handleEditorInput(content);
+                
+                // Highlight keywords in preview pane
+                clearTimeout(state.highlightTimeout);
+                state.highlightTimeout = setTimeout(highlightKeywordsInPreview, 300);
             });
         }
         
@@ -482,10 +566,12 @@ async function openEditor(projectId, chapterId) {
 
         // Load chapter content
         state.editor.setMarkdown(data.content);
+        
+        // Initial highlight
+        setTimeout(highlightKeywordsInPreview, 100);
 
         // If recovery available, show warning banner
         if (data.has_recovery) {
-            document.getElementById('recovery-chapter-title').textContent = data.id.replace(/_/g, ' ').title();
             banner.style.display = 'flex';
         }
         
@@ -786,3 +872,444 @@ function escapeHtml(unsafe) {
 String.prototype.title = function() {
     return this.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 };
+
+// Recovery Diff Merge Helpers
+
+function computeDiff(linesA, linesB) {
+    const matrix = Array(linesA.length + 1).fill().map(() => Array(linesB.length + 1).fill(0));
+    for (let i = 1; i <= linesA.length; i++) {
+        for (let j = 1; j <= linesB.length; j++) {
+            if (linesA[i - 1] === linesB[j - 1]) {
+                matrix[i][j] = matrix[i - 1][j - 1] + 1;
+            } else {
+                matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1]);
+            }
+        }
+    }
+    
+    let i = linesA.length;
+    let j = linesB.length;
+    const diff = [];
+    
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && linesA[i - 1] === linesB[j - 1]) {
+            diff.unshift({ type: 'unchanged', text: linesA[i - 1] });
+            i--;
+            j--;
+        } else if (j > 0 && (i === 0 || matrix[i][j - 1] >= matrix[i - 1][j])) {
+            diff.unshift({ type: 'added', text: linesB[j - 1] });
+            j--;
+        } else {
+            diff.unshift({ type: 'removed', text: linesA[i - 1] });
+            i--;
+        }
+    }
+    return diff;
+}
+
+function renderDiffMergeView(originalText, recoveryText) {
+    const linesA = originalText.split('\n');
+    const linesB = recoveryText.split('\n');
+    const diff = computeDiff(linesA, linesB);
+    
+    const container = document.getElementById('merge-diff-container');
+    container.innerHTML = '';
+    
+    state.mergeLines = [];
+    
+    diff.forEach((item, index) => {
+        const lineEl = document.createElement('div');
+        lineEl.className = `diff-line diff-line-${item.type}`;
+        
+        // Line number
+        const numEl = document.createElement('div');
+        numEl.className = 'diff-line-num';
+        numEl.textContent = index + 1;
+        lineEl.appendChild(numEl);
+        
+        // Action checkbox
+        const actionEl = document.createElement('div');
+        actionEl.className = 'diff-line-action';
+        
+        let checkbox = null;
+        if (item.type === 'added') {
+            checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true; // checked by default
+            actionEl.appendChild(checkbox);
+        } else if (item.type === 'removed') {
+            checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = false; // unchecked by default (we accept removal)
+            actionEl.appendChild(checkbox);
+        } else {
+            // unchanged placeholder
+            const placeholder = document.createElement('span');
+            placeholder.style.width = '16px';
+            actionEl.appendChild(placeholder);
+        }
+        lineEl.appendChild(actionEl);
+        
+        // Prefix indicator
+        const prefixEl = document.createElement('span');
+        prefixEl.className = 'diff-line-prefix';
+        prefixEl.textContent = item.type === 'added' ? '+' : (item.type === 'removed' ? '-' : ' ');
+        lineEl.appendChild(prefixEl);
+        
+        // Line content
+        const contentEl = document.createElement('div');
+        contentEl.className = 'diff-line-content';
+        contentEl.textContent = item.text;
+        lineEl.appendChild(contentEl);
+        
+        container.appendChild(lineEl);
+        
+        state.mergeLines.push({
+            type: item.type,
+            text: item.text,
+            checkbox: checkbox
+        });
+    });
+}
+
+async function applyMerge() {
+    const finalLines = [];
+    state.mergeLines.forEach(item => {
+        if (item.type === 'unchanged') {
+            finalLines.push(item.text);
+        } else if (item.type === 'added') {
+            if (item.checkbox && item.checkbox.checked) {
+                finalLines.push(item.text);
+            }
+        } else if (item.type === 'removed') {
+            if (item.checkbox && item.checkbox.checked) {
+                finalLines.push(item.text);
+            }
+        }
+    });
+    
+    const mergedText = finalLines.join('\n');
+    
+    if (state.editor) {
+        state.editor.setMarkdown(mergedText);
+    }
+    
+    state.isDirty = true;
+    
+    closeModal('modal-merge');
+    
+    // Discard the temp file on the backend as we've completed the merge
+    await resolveRecovery(false);
+    
+    showToast('Änderungen erfolgreich zusammengeführt!', 'success');
+}
+
+// ==========================================
+// 2.5 LORE / WIKI LOGIC
+// ==========================================
+
+async function loadLoreEntries() {
+    if (!state.currentProject) return;
+    
+    const listContainer = document.getElementById('wiki-list');
+    listContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted);">Lade Einträge...</div>';
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore`);
+        if (!response.ok) throw new Error("Could not load lore database");
+        state.loreList = await response.json();
+        renderLoreList(state.loreList);
+    } catch (e) {
+        showToast("Fehler beim Laden der Lore: " + e.message, "danger");
+    }
+}
+
+function renderLoreList(entries) {
+    const listContainer = document.getElementById('wiki-list');
+    listContainer.innerHTML = '';
+    
+    if (entries.length === 0) {
+        listContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">Keine Einträge gefunden.</div>';
+        return;
+    }
+    
+    entries.forEach(entry => {
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.style.padding = '10px 14px';
+        el.innerHTML = `
+            <div class="list-item-info">
+                <div class="list-item-title" style="font-size: 14px; font-weight: 500;">${escapeHtml(entry.name)}</div>
+                <div class="list-item-meta" style="font-size: 11px;">${translateCategory(entry.category)}</div>
+            </div>
+        `;
+        el.addEventListener('click', () => showLoreDetail(entry.id));
+        listContainer.appendChild(el);
+    });
+}
+
+function filterLoreEntries() {
+    const searchVal = document.getElementById('wiki-search').value.toLowerCase().trim();
+    const catVal = document.getElementById('wiki-filter-category').value;
+    
+    const filtered = state.loreList.filter(entry => {
+        const matchesSearch = entry.name.toLowerCase().includes(searchVal) || 
+                              (entry.short_description || "").toLowerCase().includes(searchVal) ||
+                              entry.keywords.some(k => k.toLowerCase().includes(searchVal));
+                              
+        const matchesCat = catVal === 'all' || entry.category === catVal;
+        
+        return matchesSearch && matchesCat;
+    });
+    
+    renderLoreList(filtered);
+}
+
+function openLoreModal(loreId = null) {
+    state.editingLoreId = loreId;
+    
+    const titleEl = document.getElementById('lore-modal-title');
+    const nameEl = document.getElementById('lore-name');
+    const categoryEl = document.getElementById('lore-category');
+    const keywordsEl = document.getElementById('lore-keywords');
+    const shortDescEl = document.getElementById('lore-short-desc');
+    const descEl = document.getElementById('lore-desc');
+    
+    if (loreId) {
+        // Edit mode
+        titleEl.textContent = 'Lore-Eintrag bearbeiten';
+        const entry = state.loreList.find(e => e.id === loreId);
+        if (entry) {
+            nameEl.value = entry.name;
+            categoryEl.value = entry.category;
+            keywordsEl.value = entry.keywords.join(', ');
+            shortDescEl.value = entry.short_description;
+            descEl.value = entry.description;
+        }
+    } else {
+        // Create mode
+        titleEl.textContent = 'Neuer Lore-Eintrag';
+        nameEl.value = '';
+        categoryEl.value = 'character';
+        keywordsEl.value = '';
+        shortDescEl.value = '';
+        descEl.value = '';
+    }
+    
+    openModal('modal-lore');
+}
+
+async function handleSaveLore() {
+    if (!state.currentProject) return;
+    
+    const name = document.getElementById('lore-name').value.trim();
+    const category = document.getElementById('lore-category').value;
+    const keywordsRaw = document.getElementById('lore-keywords').value;
+    const short_description = document.getElementById('lore-short-desc').value.trim();
+    const description = document.getElementById('lore-desc').value;
+    
+    if (!name) {
+        showToast("Bitte gib dem Eintrag einen Namen.", "warning");
+        return;
+    }
+    
+    // Process keywords: split by comma, trim
+    const keywords = keywordsRaw.split(',')
+                                .map(k => k.trim())
+                                .filter(k => k.length > 0);
+                                
+    // If empty, default to name
+    if (keywords.length === 0) {
+        keywords.push(name);
+    }
+    
+    const payload = { name, category, short_description, description, keywords };
+    
+    const isEdit = !!state.editingLoreId;
+    const url = isEdit 
+        ? `${API_URL}/projects/${state.currentProject.id}/lore/${state.editingLoreId}`
+        : `${API_URL}/projects/${state.currentProject.id}/lore`;
+        
+    try {
+        const response = await fetch(url, {
+            method: isEdit ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) throw new Error("Could not save lore entry");
+        
+        const saved = await response.json();
+        closeModal('modal-lore');
+        showToast(`Eintrag "${saved.name}" erfolgreich gespeichert!`, 'success');
+        
+        // Reload list
+        await loadLoreEntries();
+        
+        // If edit, re-render details
+        if (isEdit) {
+            showLoreDetail(state.editingLoreId);
+        } else {
+            showLoreDetail(saved.id);
+        }
+        
+    } catch (e) {
+        showToast(e.message, 'danger');
+    }
+}
+
+async function deleteLoreEntry(loreId) {
+    if (!confirm("Möchtest du diesen Lore-Eintrag wirklich in den Papierkorb verschieben?")) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/${loreId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error("Could not delete lore entry");
+        
+        showToast("Eintrag gelöscht.", "success");
+        
+        // Reset article panel
+        const container = document.getElementById('wiki-article-container');
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
+                <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
+                <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
+            </div>
+        `;
+        
+        loadLoreEntries();
+    } catch (e) {
+        showToast(e.message, 'danger');
+    }
+}
+
+function showLoreDetail(loreId) {
+    const entry = state.loreList.find(e => e.id === loreId);
+    if (!entry) return;
+    
+    const container = document.getElementById('wiki-article-container');
+    container.innerHTML = `
+        <div class="wiki-detail-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+            <div>
+                <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">${escapeHtml(entry.name)}</h2>
+                <span style="font-size: 11px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 3px 8px; border-radius: 4px; font-weight: 600;">${translateCategory(entry.category)}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="btn-wiki-edit-act" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">✏️ Bearbeiten</button>
+                <button id="btn-wiki-delete-act" class="btn btn-secondary btn-danger" style="padding: 6px 12px; font-size: 13px; color: #fff;">🗑️ Löschen</button>
+            </div>
+        </div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; font-style: italic;">
+            ${escapeHtml(entry.short_description || "Keine Kurzbeschreibung.")}
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+            <strong>Keywords:</strong> ${entry.keywords.map(k => `<span style="background-color: var(--bg-base); border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">${escapeHtml(k)}</span>`).join('')}
+        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+        <div id="wiki-rendered-markdown" class="editor-preview-content"></div>
+    `;
+    
+    // Bind buttons
+    document.getElementById('btn-wiki-edit-act').addEventListener('click', () => openLoreModal(entry.id));
+    document.getElementById('btn-wiki-delete-act').addEventListener('click', () => deleteLoreEntry(entry.id));
+    
+    // Render Markdown full article using Toast UI Viewer
+    new toastui.Viewer({
+        el: document.getElementById('wiki-rendered-markdown'),
+        initialValue: entry.description || '_Keine ausführliche Beschreibung vorhanden._',
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+    });
+}
+
+function showLoreQuickviewById(loreId) {
+    if (!state.loreList || state.loreList.length === 0) return;
+    
+    const entry = state.loreList.find(e => e.id === loreId);
+    if (!entry) return;
+    
+    // Open split panel
+    const workspace = document.querySelector('.editor-workspace');
+    const lorePanel = document.getElementById('editor-lore-panel');
+    
+    lorePanel.style.display = 'flex';
+    workspace.classList.add('editor-layout-split');
+    
+    // Populate panel elements
+    document.getElementById('lore-quick-title').textContent = entry.name;
+    document.getElementById('lore-quick-type').textContent = translateCategory(entry.category);
+    
+    const descEl = document.getElementById('lore-quick-desc');
+    descEl.innerHTML = '';
+    
+    // Render detail Markdown in quickview sidebar using Toast UI Viewer
+    new toastui.Viewer({
+        el: descEl,
+        initialValue: entry.description || entry.short_description || '_Keine Beschreibung vorhanden._',
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+    });
+}
+
+function translateCategory(cat) {
+    switch (cat) {
+        case 'character': return 'Charakter';
+        case 'location': return 'Ort / Schauplatz';
+        case 'item': return 'Objekt / Gegenstand';
+        case 'lore': return 'Begriff / Sonstiges';
+        default: return 'Lore';
+    }
+}
+
+// Smart keyword parser
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightKeywordsInPreview() {
+    const previewContainer = document.querySelector('.toastui-editor-contents');
+    if (!previewContainer || !state.loreList || state.loreList.length === 0) return;
+    
+    highlightKeywords(previewContainer, state.loreList);
+}
+
+function highlightKeywords(node, loreList) {
+    if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.nodeValue;
+        let newHtml = escapeHtml(text);
+        let matched = false;
+        
+        const allKeywords = [];
+        loreList.forEach(item => {
+            item.keywords.forEach(kw => {
+                if (kw.trim()) {
+                    allKeywords.push({ keyword: kw.trim(), loreId: item.id, item: item });
+                }
+            });
+        });
+        // Sort keywords by length desc
+        allKeywords.sort((a, b) => b.keyword.length - a.keyword.length);
+        
+        allKeywords.forEach(kwObj => {
+            const kw = kwObj.keyword;
+            const regex = new RegExp(`(?<![a-zA-Z0-9äöüÄÖÜß])(${escapeRegExp(kw)})(?![a-zA-Z0-9äöüÄÖÜß])`, 'gi');
+            if (regex.test(newHtml)) {
+                newHtml = newHtml.replace(regex, `<span class="smart-keyword" data-lore-id="${kwObj.loreId}" title="${escapeHtml(kwObj.item.short_description)}">$1</span>`);
+                matched = true;
+            }
+        });
+        
+        if (matched) {
+            const span = document.createElement('span');
+            span.innerHTML = newHtml;
+            node.parentNode.replaceChild(span, node);
+        }
+    } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SPAN' && node.nodeName !== 'A' && !node.classList.contains('smart-keyword')) {
+        const children = Array.from(node.childNodes);
+        children.forEach(child => highlightKeywords(child, loreList));
+    }
+}
+
+// Expose openLoreModal and deleteLoreEntry globally so onclick in generated HTML works
+window.openLoreModal = openLoreModal;
+window.deleteLoreEntry = deleteLoreEntry;

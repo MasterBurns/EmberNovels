@@ -458,3 +458,156 @@ class StorageService:
             # Just delete the tmp file
             tmp_path.unlink()
             return True
+
+    # LORE / WIKI DATABASE MANAGEMENT
+    
+    @classmethod
+    def get_lore_dir(cls, project_id: str) -> Path:
+        p_dir = cls.get_projects_dir() / project_id
+        l_dir = p_dir / "lore"
+        l_dir.mkdir(parents=True, exist_ok=True)
+        (l_dir / ".trash").mkdir(parents=True, exist_ok=True)
+        return l_dir
+
+    @classmethod
+    def list_lore(cls, project_id: str) -> List[Dict[str, Any]]:
+        """List active lore entries in a project."""
+        lore_dir = cls.get_lore_dir(project_id)
+        entries = []
+        for file in lore_dir.iterdir():
+            if file.is_file() and file.suffix == '.json' and not file.name.startswith('.'):
+                try:
+                    with open(file, 'r', encoding='utf-8') as f:
+                        entry = json.load(f)
+                        entry['id'] = file.stem
+                        entries.append(entry)
+                except Exception:
+                    pass
+        return sorted(entries, key=lambda x: x.get('name', '').lower())
+
+    @classmethod
+    def list_trashed_lore(cls, project_id: str) -> List[Dict[str, Any]]:
+        """List soft-deleted lore entries."""
+        trash_dir = cls.get_lore_dir(project_id) / ".trash"
+        entries = []
+        for file in trash_dir.iterdir():
+            if file.is_file() and file.suffix == '.json':
+                try:
+                    with open(file, 'r', encoding='utf-8') as f:
+                        entry = json.load(f)
+                        entry['id'] = file.stem
+                        entries.append(entry)
+                except Exception:
+                    pass
+        return entries
+
+    @classmethod
+    def create_lore(cls, project_id: str, name: str, category: str, short_description: str = "", description: str = "", keywords: List[str] = None) -> Dict[str, Any]:
+        """Create a new lore JSON entry."""
+        lore_dir = cls.get_lore_dir(project_id)
+        lore_id = sanitize_filename(name)
+        
+        base_id = lore_id
+        counter = 1
+        while (lore_dir / f"{lore_id}.json").exists() or (lore_dir / ".trash" / f"{lore_id}.json").exists():
+            lore_id = f"{base_id}_{counter}"
+            counter += 1
+            
+        file_path = lore_dir / f"{lore_id}.json"
+        now_str = datetime.now().isoformat()
+        
+        entry = {
+            "id": lore_id,
+            "name": name,
+            "category": category, # character, location, item, lore
+            "short_description": short_description,
+            "description": description,
+            "keywords": keywords or [name],
+            "created_at": now_str,
+            "updated_at": now_str
+        }
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(entry, f, indent=4, ensure_ascii=False)
+            
+        return entry
+
+    @classmethod
+    def get_lore(cls, project_id: str, lore_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a specific lore entry."""
+        lore_dir = cls.get_lore_dir(project_id)
+        file_path = lore_dir / f"{lore_id}.json"
+        if not file_path.exists():
+            # Check trash
+            file_path = lore_dir / ".trash" / f"{lore_id}.json"
+            if not file_path.exists():
+                return None
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                entry = json.load(f)
+                entry['id'] = lore_id
+                return entry
+        except Exception:
+            return None
+
+    @classmethod
+    def update_lore(cls, project_id: str, lore_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update a specific lore entry."""
+        lore_dir = cls.get_lore_dir(project_id)
+        file_path = lore_dir / f"{lore_id}.json"
+        if not file_path.exists():
+            return None
+            
+        entry = cls.get_lore(project_id, lore_id)
+        if not entry:
+            return None
+            
+        for k, v in data.items():
+            if k not in ['id', 'created_at']:
+                entry[k] = v
+        entry['updated_at'] = datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(entry, f, indent=4, ensure_ascii=False)
+        return entry
+
+    @classmethod
+    def delete_lore(cls, project_id: str, lore_id: str) -> bool:
+        """Soft delete a lore entry by moving it to the lore .trash folder."""
+        lore_dir = cls.get_lore_dir(project_id)
+        source = lore_dir / f"{lore_id}.json"
+        if not source.exists():
+            return False
+            
+        destination = lore_dir / ".trash" / f"{lore_id}.json"
+        if destination.exists():
+            destination.unlink()
+            
+        shutil.move(str(source), str(destination))
+        return True
+
+    @classmethod
+    def restore_lore(cls, project_id: str, lore_id: str) -> bool:
+        """Restore a lore entry from trash."""
+        lore_dir = cls.get_lore_dir(project_id)
+        source = lore_dir / ".trash" / f"{lore_id}.json"
+        if not source.exists():
+            return False
+            
+        destination = lore_dir / f"{lore_id}.json"
+        if destination.exists():
+            suffix = datetime.now().strftime("%Y%m%d%H%M%S")
+            destination = lore_dir / f"{lore_id}_{suffix}.json"
+            
+        shutil.move(str(source), str(destination))
+        return True
+
+    @classmethod
+    def permanent_delete_lore(cls, project_id: str, lore_id: str) -> bool:
+        """Permanently delete a lore entry."""
+        lore_dir = cls.get_lore_dir(project_id)
+        target = lore_dir / ".trash" / f"{lore_id}.json"
+        if not target.exists():
+            return False
+        target.unlink()
+        return True
