@@ -1,6 +1,6 @@
 [Setup]
 AppName=EmberNovels
-AppVersion=0.1.0.1
+AppVersion=0.1.0.2
 DefaultDirName={userpf}\EmberNovels
 DefaultGroupName=EmberNovels
 OutputDir=output

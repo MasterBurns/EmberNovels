@@ -32,4 +32,4 @@ def export_project(project_id: str, file_format: str, req: ExportRequest, backgr
     except ImportError as e:
         raise HTTPException(status_code=501, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Export-Fehler: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Export error: {str(e)}")

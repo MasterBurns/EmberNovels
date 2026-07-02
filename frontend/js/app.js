@@ -292,7 +292,7 @@ function setupEventListeners() {
         if (state.currentProject) {
             navigateTo('lore');
         } else {
-            showToast('Bitte wähle zuerst ein Projekt aus, um auf seine Lore-Datenbank zuzugreifen.', 'warning');
+            showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus, um auf seine Lore-Datenbank zuzugreifen.'), 'warning');
             navigateTo('projects');
         }
     });
@@ -307,7 +307,7 @@ function setupEventListeners() {
         if (!state.editor) return;
         const selectedText = state.editor.getSelectedText().trim();
         if (!selectedText) {
-            showToast('Bitte markiere zuerst ein Wort oder einen Begriff im Text.', 'warning');
+            showToast(t('toast_select_text_first', 'Bitte markiere zuerst ein Wort oder einen Begriff im Text.'), 'warning');
             return;
         }
         openLoreModal(null, selectedText);
@@ -340,7 +340,7 @@ function setupEventListeners() {
         const selectedChapterIds = [];
         document.querySelectorAll('.export-chapter-chk:checked').forEach(c => selectedChapterIds.push(c.value));
         if (selectedChapterIds.length === 0) {
-            showToast("Bitte wähle mindestens ein Kapitel für den Export aus.", "warning");
+            showToast(t('toast_select_chapters_export', 'Bitte wähle mindestens ein Kapitel für den Export aus.'), 'warning');
             return;
         }
         closeModal('modal-export');
@@ -492,7 +492,7 @@ async function loadProjects() {
         });
         
     } catch (e) {
-        showToast("Fehler beim Laden der Projekte: " + e.message, "danger");
+        showToast(t('error_load_projects', 'Fehler beim Laden der Projekte: ') + e.message, "danger");
     }
 }
 
@@ -503,7 +503,7 @@ async function handleCreateProject() {
     const description = document.getElementById('project-description').value;
     
     if (!title.trim()) {
-        showToast("Bitte gib einen Projekttitel an.", "warning");
+        showToast(t('toast_project_title_required', 'Bitte gib einen Projekttitel an.'), "warning");
         return;
     }
     
@@ -517,7 +517,7 @@ async function handleCreateProject() {
         if (!response.ok) throw new Error("Failed to create project");
         const newProject = await response.json();
         closeModal('modal-project');
-        showToast(`Projekt "${newProject.title}" erfolgreich erstellt!`, 'success');
+        showToast(t('project_created_toast_prefix', 'Projekt "') + newProject.title + t('project_created_toast_suffix', '" erfolgreich erstellt!'), 'success');
         
         // Reset fields
         document.getElementById('project-title').value = '';
@@ -534,7 +534,7 @@ async function deleteProject(id) {
     try {
         const response = await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error("Failed to delete project");
-        showToast("Projekt in den Papierkorb verschoben.", "success");
+        showToast(t('project_deleted_toast', 'Projekt in den Papierkorb verschoben.'), "success");
         loadProjects();
     } catch (e) {
         showToast(e.message, "danger");
@@ -667,7 +667,7 @@ async function loadProjectDetails(projectId) {
 async function handleCreateChapter() {
     const title = document.getElementById('chapter-title').value;
     if (!title.trim()) {
-        showToast("Bitte gib einen Kapiteltitel an.", "warning");
+        showToast(t('toast_chapter_title_required', 'Bitte gib einen Kapiteltitel an.'), "warning");
         return;
     }
     
@@ -681,7 +681,7 @@ async function handleCreateChapter() {
         if (!response.ok) throw new Error("Failed to create chapter");
         const chapter = await response.json();
         closeModal('modal-chapter');
-        showToast(`Kapitel "${chapter.title}" angelegt.`, 'success');
+        showToast(t('chapter_created_toast_prefix', 'Kapitel "') + chapter.title + t('chapter_created_toast_suffix', '" angelegt.'), 'success');
         
         document.getElementById('chapter-title').value = '';
         
@@ -696,7 +696,7 @@ async function deleteChapter(projectId, chapterId) {
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}/chapters/${chapterId}`, { method: 'DELETE' });
         if (!response.ok) throw new Error("Failed to delete chapter");
-        showToast("Kapitel gelöscht.", "success");
+        showToast(t('chapter_deleted_toast', 'Kapitel gelöscht.'), "success");
         loadProjectDetails(projectId);
     } catch (e) {
         showToast(e.message, "danger");
@@ -830,7 +830,7 @@ function handleEditorInput(content) {
     localStorage.setItem(storageKey, content);
     
     const saveStatus = document.getElementById('save-status');
-    saveStatus.textContent = 'Ungespeicherte Änderungen (Tippe...)';
+    saveStatus.textContent = t('unsaved_changes_typing', 'Ungespeicherte Änderungen (Tippe...)');
     
     updateWordCount(content);
 }
@@ -842,7 +842,7 @@ async function handleAutosaveTick() {
     
     const content = state.editor ? state.editor.getMarkdown() : '';
     const saveStatus = document.getElementById('save-status');
-    saveStatus.textContent = 'Automatisches Sichern...';
+    saveStatus.textContent = t('autosaving', 'Automatisches Sichern...');
     
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/autosave`, {
@@ -852,11 +852,11 @@ async function handleAutosaveTick() {
         });
         
         if (response.ok) {
-            saveStatus.textContent = 'Auto-gesichert (Schattenkopie)';
+            saveStatus.textContent = t('auto_saved_shadow_copy', 'Auto-gesichert (Schattenkopie)');
         }
     } catch (e) {
         console.error("Autosave backend connection failed", e);
-        saveStatus.textContent = 'Lokale Sicherung aktiv (Netzwerkfehler)';
+        saveStatus.textContent = t('local_backup_network_error', 'Lokale Sicherung aktiv (Netzwerkfehler)');
     }
 }
 
@@ -866,7 +866,7 @@ async function handleExplicitSave() {
     
     const content = state.editor ? state.editor.getMarkdown() : '';
     const saveStatus = document.getElementById('save-status');
-    saveStatus.textContent = 'Speichere endgültig...';
+    saveStatus.textContent = t('saving_permanently', 'Speichere endgültig...');
     
     try {
         const url = state.activeLanguage === 'original'
@@ -889,11 +889,11 @@ async function handleExplicitSave() {
         const storageKey = `ember_backup_${state.currentProject.id}_${state.currentChapter.id}`;
         localStorage.removeItem(storageKey);
         
-        saveStatus.textContent = 'Gesichert';
-        showToast('Änderungen dauerhaft gespeichert (.history Backup erstellt)', 'success');
+        saveStatus.textContent = t('saved_status', 'Gesichert');
+        showToast(t('changes_saved_backup_created', 'Änderungen dauerhaft gespeichert (.history Backup erstellt)'), 'success');
     } catch (e) {
-        showToast('Fehler beim Speichern: ' + e.message, 'danger');
-        saveStatus.textContent = 'Fehler beim Speichern';
+        showToast(t('error_saving', 'Fehler beim Speichern: ') + e.message, 'danger');
+        saveStatus.textContent = t('error_saving_status', 'Fehler beim Speichern');
     }
 }
 
@@ -918,9 +918,9 @@ async function resolveRecovery(keep) {
             }
             updateWordCount(recoveredContent);
             state.isDirty = true;
-            showToast('Wiederherstellung geladen (Schattenkopie angewendet).', 'success');
+            showToast(t('recovery_loaded_toast', 'Wiederherstellung geladen (Schattenkopie angewendet).'), 'success');
         } else {
-            showToast('Sicherung verworfen. Originalversion geladen.', 'info');
+            showToast(t('backup_discarded_toast', 'Sicherung verworfen. Originalversion geladen.'), 'info');
         }
     } catch (e) {
         showToast(e.message, 'danger');
@@ -1006,13 +1006,13 @@ async function loadTrashedProjects() {
                 card.style.borderColor = 'var(--border-color)';
                 card.innerHTML = `
                     <div class="card-title" style="text-decoration: line-through;">${escapeHtml(p.title)}</div>
-                    <div class="card-desc">${escapeHtml(p.description || "Keine Beschreibung.")}</div>
+                    <div class="card-desc">${escapeHtml(p.description || t('no_description', 'Keine Beschreibung.'))}</div>
                     <div class="card-meta">
-                        <span>Gelöscht am: ${new Date(p.deleted_at || Date.now()).toLocaleDateString('de-DE')}</span>
+                        <span>${t('deleted_at_lbl', 'Gelöscht am: ')}${new Date(p.deleted_at || Date.now()).toLocaleDateString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US')}</span>
                     </div>
                     <div class="card-actions" style="opacity: 1;">
-                        <button class="card-action-btn btn-restore" title="Wiederherstellen">🔄</button>
-                        <button class="card-action-btn btn-delete btn-permanent" title="Endgültig löschen" style="background-color: rgba(239,68,68,0.1); color: var(--color-danger);">❌</button>
+                        <button class="card-action-btn btn-restore" title="${t('btn_restore', 'Wiederherstellen')}">🔄</button>
+                        <button class="card-action-btn btn-delete btn-permanent" title="${t('delete_project_perm_title', 'Endgültig löschen')}" style="background-color: rgba(239,68,68,0.1); color: var(--color-danger);">❌</button>
                     </div>
                 `;
                 
@@ -1042,7 +1042,7 @@ async function restoreProject(id) {
     try {
         const response = await fetch(`${API_URL}/projects/${id}/restore`, { method: 'POST' });
         if (!response.ok) throw new Error("Could not restore project");
-        showToast("Projekt erfolgreich wiederhergestellt!", "success");
+        showToast(t('project_restored_toast', 'Projekt erfolgreich wiederhergestellt!'), "success");
         loadTrashedProjects();
     } catch (e) {
         showToast(e.message, "danger");
@@ -1053,7 +1053,7 @@ async function permanentDeleteProject(id) {
     try {
         const response = await fetch(`${API_URL}/projects/${id}/permanent`, { method: 'DELETE' });
         if (!response.ok) throw new Error("Failed to delete project permanently");
-        showToast("Projekt dauerhaft gelöscht.", "success");
+        showToast(t('project_deleted_perm_toast', 'Projekt dauerhaft gelöscht.'), "success");
         loadTrashedProjects();
     } catch (e) {
         showToast(e.message, "danger");
@@ -1238,7 +1238,7 @@ async function applyMerge() {
     // Discard the temp file on the backend as we've completed the merge
     await resolveRecovery(false);
     
-    showToast('Änderungen erfolgreich zusammengeführt!', 'success');
+    showToast(t('merge_success_toast', 'Änderungen erfolgreich zusammengeführt!'), 'success');
 }
 
 // ==========================================
@@ -1249,7 +1249,7 @@ async function loadLoreEntries() {
     if (!state.currentProject) return;
     
     const listContainer = document.getElementById('wiki-list');
-    listContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted);">Lade Einträge...</div>';
+    listContainer.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--text-muted);">${t('loading_lore_entries', 'Lade Einträge...')}</div>`;
     
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore`);
@@ -1257,7 +1257,7 @@ async function loadLoreEntries() {
         state.loreList = await response.json();
         renderLoreList(state.loreList);
     } catch (e) {
-        showToast("Fehler beim Laden der Lore: " + e.message, "danger");
+        showToast(t('error_load_lore', 'Fehler beim Laden der Lore: ') + e.message, "danger");
     }
 }
 
@@ -1266,7 +1266,7 @@ function renderLoreList(entries) {
     listContainer.innerHTML = '';
     
     if (entries.length === 0) {
-        listContainer.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">Keine Einträge gefunden.</div>';
+        listContainer.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">${t('no_lore_entries_found', 'Keine Einträge gefunden.')}</div>`;
         return;
     }
     
@@ -1377,7 +1377,7 @@ async function handleSaveLore() {
     const description = document.getElementById('lore-desc').value;
     
     if (!name) {
-        showToast("Bitte gib dem Eintrag einen Namen.", "warning");
+        showToast(t('toast_lore_name_required', 'Bitte gib dem Eintrag einen Namen.'), "warning");
         return;
     }
     
@@ -1417,7 +1417,7 @@ async function handleSaveLore() {
         
         const saved = await response.json();
         closeModal('modal-lore');
-        showToast(`Eintrag "${saved.name}" erfolgreich gespeichert!`, 'success');
+        showToast(t('lore_save_success_prefix', 'Eintrag "') + saved.name + t('lore_save_success_suffix', '" erfolgreich gespeichert!'), 'success');
         
         // Reload list
         await loadLoreEntries();
@@ -1639,7 +1639,7 @@ window.deleteLoreEntry = deleteLoreEntry;
 async function handleExport(format, chapterIds = null) {
     if (!state.currentProject) return;
     
-    showToast(`Exportiere Buch als ${format.toUpperCase()}...`, 'info');
+    showToast(t('export_started_toast_prefix', 'Exportiere Buch als ') + format.toUpperCase() + t('export_started_toast_suffix', '...'), 'info');
     
     try {
         const url = `${API_URL}/projects/${state.currentProject.id}/export/${format}`;
@@ -1651,7 +1651,7 @@ async function handleExport(format, chapterIds = null) {
         
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.detail || "Export fehlgeschlagen.");
+            throw new Error(errData.detail || t('export_failed', 'Export fehlgeschlagen.'));
         }
         
         const blob = await response.blob();
@@ -1676,9 +1676,9 @@ async function handleExport(format, chapterIds = null) {
         a.remove();
         window.URL.revokeObjectURL(downloadUrl);
         
-        showToast(`Export als ${format.toUpperCase()} erfolgreich abgeschlossen!`, 'success');
+        showToast(t('export_success_prefix', 'Export als ') + format.toUpperCase() + t('export_success_suffix', ' erfolgreich abgeschlossen!'), 'success');
     } catch (e) {
-        showToast(`Fehler beim Export: ${e.message}`, 'danger');
+        showToast(t('error_export', 'Fehler beim Export: ') + e.message, 'danger');
     }
 }
 
@@ -1686,14 +1686,14 @@ function openExportModal() {
     if (!state.currentProject) return;
     
     const list = document.getElementById('export-chapters-list');
-    list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Lade Kapitel...</div>';
+    list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('loading_chapter', 'Lade Kapitel...')}</div>`;
     
     fetch(`${API_URL}/projects/${state.currentProject.id}/chapters`)
         .then(res => res.json())
         .then(chapters => {
             list.innerHTML = '';
             if (chapters.length === 0) {
-                list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Keine aktiven Kapitel vorhanden.</div>';
+                list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('no_chapters_placeholder_short', 'Keine aktiven Kapitel vorhanden.')}</div>`;
                 return;
             }
             
@@ -1716,7 +1716,7 @@ function openExportModal() {
             openModal('modal-export');
         })
         .catch(e => {
-            showToast("Kapitel konnten nicht geladen werden.", "danger");
+            showToast(t('error_load_chapters', 'Kapitel konnten nicht geladen werden.'), "danger");
         });
 }
 
@@ -1807,7 +1807,7 @@ async function loadAISettingsInForm() {
         providerSelect.dispatchEvent(new Event('change'));
         
     } catch (e) {
-        showToast("Fehler beim Laden der Einstellungen: " + e.message, "danger");
+        showToast(t('error_loading_settings', 'Fehler beim Laden der Einstellungen: ') + e.message, "danger");
     }
 }
 
@@ -1853,7 +1853,7 @@ async function handleSaveSettings() {
         showToast(t('settings_save_success', 'Einstellungen erfolgreich gespeichert!'), 'success');
         
     } catch (e) {
-        showToast('KI-Einstellungen konnten nicht gespeichert werden: ' + e.message, 'danger');
+        showToast(t('error_save_settings', 'KI-Einstellungen konnten nicht gespeichert werden: ') + e.message, 'danger');
     }
 }
 
@@ -1927,10 +1927,8 @@ async function loadProjectLanguages(projectId) {
                 loadProjectLanguages(projectId);
             });
             list.appendChild(el);
-        });
-        
     } catch (e) {
-        list.innerHTML = '<div style="font-size: 13px; color: var(--text-muted);">Fehler beim Laden.</div>';
+        list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('error_loading', 'Fehler beim Laden.')}</div>`;
     }
 }
 
@@ -1941,11 +1939,11 @@ async function handleCreateLanguageBranch() {
     const lang_code = codeEl.value.trim().toLowerCase();
     
     if (!lang_code) {
-        showToast("Bitte gib einen Sprachcode ein.", "warning");
+        showToast(t('toast_lang_code_required', 'Bitte gib einen Sprachcode ein.'), "warning");
         return;
     }
     
-    showToast(`Erstelle Sprachzweig '${lang_code.toUpperCase()}'...`, 'info');
+    showToast(t('branch_creating_prefix', 'Erstelle Sprachzweig "') + lang_code.toUpperCase() + t('branch_creating_suffix', '"...'), 'info');
     closeModal('modal-language');
     
     try {
@@ -1957,10 +1955,10 @@ async function handleCreateLanguageBranch() {
         
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.detail || "Failed to create language branch");
+            throw new Error(err.detail || t('error_create_branch', 'Failed to create language branch'));
         }
         
-        showToast(`Sprachzweig '${lang_code.toUpperCase()}' wird im Hintergrund übersetzt!`, 'success');
+        showToast(t('branch_translating_bg_prefix', 'Sprachzweig "') + lang_code.toUpperCase() + t('branch_translating_bg_suffix', '" wird im Hintergrund übersetzt!'), 'success');
         codeEl.value = '';
         
         // Reload list after short delay
@@ -2038,10 +2036,10 @@ async function handleManualTranslate() {
             
             state.lastSavedContent = data.content || '';
             state.isDirty = false;
-            showToast("Kapitel erfolgreich neu übersetzt!", "success");
+            showToast(t('chapter_translated_toast', 'Kapitel erfolgreich neu übersetzt!'), "success");
             
         } catch (e) {
-            showToast("Fehler bei der Übersetzung: " + e.message, 'danger');
+            showToast(t('error_translation', 'Fehler bei der Übersetzung: ') + e.message, 'danger');
         } finally {
             saveStatus.style.display = 'none';
         }
@@ -2067,13 +2065,13 @@ async function handleAIAssistant(task) {
     }
     
     if (!text) {
-        showToast("Es gibt keinen Text zum Verarbeiten.", "warning");
+        showToast(t('toast_no_text_to_process', 'Es gibt keinen Text zum Verarbeiten.'), "warning");
         return;
     }
     
     const saveStatus = document.getElementById('save-status');
     saveStatus.style.display = 'inline-block';
-    saveStatus.textContent = task === 'correct' ? 'Lektorat läuft...' : 'Schreibe weiter...';
+    saveStatus.textContent = task === 'correct' ? t('ai_proofreading_running', 'Lektorat läuft...') : t('ai_continue_writing', 'Schreibe weiter...');
     
     try {
         const response = await fetch(`${API_URL}/ai/assist`, {
@@ -2084,14 +2082,14 @@ async function handleAIAssistant(task) {
         
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.detail || "AI Request failed");
+            throw new Error(err.detail || t('error_ai_request_failed', 'AI Request failed'));
         }
         
         const data = await response.json();
         const result = data.result;
         
         if (!result) {
-            showToast("Keine Antwort erhalten.", "warning");
+            showToast(t('toast_no_ai_response', 'Keine Antwort erhalten.'), "warning");
             return;
         }
         
@@ -2101,10 +2099,10 @@ async function handleAIAssistant(task) {
             } else {
                 state.editor.setMarkdown(result);
             }
-            showToast("Text erfolgreich lektoriert!", "success");
+            showToast(t('text_proofread_toast', 'Text erfolgreich lektoriert!'), "success");
         } else if (task === 'continue') {
             state.editor.insertText("\n" + result);
-            showToast("Text erfolgreich fortgeführt!", "success");
+            showToast(t('text_continued_toast', 'Text erfolgreich fortgeführt!'), "success");
         }
         
         state.isDirty = true;
@@ -2214,7 +2212,7 @@ async function handleImportWizardSubmit() {
         // Sort files numerically/alphabetically
         mdFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
         
-        let folderName = "Importiertes Projekt";
+        let folderName = t('imported_project_default_title', "Importiertes Projekt");
         if (mdFiles[0].webkitRelativePath) {
             const parts = mdFiles[0].webkitRelativePath.split('/');
             if (parts.length > 1) {
@@ -2224,12 +2222,12 @@ async function handleImportWizardSubmit() {
         
         const original_language = document.getElementById('import-folder-lang').value;
         
-        showToast("Projekt wird erstellt...", "info");
+        showToast(t('toast_project_creating', "Projekt wird erstellt..."), "info");
         try {
             const projRes = await fetch(`${API_URL}/projects`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: folderName, author: "Importiert", description: `Ordner-Import von ${folderName}`, original_language })
+                body: JSON.stringify({ title: folderName, author: t('imported_author_placeholder', "Importiert"), description: t('import_folder_desc_prefix', "Ordner-Import von ") + folderName, original_language })
             });
             if (!projRes.ok) throw new Error("Failed to create project");
             const project = await projRes.json();
@@ -2254,17 +2252,17 @@ async function handleImportWizardSubmit() {
                 });
             }
             
-            showToast("Ordner-Import erfolgreich abgeschlossen!", "success");
+            showToast(t('import_folder_success_toast', "Ordner-Import erfolgreich abgeschlossen!"), "success");
             closeModal('modal-import');
             loadProjects();
         } catch(err) {
-            showToast("Fehler beim Import: " + err.message, "danger");
+            showToast(t('error_import', "Fehler beim Import: ") + err.message, "danger");
         }
         
     } else {
         const picker = document.getElementById('import-file-picker');
         if (!picker.files || picker.files.length === 0) {
-            showToast("Bitte wähle eine .md Datei zum Importieren aus.", "warning");
+            showToast(t('toast_select_md_file_first', "Bitte wähle eine .md Datei zum Importieren aus."), "warning");
             return;
         }
         
@@ -2272,19 +2270,19 @@ async function handleImportWizardSubmit() {
         const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
         const mode = document.querySelector('input[name="import-file-mode"]:checked').value;
         
-        showToast("Lese Datei...", "info");
+        showToast(t('toast_reading_file', "Lese Datei..."), "info");
         const fileText = await file.text();
         
         if (mode === 'project') {
             const original_language = document.getElementById('import-file-lang').value;
             const parsedChapters = parseMarkdownToChapters(fileText, fileName);
             
-            showToast(`Erstelle Projekt mit ${parsedChapters.length} Kapiteln...`, "info");
+            showToast(t('toast_creating_project_chapters_prefix', "Erstelle Projekt mit ") + parsedChapters.length + t('toast_creating_project_chapters_suffix', " Kapiteln..."), "info");
             try {
                 const projRes = await fetch(`${API_URL}/projects`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: fileName, author: "Importiert", description: `Datei-Import von ${file.name}`, original_language })
+                    body: JSON.stringify({ title: fileName, author: t('imported_author_placeholder', "Importiert"), description: t('import_file_desc_prefix', "Datei-Import von ") + file.name, original_language })
                 });
                 if (!projRes.ok) throw new Error("Failed to create project");
                 const project = await projRes.json();
@@ -2307,16 +2305,16 @@ async function handleImportWizardSubmit() {
                     });
                 }
                 
-                showToast("Buch-Import erfolgreich abgeschlossen!", "success");
+                showToast(t('import_book_success_toast', "Buch-Import erfolgreich abgeschlossen!"), "success");
                 closeModal('modal-import');
                 loadProjects();
             } catch(err) {
-                showToast("Fehler beim Import: " + err.message, "danger");
+                showToast(t('error_import', "Fehler beim Import: ") + err.message, "danger");
             }
         } else {
             const projectId = document.getElementById('import-file-target-project').value;
             if (!projectId) {
-                showToast("Bitte wähle ein Ziel-Projekt aus.", "warning");
+                showToast(t('toast_select_target_project_first', "Bitte wähle ein Ziel-Projekt aus."), "warning");
                 return;
             }
             
@@ -2326,7 +2324,7 @@ async function handleImportWizardSubmit() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title: fileName })
                 });
-                if (!chRes.ok) throw new Error("Kapitel konnte nicht erstellt werden");
+                if (!chRes.ok) throw new Error(t('error_create_chapter_failed', "Kapitel konnte nicht erstellt werden"));
                 const chapter = await chRes.json();
                 
                 await fetch(`${API_URL}/projects/${projectId}/chapters/${chapter.id}/save`, {
@@ -2335,7 +2333,7 @@ async function handleImportWizardSubmit() {
                     body: JSON.stringify({ content: fileText })
                 });
                 
-                showToast("Kapitel erfolgreich importiert!", "success");
+                showToast(t('import_chapter_success_toast', "Kapitel erfolgreich importiert!"), "success");
                 closeModal('modal-import');
                 if (state.currentProject && state.currentProject.id === projectId) {
                     loadProjectDetails(projectId);
@@ -2343,7 +2341,7 @@ async function handleImportWizardSubmit() {
                     navigateTo('project-details', { projectId });
                 }
             } catch(err) {
-                showToast("Fehler beim Import: " + err.message, "danger");
+                showToast(t('error_import', "Fehler beim Import: ") + err.message, "danger");
             }
         }
     }
@@ -2365,7 +2363,7 @@ async function handleSaveProjectStats() {
         
         if (!response.ok) throw new Error("Failed to update project stats");
         
-        showToast("Projekt-Ziele erfolgreich aktualisiert!", "success");
+        showToast(t('stats_update_success_toast', "Projekt-Ziele erfolgreich aktualisiert!"), "success");
         closeModal('modal-project-stats');
         loadProjectDetails(state.currentProject.id);
     } catch(err) {
@@ -2432,7 +2430,7 @@ function makeChaptersDraggable() {
                     });
                     
                     if (response.ok) {
-                        showToast("Reihenfolge aktualisiert!", "success");
+                        showToast(t('reorder_success_toast', "Reihenfolge aktualisiert!"), "success");
                         // Instantly update numbering labels in list items
                         Array.from(list.children).forEach((chEl, idx) => {
                             const titleEl = chEl.querySelector('.list-item-title strong');
@@ -2442,7 +2440,7 @@ function makeChaptersDraggable() {
                         });
                     }
                 } catch(err) {
-                    showToast("Fehler beim Umsortieren: " + err.message, "danger");
+                    showToast(t('error_reorder', "Fehler beim Umsortieren: ") + err.message, "danger");
                 }
             }
             return false;
@@ -2509,13 +2507,13 @@ async function checkAppUpdates() {
     const triggerBtn = document.getElementById('btn-trigger-update');
     
     btn.disabled = true;
-    btn.textContent = t('about_updating', 'Suche...');
+    btn.textContent = t('searching', 'Suche...');
     panel.style.display = 'flex';
-    msg.textContent = t('about_updating', 'Suche nach neuen Updates...');
+    msg.textContent = t('searching_updates', 'Suche nach neuen Updates...');
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = "0.1.0.1";
+    const currentVersion = "0.1.0.2";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -2527,8 +2525,8 @@ async function checkAppUpdates() {
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
-            msg.innerHTML = `<span style="color: var(--color-warning);">⚠️ Update verfügbar! Version ${latestVersion} ist jetzt online.</span>`;
-            notes.textContent = data.release_notes || "Keine Update-Notizen vorhanden.";
+            msg.innerHTML = `<span style="color: var(--color-warning);">⚠️ ${t('update_available_prefix', 'Update verfügbar! Version')} ${latestVersion} ${t('update_available_suffix', 'ist jetzt online.')}</span>`;
+            notes.textContent = data.release_notes || t('no_release_notes', 'Keine Update-Notizen vorhanden.');
             
             // Re-bind trigger click
             const newTriggerBtn = triggerBtn.cloneNode(true);
@@ -2536,20 +2534,20 @@ async function checkAppUpdates() {
             newTriggerBtn.style.display = 'inline-block';
             newTriggerBtn.addEventListener('click', () => {
                 showConfirm(
-                    "Update installieren",
-                    `Möchtest du zu GitHub weitergeleitet werden, um Version ${latestVersion} herunterzuladen und zu installieren?`,
+                    t('update_install_title', 'Update installieren'),
+                    `${t('update_install_body_prefix', 'Möchtest du zu GitHub weitergeleitet werden, um Version')} ${latestVersion} ${t('update_install_body_suffix', 'herunterzuladen und zu installieren?')}`,
                     () => {
                         window.open('https://github.com/MasterBurns/EmberNovels/releases', '_blank');
                     }
                 );
             });
         } else {
-            msg.innerHTML = `<span style="color: var(--color-success);">✨ EmberNovels ist auf dem neuesten Stand (Version ${currentVersion}).</span>`;
-            notes.textContent = "Keine neuen Updates verfügbar.";
+            msg.innerHTML = `<span style="color: var(--color-success);">✨ ${t('app_up_to_date_prefix', 'EmberNovels ist auf dem neuesten Stand (Version')} ${currentVersion}).</span>`;
+            notes.textContent = t('no_updates_available', 'Keine neuen Updates verfügbar.');
         }
     } catch(err) {
-        msg.innerHTML = `<span style="color: var(--color-danger);">❌ Fehler beim Abfragen der Updates: ${err.message}</span>`;
-        notes.textContent = "Bitte überprüfe deine Internetverbindung oder versuche es später noch einmal.";
+        msg.innerHTML = `<span style="color: var(--color-danger);">❌ ${t('error_checking_updates', 'Fehler beim Abfragen der Updates:')} ${err.message}</span>`;
+        notes.textContent = t('check_connection_retry', 'Bitte überprüfe deine Internetverbindung oder versuche es später noch einmal.');
     } finally {
         btn.disabled = false;
         btn.textContent = t('about_update_check', 'Nach Updates suchen');

@@ -1,4 +1,4 @@
 {
-    "version": "0.1.0.1",
-    "release_notes": "Version 0.1.0.1 Release.\n- GitHub Actions Release-Workflow Syntaxfehler behoben\n- Komplette Übersetzung aller Untermenüs, Einstellungs-Karten und Modals für alle 7 unterstützten Sprachen integriert\n- Favicon und i18n DOM-Übersetzung vervollständigt\n- Versions-Increment auf 0.1.0.1"
+    "version": "0.1.0.2",
+    "release_notes": "Version 0.1.0.2 Release.\n- Vollständige Lokalisierung aller Einstellungsmenüs, KI-Provider und Option-Auswahlen\n- Fehlerbehebung bei unübersetzten dynamic Toast-Nachrichten und Status-Ladebalken\n- Versions-Increment auf 0.1.0.2"
 }
