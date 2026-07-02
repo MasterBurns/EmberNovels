@@ -1,0 +1,137 @@
+name: Build and Release EmberNovels
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-cross-platform:
+    name: Build Standalone Executables
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: EmberNovels-Windows
+            binary_name: EmberNovels.exe
+            sep: ";"
+          - os: ubuntu-latest
+            artifact_name: EmberNovels-Linux
+            binary_name: EmberNovels
+            sep: ":"
+          - os: macos-latest
+            artifact_name: EmberNovels-macOS
+            binary_name: EmberNovels
+            sep: ":"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn pydantic aiofiles python-multipart requests pyinstaller
+
+      - name: Compile Standalone App (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          pyinstaller --onefile --add-data "frontend${{ matrix.sep }}frontend" --add-data "version.json${{ matrix.sep }}." run_app.py --name EmberNovels
+
+      - name: Compile Standalone App (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          pyinstaller --onefile --add-data "frontend${{ matrix.sep }}frontend" --add-data "version.json${{ matrix.sep }}." run_app.py --name EmberNovels
+
+      # Windows Setup compilation using pre-installed Inno Setup
+      - name: Compile Inno Setup Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          iscc installer.iss
+
+      # Zip/tar archives preparation
+      - name: Package Linux Binary
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czvf EmberNovels-Linux.tar.gz -C dist EmberNovels
+
+      - name: Package macOS Binary
+        if: matrix.os == 'macos-latest'
+        run: |
+          zip -j EmberNovels-macOS.zip dist/EmberNovels
+
+      - name: Package Windows Binary
+        if: matrix.os == 'windows-latest'
+        run: |
+          zip -j EmberNovels-Windows-Portable.zip dist/EmberNovels.exe
+
+      # Upload artifacts
+      - name: Upload Windows Setup Artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: EmberNovels-Windows-Installer
+          path: output/EmberNovels-Setup.exe
+
+      - name: Upload Portables Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            dist/${{ matrix.binary_name }}
+            *.zip
+            *.tar.gz
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-cross-platform
+    runs-ok: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Download Windows Installer
+        uses: actions/download-artifact@v3
+        with:
+          name: EmberNovels-Windows-Installer
+          path: ./release-assets
+
+      - name: Download Windows Portable
+        uses: actions/download-artifact@v3
+        with:
+          name: EmberNovels-Windows
+          path: ./release-assets
+
+      - name: Download Linux Portable
+        uses: actions/download-artifact@v3
+        with:
+          name: EmberNovels-Linux
+          path: ./release-assets
+
+      - name: Download macOS Portable
+        uses: actions/download-artifact@v3
+        with:
+          name: EmberNovels-macOS
+          path: ./release-assets
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-assets/EmberNovels-Setup.exe
+            release-assets/*.zip
+            release-assets/*.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

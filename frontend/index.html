@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmberNovels - Deine lokale Autoren-Suite</title>
+    <!-- Favicon 🔥 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     <!-- CSS link -->
     <link rel="stylesheet" href="css/style.css">
     <!-- Toast UI Editor CSS -->
@@ -23,25 +25,25 @@
                     <li>
                         <a id="nav-projects" class="nav-item active">
                             <span class="nav-item-icon">📚</span>
-                            <span>Projekte</span>
+                            <span data-i18n="nav_projects">Projekte</span>
                         </a>
                     </li>
                     <li>
                         <a id="nav-lore" class="nav-item">
                             <span class="nav-item-icon">📖</span>
-                            <span>Lore-Datenbank</span>
+                            <span data-i18n="nav_lore">Lore-Datenbank</span>
                         </a>
                     </li>
                     <li>
                         <a id="nav-trash" class="nav-item">
                             <span class="nav-item-icon">🗑️</span>
-                            <span>Papierkorb</span>
+                            <span data-i18n="nav_trash">Papierkorb</span>
                         </a>
                     </li>
                     <li>
                         <a id="nav-settings" class="nav-item">
                             <span class="nav-item-icon">⚙️</span>
-                            <span>Einstellungen</span>
+                            <span data-i18n="nav_settings">Einstellungen</span>
                         </a>
                     </li>
                 </ul>
@@ -70,7 +72,7 @@
                 <div class="header-actions">
                     <div id="save-status" style="font-size: 13px; color: var(--text-muted); display: none;"></div>
                     <button id="btn-header-action" class="btn">
-                        <span>+</span> Neues Projekt
+                        <span data-i18n="btn_new_project">+ Neues Projekt</span>
                     </button>
                 </div>
             </header>
@@ -316,10 +318,22 @@
                         
                         <!-- CARD 1: ALLGEMEIN -->
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
-                            <h3 class="list-title" style="margin-bottom: 8px;">⚙️ Allgemeine Einstellungen</h3>
+                            <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="settings_general">⚙️ Allgemeine Einstellungen</h3>
                             <div class="form-group">
-                                <label class="form-label" for="setting-autosave-interval">Automatisches Speicher-Intervall (Sekunden)</label>
+                                <label class="form-label" for="setting-autosave-interval" data-i18n="settings_autosave">Automatisches Speicher-Intervall (Sekunden)</label>
                                 <input type="number" id="setting-autosave-interval" class="form-input" value="3" min="1" max="60">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-ui-language" data-i18n="settings_ui_language_select">Sprache der EmberNovels-Benutzeroberfläche</label>
+                                <select id="setting-ui-language" class="form-input" style="height: auto;">
+                                    <option value="de">🇩🇪 Deutsch</option>
+                                    <option value="en">🇬🇧 English</option>
+                                    <option value="fr">🇫🇷 Français</option>
+                                    <option value="es">🇪🇸 Español</option>
+                                    <option value="it">🇮🇹 Italiano</option>
+                                    <option value="ja">🇯🇵 日本語 (Japanese)</option>
+                                    <option value="zh">🇨🇳 简体中文 (Simplified Chinese)</option>
+                                </select>
                             </div>
                         </div>
 
@@ -392,6 +406,20 @@
                                     Bei manuellem Speichern (Strg+S) alle Sprachzweige automatisch aktualisieren und übersetzen<br>
                                     <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">*Achtung: Bei Nutzung von kostenpflichtigen APIs (Gemini, OpenAI, Anthropic) kann dies zusätzliche Kosten verursachen.*</span>
                                 </label>
+                            </div>
+                        </div>
+
+                        <!-- CARD 4: ÜBER EMBERNOVELS & UPDATES -->
+                        <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                            <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.0</strong></span>
+                                <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
+                            </div>
+                            <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">
+                                <div id="update-status-msg" style="font-weight: 500;"></div>
+                                <div id="update-release-notes" style="background-color: var(--bg-surface); padding: 12px; border-radius: 6px; white-space: pre-wrap; font-family: monospace; font-size: 12px; border: 1px solid var(--border-color); max-height: 150px; overflow-y: auto;"></div>
+                                <button id="btn-trigger-update" class="btn" style="display: none; align-self: flex-end; padding: 6px 12px; font-size: 13px;">Update jetzt installieren</button>
                             </div>
                         </div>
 

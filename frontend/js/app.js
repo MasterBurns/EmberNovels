@@ -24,8 +24,13 @@ let state = {
 const API_URL = '/api';
 
 // On Document Load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
+    
+    // Initialize UI Language
+    state.uiLanguage = localStorage.getItem('ember_ui_language') || 'de';
+    await loadUiLanguage(state.uiLanguage);
+    
     setupEventListeners();
     navigateTo('projects');
     
@@ -122,8 +127,8 @@ function navigateTo(view, params = {}) {
     switch (view) {
         case 'projects':
             document.getElementById('nav-projects').classList.add('active');
-            headerTitle.textContent = 'Meine Romanprojekte';
-            headerAction.textContent = '+ Neues Projekt';
+            headerTitle.textContent = t('title_projects', 'Meine Romanprojekte');
+            headerAction.textContent = t('btn_new_project', '+ Neues Projekt');
             headerAction.onclick = () => openModal('modal-project');
             loadProjects();
             break;
@@ -132,7 +137,7 @@ function navigateTo(view, params = {}) {
             document.getElementById('nav-projects').classList.add('active');
             btnBackProjects.style.display = 'inline-flex';
             btnBackProjects.onclick = () => navigateTo('projects');
-            headerAction.textContent = '+ Kapitel hinzufügen';
+            headerAction.textContent = t('btn_add_chapter', '+ Kapitel hinzufügen');
             headerAction.onclick = () => openModal('modal-chapter');
             if (params.projectId) {
                 loadProjectDetails(params.projectId);
@@ -165,20 +170,20 @@ function navigateTo(view, params = {}) {
             btnBackDetails.style.display = 'inline-flex';
             btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
             headerAction.style.display = 'none';
-            headerTitle.textContent = `Lore-Datenbank: ${state.currentProject.title}`;
+            headerTitle.textContent = `${t('nav_lore', 'Lore-Datenbank')}: ${state.currentProject.title}`;
             loadLoreEntries();
             break;
             
         case 'trash':
             document.getElementById('nav-trash').classList.add('active');
-            headerTitle.textContent = 'Papierkorb';
+            headerTitle.textContent = t('trash_title', 'Papierkorb');
             headerAction.style.display = 'none';
             loadTrashedProjects();
             break;
             
         case 'settings':
             document.getElementById('nav-settings').classList.add('active');
-            headerTitle.textContent = 'Einstellungen';
+            headerTitle.textContent = t('nav_settings', 'Einstellungen');
             headerAction.style.display = 'none';
             loadAISettingsInForm();
             break;
@@ -434,6 +439,12 @@ function setupEventListeners() {
     }
     
     document.getElementById('btn-submit-project-stats').addEventListener('click', handleSaveProjectStats);
+
+    // Update checker trigger
+    const btnCheckUpdate = document.getElementById('btn-check-update');
+    if (btnCheckUpdate) {
+        btnCheckUpdate.addEventListener('click', checkAppUpdates);
+    }
 }
 
 // 1. PROJECTS LOGIC
@@ -1765,9 +1776,12 @@ async function loadAISettingsInForm() {
         
         state.aiSettings = settings;
         
-        // General Interval
+        // General Interval and UI language
         const savedInterval = localStorage.getItem('ember_autosave_interval') || '3';
         document.getElementById('setting-autosave-interval').value = savedInterval;
+        
+        const savedUiLang = localStorage.getItem('ember_ui_language') || 'de';
+        document.getElementById('setting-ui-language').value = savedUiLang;
         
         // AI Provider Select
         const providerSelect = document.getElementById('setting-ai-provider');
@@ -1803,6 +1817,16 @@ async function handleSaveSettings() {
     localStorage.setItem('ember_autosave_interval', interval);
     state.autosaveInterval = parseInt(interval, 10) * 1000;
     
+    // Save UI language to localStorage and reload it
+    const uiLang = document.getElementById('setting-ui-language').value;
+    const oldUiLang = localStorage.getItem('ember_ui_language') || 'de';
+    localStorage.setItem('ember_ui_language', uiLang);
+    state.uiLanguage = uiLang;
+    if (uiLang !== oldUiLang) {
+        await loadUiLanguage(uiLang);
+        navigateTo(state.currentView, state.currentProject ? { projectId: state.currentProject.id } : {});
+    }
+    
     // Gather AI settings payload
     const payload = {
         ai_provider: document.getElementById('setting-ai-provider').value,
@@ -1826,7 +1850,7 @@ async function handleSaveSettings() {
         
         if (!response.ok) throw new Error("API request failed");
         
-        showToast('Einstellungen erfolgreich gespeichert!', 'success');
+        showToast(t('settings_save_success', 'Einstellungen erfolgreich gespeichert!'), 'success');
         
     } catch (e) {
         showToast('KI-Einstellungen konnten nicht gespeichert werden: ' + e.message, 'danger');
@@ -2431,4 +2455,116 @@ function makeChaptersDraggable() {
             });
         });
     });
+}
+
+// ==========================================
+// SYSTEM TRANSLATION (I18N) & UPDATE ENGINE
+// ==========================================
+
+// Translation lookup helper
+function t(key, defaultValue) {
+    if (state.translations && state.translations[key]) {
+        return state.translations[key];
+    }
+    return defaultValue;
+}
+
+// Load selected translation JSON file and localize DOM elements
+async function loadUiLanguage(lang) {
+    try {
+        const response = await fetch(`lang/${lang}.json`);
+        if (!response.ok) throw new Error("Localization file not found");
+        state.translations = await response.json();
+        
+        // Translate elements with data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (state.translations[key]) {
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = state.translations[key];
+                } else {
+                    el.textContent = state.translations[key];
+                }
+            }
+        });
+        
+        // Save choice
+        localStorage.setItem('ember_ui_language', lang);
+        state.uiLanguage = lang;
+        
+        // Update document lang
+        document.documentElement.lang = lang;
+        
+    } catch (e) {
+        console.error("Localization error:", e);
+    }
+}
+
+// Check Raw GitHub repository version.json for updates
+async function checkAppUpdates() {
+    const btn = document.getElementById('btn-check-update');
+    const panel = document.getElementById('update-status-panel');
+    const msg = document.getElementById('update-status-msg');
+    const notes = document.getElementById('update-release-notes');
+    const triggerBtn = document.getElementById('btn-trigger-update');
+    
+    btn.disabled = true;
+    btn.textContent = t('about_updating', 'Suche...');
+    panel.style.display = 'flex';
+    msg.textContent = t('about_updating', 'Suche nach neuen Updates...');
+    notes.textContent = '';
+    triggerBtn.style.display = 'none';
+    
+    const currentVersion = "0.1.0";
+    
+    try {
+        // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
+        const response = await fetch('https://raw.githubusercontent.com/MasterBurns/EmberNovels/master/version.json');
+        if (!response.ok) throw new Error("Could not download updates list");
+        const data = await response.json();
+        
+        const latestVersion = data.version || "0.1.0";
+        const isNewer = compareVersions(latestVersion, currentVersion) > 0;
+        
+        if (isNewer) {
+            msg.innerHTML = `<span style="color: var(--color-warning);">⚠️ Update verfügbar! Version ${latestVersion} ist jetzt online.</span>`;
+            notes.textContent = data.release_notes || "Keine Update-Notizen vorhanden.";
+            
+            // Re-bind trigger click
+            const newTriggerBtn = triggerBtn.cloneNode(true);
+            triggerBtn.parentNode.replaceChild(newTriggerBtn, triggerBtn);
+            newTriggerBtn.style.display = 'inline-block';
+            newTriggerBtn.addEventListener('click', () => {
+                showConfirm(
+                    "Update installieren",
+                    `Möchtest du zu GitHub weitergeleitet werden, um Version ${latestVersion} herunterzuladen und zu installieren?`,
+                    () => {
+                        window.open('https://github.com/MasterBurns/EmberNovels/releases', '_blank');
+                    }
+                );
+            });
+        } else {
+            msg.innerHTML = `<span style="color: var(--color-success);">✨ EmberNovels ist auf dem neuesten Stand (Version ${currentVersion}).</span>`;
+            notes.textContent = "Keine neuen Updates verfügbar.";
+        }
+    } catch(err) {
+        msg.innerHTML = `<span style="color: var(--color-danger);">❌ Fehler beim Abfragen der Updates: ${err.message}</span>`;
+        notes.textContent = "Bitte überprüfe deine Internetverbindung oder versuche es später noch einmal.";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = t('about_update_check', 'Nach Updates suchen');
+    }
+}
+
+// Compare semantic versions (e.g. 1.2.3 vs 1.2.4)
+function compareVersions(a, b) {
+    const pa = a.split('.');
+    const pb = b.split('.');
+    for (let i = 0; i < 3; i++) {
+        const na = Number(pa[i] || 0);
+        const nb = Number(pb[i] || 0);
+        if (na > nb) return 1;
+        if (na < nb) return -1;
+    }
+    return 0;
 }
