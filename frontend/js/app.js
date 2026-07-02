@@ -718,6 +718,9 @@ function setEditorMode(mode) {
         btnWysiwyg.classList.remove('active');
         btnMarkdown.classList.add('active');
         state.editor.changeMode('markdown');
+        
+        // Render highlights on switch
+        setTimeout(highlightKeywordsInPreview, 150);
     }
 }
 
@@ -728,30 +731,21 @@ function toggleEditorSplit() {
     if (lorePanel.style.display === 'none') {
         lorePanel.style.display = 'flex';
         workspace.classList.add('editor-layout-split');
-        showLoreQuickview('Erzmagier'); // Mock loading lore article
+        
+        // Set a friendly placeholder if empty
+        const titleEl = document.getElementById('lore-quick-title');
+        if (!titleEl.textContent || titleEl.textContent === 'Begriff') {
+            titleEl.textContent = 'Lore-Quickview';
+            document.getElementById('lore-quick-type').textContent = 'Hinweis';
+            document.getElementById('lore-quick-desc').innerHTML = 
+                '<div style="padding: 12px; color: var(--text-muted); font-size: 13px;">Klicke auf ein markiertes Wort im Text oder markiere ein Wort und klicke auf "Aus Auswahl Lore erstellen", um Details anzuzeigen.</div>';
+        }
+        
+        // Re-run highlights
+        setTimeout(highlightKeywordsInPreview, 150);
     } else {
         lorePanel.style.display = 'none';
         workspace.classList.remove('editor-layout-split');
-    }
-}
-
-function showLoreQuickview(keyword) {
-    document.getElementById('editor-lore-panel').style.display = 'flex';
-    document.querySelector('.editor-workspace').classList.add('editor-layout-split');
-    
-    const title = document.getElementById('lore-quick-title');
-    const type = document.getElementById('lore-quick-type');
-    const desc = document.getElementById('lore-quick-desc');
-    
-    // Mock Lore Articles
-    if (keyword.toLowerCase() === 'erzmagier') {
-        title.textContent = 'Erzmagier';
-        type.textContent = 'Rolle / Rang';
-        desc.textContent = 'Der höchste spirituelle und magische Titel im Reich Ember. Ein Erzmagier leitet das Konzil der Flamme und wacht über die Einhaltung des Codex Arcanum. Nur eine Person pro Epoche kann den Titel tragen.';
-    } else {
-        title.textContent = keyword;
-        type.textContent = 'Unbekannter Begriff';
-        desc.textContent = `Dieser Lore-Artikel für "${keyword}" wird in Kürze implementiert, sobald das Wiki voll funktionsfähig ist.`;
     }
 }
 
@@ -1320,43 +1314,72 @@ function highlightKeywordsInPreview() {
     const previewContainer = document.querySelector('#editor-container .toastui-editor-md-preview .toastui-editor-contents');
     if (!previewContainer || !state.loreList || state.loreList.length === 0) return;
     
-    highlightKeywords(previewContainer, state.loreList);
+    // Clean up any previous highlights to avoid nested elements
+    const wrappers = previewContainer.querySelectorAll('.smart-keyword-wrapper');
+    wrappers.forEach(w => {
+        const parent = w.parentNode;
+        if (parent) {
+            while (w.firstChild) {
+                parent.insertBefore(w.firstChild, w);
+            }
+            parent.removeChild(w);
+        }
+    });
+    
+    // Re-merge adjacent text nodes that were split by unwrapping
+    previewContainer.normalize();
+    
+    // Build keywords list
+    const allKeywords = [];
+    state.loreList.forEach(item => {
+        item.keywords.forEach(kw => {
+            if (kw.trim()) {
+                allKeywords.push({ keyword: kw.trim(), loreId: item.id, item: item });
+            }
+        });
+    });
+    if (allKeywords.length === 0) return;
+    
+    // Sort keywords by length desc so longer words match first (e.g. "Erzmagier" before "Erz")
+    allKeywords.sort((a, b) => b.keyword.length - a.keyword.length);
+    
+    // Build unified RegExp for single-pass replacement
+    const regexParts = allKeywords.map(kwObj => escapeRegExp(kwObj.keyword));
+    const regex = new RegExp(`(?<![a-zA-Z0-9äöüÄÖÜß])(${regexParts.join('|')})(?![a-zA-Z0-9äöüÄÖÜß])`, 'gi');
+    
+    highlightKeywords(previewContainer, regex, allKeywords);
 }
 
-function highlightKeywords(node, loreList) {
+function highlightKeywords(node, regex, allKeywords) {
     if (node.nodeType === Node.TEXT_NODE) {
         const text = node.nodeValue;
-        let newHtml = escapeHtml(text);
+        if (!text.trim()) return;
+        
         let matched = false;
-        
-        const allKeywords = [];
-        loreList.forEach(item => {
-            item.keywords.forEach(kw => {
-                if (kw.trim()) {
-                    allKeywords.push({ keyword: kw.trim(), loreId: item.id, item: item });
-                }
-            });
-        });
-        // Sort keywords by length desc
-        allKeywords.sort((a, b) => b.keyword.length - a.keyword.length);
-        
-        allKeywords.forEach(kwObj => {
-            const kw = kwObj.keyword;
-            const regex = new RegExp(`(?<![a-zA-Z0-9äöüÄÖÜß])(${escapeRegExp(kw)})(?![a-zA-Z0-9äöüÄÖÜß])`, 'gi');
-            if (regex.test(newHtml)) {
-                newHtml = newHtml.replace(regex, `<span class="smart-keyword" data-lore-id="${kwObj.loreId}" title="${escapeHtml(kwObj.item.short_description)}">$1</span>`);
+        const newHtml = escapeHtml(text).replace(regex, (match) => {
+            const matchLower = match.toLowerCase();
+            const kwObj = allKeywords.find(k => k.keyword.toLowerCase() === matchLower);
+            if (kwObj) {
                 matched = true;
+                return `<span class="smart-keyword" data-lore-id="${kwObj.loreId}" title="${escapeHtml(kwObj.item.short_description || '')}">${escapeHtml(match)}</span>`;
             }
+            return match;
         });
         
         if (matched) {
             const span = document.createElement('span');
+            span.className = 'smart-keyword-wrapper';
             span.innerHTML = newHtml;
             node.parentNode.replaceChild(span, node);
         }
-    } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SPAN' && node.nodeName !== 'A' && !node.classList.contains('smart-keyword')) {
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const name = node.nodeName.toUpperCase();
+        // Skip links, existing smart-keyword spans, inputs, scripts, style sheets
+        if (name === 'A' || name === 'TEXTAREA' || name === 'INPUT' || name === 'SCRIPT' || name === 'STYLE' || node.classList.contains('smart-keyword')) {
+            return;
+        }
         const children = Array.from(node.childNodes);
-        children.forEach(child => highlightKeywords(child, loreList));
+        children.forEach(child => highlightKeywords(child, regex, allKeywords));
     }
 }
 
