@@ -13,7 +13,8 @@ let state = {
     lastSavedContent: "",
     editor: null,
     loreList: [],
-    editingLoreId: null
+    editingLoreId: null,
+    detectedKeywordsTimeout: null
 };
 
 // Base API URL
@@ -310,6 +311,14 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Bind export buttons
+    document.querySelectorAll('.btn-export').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const format = e.currentTarget.getAttribute('data-format');
+            handleExport(format);
+        });
+    });
 }
 
 // 1. PROJECTS LOGIC
@@ -567,6 +576,10 @@ async function openEditor(projectId, chapterId) {
                 // Highlight keywords in preview pane
                 clearTimeout(state.highlightTimeout);
                 state.highlightTimeout = setTimeout(highlightKeywordsInPreview, 300);
+                
+                // Update detected keywords list in the side panel
+                clearTimeout(state.detectedKeywordsTimeout);
+                state.detectedKeywordsTimeout = setTimeout(updateDetectedKeywords, 400);
             });
         }
         
@@ -577,8 +590,11 @@ async function openEditor(projectId, chapterId) {
         // Load chapter content
         state.editor.setMarkdown(data.content);
         
-        // Initial highlight
-        setTimeout(highlightKeywordsInPreview, 100);
+        // Initial highlight & scanning
+        setTimeout(() => {
+            highlightKeywordsInPreview();
+            updateDetectedKeywords();
+        }, 150);
 
         // If recovery available, show warning banner
         if (data.has_recovery) {
@@ -734,15 +750,19 @@ function toggleEditorSplit() {
         
         // Set a friendly placeholder if empty
         const titleEl = document.getElementById('lore-quick-title');
-        if (!titleEl.textContent || titleEl.textContent === 'Begriff') {
+        if (!titleEl.textContent || titleEl.textContent === 'Begriff' || titleEl.textContent === 'Lore-Quickview') {
             titleEl.textContent = 'Lore-Quickview';
             document.getElementById('lore-quick-type').textContent = 'Hinweis';
             document.getElementById('lore-quick-desc').innerHTML = 
                 '<div style="padding: 12px; color: var(--text-muted); font-size: 13px;">Klicke auf ein markiertes Wort im Text oder markiere ein Wort und klicke auf "Aus Auswahl Lore erstellen", um Details anzuzeigen.</div>';
+            document.getElementById('btn-lore-quick-open-wiki').style.display = 'none';
         }
         
-        // Re-run highlights
-        setTimeout(highlightKeywordsInPreview, 150);
+        // Re-run highlights & scanning
+        setTimeout(() => {
+            highlightKeywordsInPreview();
+            updateDetectedKeywords();
+        }, 150);
     } else {
         lorePanel.style.display = 'none';
         workspace.classList.remove('editor-layout-split');
@@ -1291,6 +1311,16 @@ function showLoreQuickviewById(loreId) {
         initialValue: entry.description || entry.short_description || '_Keine Beschreibung vorhanden._',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
     });
+    
+    // Show and wire up "Im Wiki öffnen" button
+    const openWikiBtn = document.getElementById('btn-lore-quick-open-wiki');
+    if (openWikiBtn) {
+        openWikiBtn.style.display = 'block';
+        openWikiBtn.onclick = () => {
+            navigateTo('lore');
+            setTimeout(() => showLoreDetail(loreId), 50);
+        };
+    }
 }
 
 function translateCategory(cat) {
@@ -1386,3 +1416,93 @@ function highlightKeywords(node, regex, allKeywords) {
 // Expose openLoreModal and deleteLoreEntry globally so onclick in generated HTML works
 window.openLoreModal = openLoreModal;
 window.deleteLoreEntry = deleteLoreEntry;
+
+// ==========================================
+// C. EXPORT & DETECTED KEYWORDS ENGINE
+// ==========================================
+
+async function handleExport(format) {
+    if (!state.currentProject) return;
+    
+    showToast(`Exportiere Buch als ${format.toUpperCase()}...`, 'info');
+    
+    try {
+        const url = `${API_URL}/projects/${state.currentProject.id}/export/${format}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.detail || "Export fehlgeschlagen.");
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = downloadUrl;
+        
+        // Extract filename from content-disposition header if available
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `${state.currentProject.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.${format}`;
+        if (contentDisposition) {
+            const matches = /filename="?([^"]+)"?/.exec(contentDisposition);
+            if (matches && matches[1]) {
+                filename = matches[1];
+            }
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        showToast(`Export als ${format.toUpperCase()} erfolgreich abgeschlossen!`, 'success');
+    } catch (e) {
+        showToast(`Fehler beim Export: ${e.message}`, 'danger');
+    }
+}
+
+function updateDetectedKeywords() {
+    const detectedSection = document.getElementById('lore-quick-detected-section');
+    const detectedList = document.getElementById('lore-quick-detected-list');
+    if (!detectedSection || !detectedList || !state.editor || !state.loreList || state.loreList.length === 0) {
+        if (detectedSection) detectedSection.style.display = 'none';
+        return;
+    }
+    
+    const content = state.editor.getMarkdown().toLowerCase();
+    const detected = [];
+    
+    state.loreList.forEach(item => {
+        const hasKeyword = item.keywords.some(kw => {
+            if (!kw.trim()) return false;
+            const regex = new RegExp(`(?<![a-zA-Z0-9äöüÄÖÜß])${escapeRegExp(kw.toLowerCase())}(?![a-zA-Z0-9äöüÄÖÜß])`, 'i');
+            return regex.test(content);
+        });
+        if (hasKeyword) {
+            detected.push(item);
+        }
+    });
+    
+    if (detected.length > 0) {
+        detectedSection.style.display = 'block';
+        detectedList.innerHTML = '';
+        detected.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-secondary';
+            btn.style.padding = '4px 8px';
+            btn.style.fontSize = '12px';
+            btn.style.borderRadius = '4px';
+            btn.style.border = '1px solid var(--border-color)';
+            btn.style.backgroundColor = 'var(--bg-base)';
+            btn.style.color = 'var(--text-primary)';
+            btn.style.cursor = 'pointer';
+            btn.textContent = item.name;
+            btn.addEventListener('click', () => showLoreQuickviewById(item.id));
+            detectedList.appendChild(btn);
+        });
+    } else {
+        detectedSection.style.display = 'none';
+    }
+}

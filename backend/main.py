@@ -7,6 +7,7 @@ from backend.config import APP_NAME, API_PREFIX
 from backend.routes.projects import router as projects_router
 from backend.routes.chapters import router as chapters_router
 from backend.routes.lore import router as lore_router
+from backend.routes.exports import router as exports_router
 
 app = FastAPI(title=APP_NAME, description="Local web-based writing software")
 
@@ -23,6 +24,7 @@ app.add_middleware(
 app.include_router(projects_router, prefix=API_PREFIX)
 app.include_router(chapters_router, prefix=API_PREFIX)
 app.include_router(lore_router, prefix=API_PREFIX)
+app.include_router(exports_router, prefix=API_PREFIX)
 
 @app.get("/")
 def read_root():

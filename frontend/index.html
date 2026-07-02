@@ -139,8 +139,22 @@
                                     Deine Enzyklopädie für Charaktere, Schauplätze und Begriffe.
                                 </p>
                                 <button id="btn-view-lore" class="btn btn-secondary" style="width: 100%;">
-                                    📖 Wiki öffnen (Stub)
+                                    📖 Wiki öffnen
                                 </button>
+                            </div>
+
+                            <div class="list-container" style="margin-top: 16px;">
+                                <h3 class="list-title" style="margin-bottom: 16px;">Buch exportieren</h3>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                                    Exportiere das gesamte Manuskript in dein Wunschformat.
+                                </p>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button class="btn btn-secondary btn-export" data-format="txt" style="text-align: left; padding: 10px 14px; font-size: 13px;">📝 Textdatei (.txt)</button>
+                                    <button class="btn btn-secondary btn-export" data-format="html" style="text-align: left; padding: 10px 14px; font-size: 13px;">🌐 HTML-Dokument (.html)</button>
+                                    <button class="btn btn-secondary btn-export" data-format="docx" style="text-align: left; padding: 10px 14px; font-size: 13px;">📄 Word-Dokument (.docx)</button>
+                                    <button class="btn btn-secondary btn-export" data-format="pdf" style="text-align: left; padding: 10px 14px; font-size: 13px;">📕 PDF-Dokument (.pdf)</button>
+                                    <button class="btn btn-secondary btn-export" data-format="epub" style="text-align: left; padding: 10px 14px; font-size: 13px;">📖 eBook-Datei (.epub)</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -185,13 +199,21 @@
                                 <h3 style="font-size: 15px; font-weight: 600;">Lore-Quickview</h3>
                                 <button id="btn-close-lore-panel" class="modal-close">×</button>
                             </div>
-                            <div class="lore-panel-body">
-                                <h4 id="lore-quick-title" style="margin-bottom: 8px;">Begriff</h4>
-                                <span style="font-size: 11px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px;" id="lore-quick-type">Charakter</span>
-                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
-                                <p id="lore-quick-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
-                                    Hier wird der Lore-Text geladen, wenn du auf ein Keyword klickst.
-                                </p>
+                            <div class="lore-panel-body" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                                <!-- Section for detected keywords in this chapter -->
+                                <div id="lore-quick-detected-section" style="display: none; background-color: var(--bg-base); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+                                    <strong style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 8px;">Erkannte Begriffe:</strong>
+                                    <div id="lore-quick-detected-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                                </div>
+                                <div id="lore-quick-detail-section">
+                                    <h4 id="lore-quick-title" style="margin-bottom: 8px;">Begriff</h4>
+                                    <span style="font-size: 11px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px;" id="lore-quick-type">Charakter</span>
+                                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 12px 0;">
+                                    <div id="lore-quick-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
+                                        Hier wird der Lore-Text geladen, wenn du auf ein Keyword klickst.
+                                    </div>
+                                    <button id="btn-lore-quick-open-wiki" class="btn btn-secondary" style="width: 100%; margin-top: 16px; font-size: 12px; display: none;">📖 Im Wiki öffnen</button>
+                                </div>
                             </div>
                         </div>
                     </div>
