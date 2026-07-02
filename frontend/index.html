@@ -208,14 +208,14 @@
                             </div>
                             <div class="editor-toolbar" style="flex-wrap: wrap; gap: 8px;">
                                 <div class="toolbar-group">
-                                    <button id="btn-editor-view-wysiwyg" class="toolbar-btn active">📝 Rich-Text</button>
-                                    <button id="btn-editor-view-markdown" class="toolbar-btn">💻 Markdown</button>
-                                    <button id="btn-editor-split" class="toolbar-btn">⚡ Split-Screen</button>
-                                    <button id="btn-editor-create-lore" class="toolbar-btn">📖 Aus Auswahl Lore erstellen</button>
+                                    <button id="btn-editor-view-wysiwyg" class="toolbar-btn active" data-i18n="editor_view_wysiwyg">📝 Rich-Text</button>
+                                    <button id="btn-editor-view-markdown" class="toolbar-btn" data-i18n="editor_view_markdown">💻 Markdown</button>
+                                    <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
+                                    <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
                                 <div class="toolbar-group" style="gap: 6px;">
-                                    <button id="btn-ai-correct" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Markierten Text lektorieren/korrigieren">✍️ Lektorat</button>
-                                    <button id="btn-ai-continue" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Text an Cursorposition weiterschreiben">🤖 Weiterschreiben</button>
+                                    <button id="btn-ai-correct" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Markierten Text lektorieren/korrigieren" data-i18n="editor_ai_proofread">✍️ Lektorat</button>
+                                    <button id="btn-ai-continue" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Text an Cursorposition weiterschreiben" data-i18n="editor_ai_continue">🤖 Weiterschreiben</button>
                                 </div>
                                 <div class="toolbar-group" style="align-items: center; margin-left: auto;">
                                     <span id="editor-word-count" style="font-size: 13px; color: var(--text-muted); margin-right: 12px;">Wörter: 0</span>
@@ -223,7 +223,7 @@
                                         <option value="original">Deutsch (Original)</option>
                                     </select>
                                     <button id="btn-editor-translate-now" class="toolbar-btn" style="margin-right: 12px; display: none; padding: 4px 8px;" title="Kapitel jetzt neu aus dem Original übersetzen">🔄 Übersetzen</button>
-                                    <button id="btn-editor-save" class="btn" style="padding: 6px 16px;">Speichern (Strg+S)</button>
+                                    <button id="btn-editor-save" class="btn" style="padding: 6px 16px;" data-i18n="editor_btn_save">Speichern (Strg+S)</button>
                                 </div>
                             </div>
                             
@@ -264,16 +264,16 @@
                         <div class="details-sidebar" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="list-container">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <h3 class="list-title">Einträge</h3>
-                                    <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">+ Neu</button>
+                                    <h3 class="list-title" data-i18n="lore_sidebar_title">Einträge</h3>
+                                    <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="lore_btn_new">+ Neu</button>
                                 </div>
-                                <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." style="margin-bottom: 12px;">
+                                <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." style="margin-bottom: 12px;" data-i18n="lore_search_placeholder">
                                 <select id="wiki-filter-category" class="form-input" style="margin-bottom: 16px; height: auto;">
-                                    <option value="all">Alle Kategorien</option>
-                                    <option value="character">Charaktere</option>
-                                    <option value="location">Orte / Schauplätze</option>
-                                    <option value="item">Objekte / Gegenstände</option>
-                                    <option value="lore">Begriffe / Sonstiges</option>
+                                    <option value="all" data-i18n="lore_cat_all">Alle Kategorien</option>
+                                    <option value="character" data-i18n="lore_cat_character">Charaktere</option>
+                                    <option value="location" data-i18n="lore_cat_location">Orte / Schauplätze</option>
+                                    <option value="item" data-i18n="lore_cat_item">Objekte / Gegenstände</option>
+                                    <option value="lore" data-i18n="lore_cat_lore">Begriffe / Sonstiges</option>
                                 </select>
                                 <div id="wiki-list" class="list-items" style="max-height: 50vh; overflow-y: auto;">
                                     <!-- Lore items dynamically loaded -->
@@ -287,7 +287,7 @@
                                 <!-- Will render either empty state or active lore article -->
                                 <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
                                     <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
-                                    <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
+                                    <p data-i18n="lore_empty_state_text">Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
                                 </div>
                             </div>
                         </div>
@@ -297,14 +297,14 @@
                 <!-- 4. TRASH VIEW -->
                 <section id="view-trash" class="view-section">
                     <div class="section-header">
-                        <h2 class="section-title">Papierkorb</h2>
-                        <button id="btn-empty-trash" class="btn btn-secondary btn-danger" style="display: none;">Papierkorb leeren</button>
+                        <h2 class="section-title" data-i18n="trash_title">Papierkorb</h2>
+                        <button id="btn-empty-trash" class="btn btn-secondary btn-danger" style="display: none;" data-i18n="trash_empty_btn">Papierkorb leeren</button>
                     </div>
                     <div id="trash-grid" class="projects-grid">
                         <!-- Soft-deleted projects will load here -->
                     </div>
                     <div id="trash-empty-msg" style="text-align: center; color: var(--text-muted); padding: 48px; border: 1px dashed var(--border-color); border-radius: 12px;">
-                        Der Papierkorb ist leer.
+                        <span data-i18n="trash_empty_msg">Der Papierkorb ist leer.</span>
                     </div>
                 </section>
 
@@ -413,7 +413,7 @@
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.0</strong></span>
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.0.1</strong></span>
                                 <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
                             </div>
                             <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">
@@ -437,20 +437,20 @@
     <div id="modal-project" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h3 class="modal-title">Neues Projekt erstellen</h3>
+                <h3 class="modal-title" data-i18n="modal_project_create_title">Neues Projekt erstellen</h3>
                 <button class="modal-close" onclick="closeModal('modal-project')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label" for="project-title">Titel des Romans</label>
+                    <label class="form-label" for="project-title" data-i18n="modal_project_title_lbl">Titel des Romans</label>
                     <input type="text" id="project-title" class="form-input" placeholder="z.B. Die Flamme von Ember">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="project-author">Autor / Autorin</label>
+                    <label class="form-label" for="project-author" data-i18n="modal_project_author_lbl">Autor / Autorin</label>
                     <input type="text" id="project-author" class="form-input" placeholder="z.B. Johanna Doe">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="project-language">Original-Sprache (Hauptsprache)</label>
+                    <label class="form-label" for="project-language" data-i18n="modal_project_lang_lbl">Original-Sprache (Hauptsprache)</label>
                     <select id="project-language" class="form-input" style="height: auto;">
                         <option value="de">🇩🇪 Deutsch</option>
                         <option value="en">🇬🇧 Englisch</option>
@@ -460,13 +460,13 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="project-description">Kurzbeschreibung (Optional)</label>
+                    <label class="form-label" for="project-description" data-i18n="modal_project_desc_lbl">Kurzbeschreibung (Optional)</label>
                     <textarea id="project-description" class="form-textarea" rows="3" placeholder="Ein epischer Fantasyroman über..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-project')">Abbrechen</button>
-                <button id="btn-submit-project" class="btn">Erstellen</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-project')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-project" class="btn" data-i18n="btn_create">Erstellen</button>
             </div>
         </div>
     </div>
@@ -475,18 +475,18 @@
     <div id="modal-chapter" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h3 class="modal-title">Neues Kapitel erstellen</h3>
+                <h3 class="modal-title" data-i18n="modal_chapter_create_title">Neues Kapitel erstellen</h3>
                 <button class="modal-close" onclick="closeModal('modal-chapter')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label" for="chapter-title">Kapiteltitel</label>
+                    <label class="form-label" for="chapter-title" data-i18n="modal_chapter_title_lbl">Kapiteltitel</label>
                     <input type="text" id="chapter-title" class="form-input" placeholder="z.B. Kapitel 1: Ein unerwarteter Besuch">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-chapter')">Abbrechen</button>
-                <button id="btn-submit-chapter" class="btn">Kapitel anlegen</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-chapter')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-chapter" class="btn" data-i18n="btn_create">Kapitel anlegen</button>
             </div>
         </div>
     </div>
@@ -495,45 +495,45 @@
     <div id="modal-lore" class="modal-overlay">
         <div class="modal" style="max-width: 600px; width: 90%;">
             <div class="modal-header">
-                <h3 class="modal-title" id="lore-modal-title">Neuer Lore-Eintrag</h3>
+                <h3 class="modal-title" id="lore-modal-title" data-i18n="lore_btn_new">Neuer Lore-Eintrag</h3>
                 <button class="modal-close" onclick="closeModal('modal-lore')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label" for="lore-name">Name des Eintrags</label>
+                    <label class="form-label" for="lore-name" data-i18n="lore_name_lbl">Name des Eintrags</label>
                     <input type="text" id="lore-name" class="form-input" placeholder="z.B. Erzmagier oder Flammenwüste">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="lore-category">Kategorie</label>
+                    <label class="form-label" for="lore-category" data-i18n="lore_category_lbl">Kategorie</label>
                     <select id="lore-category" class="form-input" style="height: auto;">
-                        <option value="character">Charakter</option>
-                        <option value="location">Ort / Schauplatz</option>
-                        <option value="item">Objekt / Gegenstand</option>
-                        <option value="lore">Begriffe / Sonstiges</option>
+                        <option value="character" data-i18n="lore_cat_character">Charakter</option>
+                        <option value="location" data-i18n="lore_cat_location">Ort / Schauplatz</option>
+                        <option value="item" data-i18n="lore_cat_item">Objekt / Gegenstand</option>
+                        <option value="lore" data-i18n="lore_cat_lore">Begriffe / Sonstiges</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Zugeordnete Projekte (Gilt für...)</label>
+                    <label class="form-label" data-i18n="lore_projects_lbl">Zugeordnete Projekte (Gilt für...)</label>
                     <div id="lore-projects-checkboxes" style="display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base);">
                         <!-- Dynamic project checkboxes populated by JS -->
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="lore-keywords">Schlüsselwörter (Kommagetrennt für Smart-Hover)</label>
+                    <label class="form-label" for="lore-keywords" data-i18n="lore_keywords_lbl">Schlüsselwörter (Kommagetrennt für Smart-Hover)</label>
                     <input type="text" id="lore-keywords" class="form-input" placeholder="z.B. Erzmagier, Konzil der Flamme">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="lore-short-desc">Kurzbeschreibung (Tooltip)</label>
+                    <label class="form-label" for="lore-short-desc" data-i18n="lore_short_desc_lbl">Kurzbeschreibung (Tooltip)</label>
                     <input type="text" id="lore-short-desc" class="form-input" placeholder="z.B. Der höchste spirituelle Rang im Reich Ember.">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="lore-desc">Beschreibung (Vollständiger Artikel - Markdown möglich)</label>
+                    <label class="form-label" for="lore-desc" data-i18n="lore_desc_lbl">Beschreibung (Vollständiger Artikel - Markdown möglich)</label>
                     <textarea id="lore-desc" class="form-textarea" rows="8" placeholder="Beschreibe die Herkunft, Fähigkeiten, Bedeutung..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-lore')">Abbrechen</button>
-                <button id="btn-submit-lore" class="btn">Speichern</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-lore')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-lore" class="btn" data-i18n="btn_save">Speichern</button>
             </div>
         </div>
     </div>
@@ -552,12 +552,12 @@
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <button id="btn-merge-select-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Alles von Sicherung übernehmen</button>
-                    <button id="btn-merge-deselect-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Alles ablehnen (Original behalten)</button>
+                    <button id="btn-merge-select-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="btn_merge_keep_all">Alles von Sicherung übernehmen</button>
+                    <button id="btn-merge-deselect-all" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="btn_merge_discard_all">Alles ablehnen (Original behalten)</button>
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" onclick="closeModal('modal-merge')">Abbrechen</button>
-                    <button id="btn-merge-submit" class="btn">Auswahl anwenden</button>
+                    <button class="btn btn-secondary" onclick="closeModal('modal-merge')" data-i18n="btn_cancel">Abbrechen</button>
+                    <button id="btn-merge-submit" class="btn" data-i18n="btn_merge_apply">Auswahl anwenden</button>
                 </div>
             </div>
         </div>
@@ -567,12 +567,12 @@
     <div id="modal-export" class="modal-overlay">
         <div class="modal" style="max-width: 500px; width: 90%;">
             <div class="modal-header">
-                <h3 class="modal-title">Buch exportieren</h3>
+                <h3 class="modal-title" data-i18n="modal_export_title">Buch exportieren</h3>
                 <button class="modal-close" onclick="closeModal('modal-export')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label" for="export-format-select">Export-Format</label>
+                    <label class="form-label" for="export-format-select" data-i18n="modal_export_format_lbl">Export-Format</label>
                     <select id="export-format-select" class="form-input" style="height: auto;">
                         <option value="txt">📝 Textdatei (.txt)</option>
                         <option value="html">🌐 HTML-Dokument (.html)</option>
@@ -583,10 +583,10 @@
                 </div>
                 <div class="form-group">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label class="form-label" style="margin-bottom: 0;">Kapitel auswählen</label>
+                        <label class="form-label" style="margin-bottom: 0;" data-i18n="modal_export_chapters_lbl">Kapitel auswählen</label>
                         <div style="display: flex; gap: 8px;">
-                            <button id="btn-export-select-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;">Alle</button>
-                            <button id="btn-export-deselect-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;">Keine</button>
+                            <button id="btn-export-select-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" data-i18n="btn_select_all">Alle</button>
+                            <button id="btn-export-deselect-all" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" data-i18n="btn_deselect_all">Keine</button>
                         </div>
                     </div>
                     <div id="export-chapters-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base);">
@@ -595,8 +595,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-export')">Abbrechen</button>
-                <button id="btn-submit-export" class="btn">Export starten</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-export')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-export" class="btn" data-i18n="btn_export_start">Export starten</button>
             </div>
         </div>
     </div>
@@ -605,21 +605,21 @@
     <div id="modal-language" class="modal-overlay">
         <div class="modal" style="max-width: 400px; width: 90%;">
             <div class="modal-header">
-                <h3 class="modal-title">Neuer Sprachzweig</h3>
+                <h3 class="modal-title" data-i18n="modal_branch_create_title">Neuer Sprachzweig</h3>
                 <button class="modal-close" onclick="closeModal('modal-language')">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label" for="new-language-code">Sprachcode (z.B. en, fr, es, it)</label>
+                    <label class="form-label" for="new-language-code" data-i18n="modal_branch_lang_lbl">Sprachcode (z.B. en, fr, es, it)</label>
                     <input type="text" id="new-language-code" class="form-input" placeholder="en" maxlength="5">
-                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;" data-i18n="modal_branch_hint">
                         Erstellt eine Kopie aller Kapitel und übersetzt sie automatisch im Hintergrund.
                     </small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-language')">Abbrechen</button>
-                <button id="btn-submit-language" class="btn">Zweig anlegen</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-language')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-language" class="btn" data-i18n="btn_add_branch">Zweig anlegen</button>
             </div>
         </div>
     </div>
@@ -631,15 +631,15 @@
     <div id="modal-confirm" class="modal-overlay" style="z-index: 120;">
         <div class="modal" style="max-width: 400px; width: 90%;">
             <div class="modal-header">
-                <h3 id="confirm-title" class="modal-title">Bestätigung</h3>
+                <h3 id="confirm-title" class="modal-title" data-i18n="modal_confirm_title">Bestätigung</h3>
                 <button class="modal-close" onclick="closeModal('modal-confirm')">×</button>
             </div>
-            <div id="confirm-body" class="modal-body" style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">
+            <div id="confirm-body" class="modal-body" style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;" data-i18n="modal_confirm_body">
                 Möchtest du diese Aktion wirklich durchführen?
             </div>
             <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button id="btn-confirm-cancel" class="btn btn-secondary" onclick="closeModal('modal-confirm')">Abbrechen</button>
-                <button id="btn-confirm-submit" class="btn">Fortfahren</button>
+                <button id="btn-confirm-cancel" class="btn btn-secondary" onclick="closeModal('modal-confirm')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-confirm-submit" class="btn" data-i18n="btn_continue">Fortfahren</button>
             </div>
         </div>
     </div>
@@ -647,28 +647,28 @@
     <!-- MODAL: IMPORT WIZARD -->
     <div id="modal-import" class="modal-overlay" style="z-index: 105;">
         <div class="modal" style="max-width: 550px; width: 90%;">
-            <div class="modal-header">
-                <h3 class="modal-title">Projekte & Kapitel importieren</h3>
+             <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modal_import_title">Projekte & Kapitel importieren</h3>
                 <button class="modal-close" onclick="closeModal('modal-import')">×</button>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 20px;">
                 <!-- Tab headers -->
                 <div style="display: flex; border-bottom: 1px solid var(--border-color); gap: 16px; padding-bottom: 8px;">
-                    <button id="tab-import-folder" class="toolbar-btn active" style="font-weight: 500;">📂 Ordner importieren</button>
-                    <button id="tab-import-file" class="toolbar-btn" style="font-weight: 500;">📄 Einzelne Datei (.md)</button>
+                    <button id="tab-import-folder" class="toolbar-btn active" style="font-weight: 500;" data-i18n="tab_import_folder">📂 Ordner importieren</button>
+                    <button id="tab-import-file" class="toolbar-btn" style="font-weight: 500;" data-i18n="tab_import_file">📄 Einzelne Datei (.md)</button>
                 </div>
                 
                 <!-- Tab 1: Folder Import -->
                 <div id="panel-import-folder" style="display: flex; flex-direction: column; gap: 16px;">
-                    <p style="font-size: 13px; color: var(--text-secondary);">
+                    <p style="font-size: 13px; color: var(--text-secondary);" data-i18n="modal_import_folder_hint">
                         Wähle einen lokalen Ordner aus. Es wird ein neues Buch-Projekt mit dem Namen des Ordners erstellt und alle darin liegenden <code>.md</code>-Dateien als Kapitel importiert.
                     </p>
                     <div class="form-group">
-                        <label class="form-label" for="import-folder-picker">Ordner auswählen</label>
+                        <label class="form-label" for="import-folder-picker" data-i18n="modal_import_folder_select_lbl">Ordner auswählen</label>
                         <input type="file" id="import-folder-picker" class="form-input" webkitdirectory directory multiple style="padding: 10px;">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="import-folder-lang">Original-Sprache des neuen Projekts</label>
+                        <label class="form-label" for="import-folder-lang" data-i18n="modal_project_lang_lbl">Original-Sprache des neuen Projekts</label>
                         <select id="import-folder-lang" class="form-input" style="height: auto;">
                             <option value="de">🇩🇪 Deutsch</option>
                             <option value="en">🇬🇧 Englisch</option>
@@ -681,24 +681,24 @@
                 
                 <!-- Tab 2: Single File Import -->
                 <div id="panel-import-file" style="display: none; flex-direction: column; gap: 16px;">
-                    <p style="font-size: 13px; color: var(--text-secondary);">
+                    <p style="font-size: 13px; color: var(--text-secondary);" data-i18n="modal_import_file_hint">
                         Wähle eine einzelne <code>.md</code>-Datei aus und entscheide, wie sie importiert werden soll.
                     </p>
                     <div class="form-group">
-                        <label class="form-label" for="import-file-picker">Datei auswählen (.md)</label>
+                        <label class="form-label" for="import-file-picker" data-i18n="modal_import_file_select_lbl">Datei auswählen (.md)</label>
                         <input type="file" id="import-file-picker" class="form-input" accept=".md" style="padding: 10px;">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Import-Modus</label>
+                        <label class="form-label" data-i18n="modal_import_mode_lbl">Import-Modus</label>
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
                             <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
                                 <input type="radio" name="import-file-mode" value="project" checked style="width: auto;">
-                                <span><strong>Als neues Buch-Projekt importieren</strong> (Splittet die Datei anhand von Überschriften in Kapitel auf)</span>
+                                <span data-i18n="modal_import_mode_project"><strong>Als neues Buch-Projekt importieren</strong> (Splittet die Datei anhand von Überschriften in Kapitel auf)</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
                                 <input type="radio" name="import-file-mode" value="chapter" style="width: auto;">
-                                <span><strong>Als neues Kapitel in bestehendes Projekt importieren</strong></span>
+                                <span data-i18n="modal_import_mode_chapter"><strong>Als neues Kapitel in bestehendes Projekt importieren</strong></span>
                             </label>
                         </div>
                     </div>
@@ -706,7 +706,7 @@
                     <!-- Mode conditional panels -->
                     <div id="panel-import-file-new-project" style="display: flex; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px;">
                         <div class="form-group">
-                            <label class="form-label" for="import-file-lang">Original-Sprache des neuen Projekts</label>
+                            <label class="form-label" for="import-file-lang" data-i18n="modal_project_lang_lbl">Original-Sprache des neuen Projekts</label>
                             <select id="import-file-lang" class="form-input" style="height: auto;">
                                 <option value="de">🇩🇪 Deutsch</option>
                                 <option value="en">🇬🇧 Englisch</option>
@@ -719,7 +719,7 @@
                     
                     <div id="panel-import-file-exist-project" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px;">
                         <div class="form-group">
-                            <label class="form-label" for="import-file-target-project">Ziel-Projekt auswählen</label>
+                            <label class="form-label" for="import-file-target-project" data-i18n="modal_import_target_project_lbl">Ziel-Projekt auswählen</label>
                             <select id="import-file-target-project" class="form-input" style="height: auto;">
                                 <!-- Populated dynamically -->
                             </select>
@@ -728,8 +728,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-import')">Abbrechen</button>
-                <button id="btn-submit-import-wizard" class="btn">Import starten</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-import')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-import-wizard" class="btn" data-i18n="btn_import_start">Import starten</button>
             </div>
         </div>
     </div>
@@ -738,22 +738,22 @@
     <div id="modal-project-stats" class="modal-overlay" style="z-index: 105;">
         <div class="modal" style="max-width: 400px; width: 90%;">
             <div class="modal-header">
-                <h3 class="modal-title">Projekt-Ziele anpassen</h3>
+                <h3 class="modal-title" data-i18n="modal_stats_title">Projekt-Ziele anpassen</h3>
                 <button class="modal-close" onclick="closeModal('modal-project-stats')">×</button>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
                 <div class="form-group">
-                    <label class="form-label" for="stats-word-goal">Ziel-Wortanzahl (Gesamt)</label>
+                    <label class="form-label" for="stats-word-goal" data-i18n="modal_stats_word_goal_lbl">Ziel-Wortanzahl (Gesamt)</label>
                     <input type="number" id="stats-word-goal" class="form-input" min="0" value="50000">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="stats-daily-goal">Tägliches Schreibziel (Wörter)</label>
+                    <label class="form-label" for="stats-daily-goal" data-i18n="modal_stats_daily_goal_lbl">Tägliches Schreibziel (Wörter)</label>
                     <input type="number" id="stats-daily-goal" class="form-input" min="0" value="500">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-project-stats')">Abbrechen</button>
-                <button id="btn-submit-project-stats" class="btn">Speichern</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-project-stats')" data-i18n="btn_cancel">Abbrechen</button>
+                <button id="btn-submit-project-stats" class="btn" data-i18n="btn_save">Speichern</button>
             </div>
         </div>
     </div>

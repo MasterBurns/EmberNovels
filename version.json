@@ -1,4 +1,4 @@
 {
-    "version": "0.1.0",
-    "release_notes": "Version 0.1.0 Initial Release.\n- Projektverwaltung mit Soft-Delete (Papierkorb)\n- Editor mit Markdown-Vorschau und automatischer Lore-Highlighting\n- Export-Assistent (PDF, EPUB, MD)\n- KI-Unterstützung (Lektorat und Übersetzung)\n- Drag & Drop Kapitel-Sortierung\n- Native Dialoge durch Web-Modals ersetzt\n- i18n Unterstützung mit 7 Sprachen (DE, EN, FR, ES, IT, JA, ZH)"
+    "version": "0.1.0.1",
+    "release_notes": "Version 0.1.0.1 Release.\n- GitHub Actions Release-Workflow Syntaxfehler behoben\n- Komplette Übersetzung aller Untermenüs, Einstellungs-Karten und Modals für alle 7 unterstützten Sprachen integriert\n- Favicon und i18n DOM-Übersetzung vervollständigt\n- Versions-Increment auf 0.1.0.1"
 }

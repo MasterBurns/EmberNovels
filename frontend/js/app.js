@@ -2515,7 +2515,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = "0.1.0";
+    const currentVersion = "0.1.0.1";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint

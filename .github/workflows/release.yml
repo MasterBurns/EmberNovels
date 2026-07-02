@@ -94,7 +94,6 @@ jobs:
   create-release:
     name: Create GitHub Release
     needs: build-cross-platform
-    runs-ok: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
