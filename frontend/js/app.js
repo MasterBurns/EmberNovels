@@ -16,7 +16,8 @@ let state = {
     editingLoreId: null,
     detectedKeywordsTimeout: null,
     activeLanguage: 'original',
-    aiSettings: {}
+    aiSettings: {},
+    chapterSortOrder: 'asc'
 };
 
 // Base API URL
@@ -340,6 +341,29 @@ function setupEventListeners() {
         handleExport(format, selectedChapterIds);
     });
 
+    // Project details Branch selection
+    const branchSelect = document.getElementById('project-branch-select');
+    if (branchSelect) {
+        branchSelect.addEventListener('change', (e) => {
+            state.activeLanguage = e.target.value;
+            if (state.currentProject) {
+                loadProjectDetails(state.currentProject.id);
+            }
+        });
+    }
+
+    // Project details Chapter Sorting Toggle
+    const btnSort = document.getElementById('btn-sort-chapters');
+    if (btnSort) {
+        btnSort.addEventListener('click', () => {
+            state.chapterSortOrder = state.chapterSortOrder === 'asc' ? 'desc' : 'asc';
+            btnSort.textContent = state.chapterSortOrder === 'asc' ? 'Sortierung: ⬆️ Alt zuerst' : 'Sortierung: ⬇️ Neu zuerst';
+            if (state.currentProject) {
+                loadProjectDetails(state.currentProject.id);
+            }
+        });
+    }
+
     // Language Branch triggers
     document.getElementById('btn-create-language').addEventListener('click', () => openModal('modal-language'));
     document.getElementById('btn-submit-language').addEventListener('click', handleCreateLanguageBranch);
@@ -467,26 +491,72 @@ async function loadProjectDetails(projectId) {
         const dateStr = new Date(project.created_at).toLocaleDateString('de-DE');
         document.getElementById('stat-created-at').textContent = dateStr;
         
+        // Populate the dropdown selector with original + all branches
+        const branchSelect = document.getElementById('project-branch-select');
+        if (branchSelect) {
+            const currentSelected = state.activeLanguage;
+            branchSelect.innerHTML = '<option value="original">🇩🇪 Original (Deutsch)</option>';
+            
+            try {
+                const langRes = await fetch(`${API_URL}/projects/${projectId}/languages`);
+                if (langRes.ok) {
+                    const langs = await langRes.json();
+                    langs.forEach(lang => {
+                        const opt = document.createElement('option');
+                        opt.value = lang;
+                        opt.textContent = `Übersetzung: ${lang.toUpperCase()}`;
+                        branchSelect.appendChild(opt);
+                    });
+                }
+            } catch(err) {
+                console.error("Error loading branch selector", err);
+            }
+            branchSelect.value = currentSelected;
+        }
+
+        // Show/hide branch warning banner
+        const warningBanner = document.getElementById('project-branch-warning-banner');
+        if (warningBanner) {
+            if (state.activeLanguage !== 'original') {
+                warningBanner.style.display = 'flex';
+                document.getElementById('active-branch-banner-name').textContent = state.activeLanguage.toUpperCase();
+            } else {
+                warningBanner.style.display = 'none';
+            }
+        }
+        
         // Render Chapter List
         const list = document.getElementById('chapters-list');
         list.innerHTML = '';
         
-        if (project.chapters.length === 0) {
+        const chaptersCopy = [...project.chapters];
+        if (state.chapterSortOrder === 'desc') {
+            chaptersCopy.reverse();
+        }
+        
+        if (chaptersCopy.length === 0) {
             list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Keine Kapitel angelegt. Erstelle dein erstes Kapitel!</div>`;
         } else {
-            project.chapters.forEach(c => {
+            chaptersCopy.forEach(c => {
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 if (c.has_recovery) {
                     item.style.borderColor = 'var(--color-warning)';
                 }
+                
+                let metaText = `${c.word_count} Wörter · Letzte Änderung: ${new Date(c.updated_at).toLocaleString('de-DE')}`;
+                if (state.activeLanguage !== 'original') {
+                    metaText = `Bearbeitete Übersetzung (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
+                }
+                
                 item.innerHTML = `
                     <div class="list-item-info">
                         <div class="list-item-title">
                             ${escapeHtml(c.title)} 
-                            ${c.has_recovery ? '<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ Wiederherstellung verfügbar</span>' : ''}
+                            ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">Branch: ${state.activeLanguage.toUpperCase()}</span>` : ''}
+                            ${c.has_recovery && state.activeLanguage === 'original' ? '<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ Wiederherstellung verfügbar</span>' : ''}
                         </div>
-                        <div class="list-item-meta">${c.word_count} Wörter · Letzte Änderung: ${new Date(c.updated_at).toLocaleString('de-DE')}</div>
+                        <div class="list-item-meta">${metaText}</div>
                     </div>
                     <div class="list-item-actions">
                         <button class="card-action-btn btn-delete" title="In den Papierkorb verschieben">🗑️</button>
@@ -556,6 +626,7 @@ async function deleteChapter(projectId, chapterId) {
 
 // 3. EDITOR & ZERO DATA LOSS LOGIC
 async function openEditor(projectId, chapterId) {
+    const saveStatus = document.getElementById('save-status');
     // Populate language selection dropdown
     const langSelect = document.getElementById('editor-language-select');
     langSelect.innerHTML = '<option value="original">Deutsch (Original)</option>';
@@ -1693,10 +1764,23 @@ async function loadProjectLanguages(projectId) {
         origEl.style.display = 'flex';
         origEl.style.justifyContent = 'space-between';
         origEl.style.alignItems = 'center';
+        origEl.style.cursor = 'pointer';
+        
+        if (state.activeLanguage === 'original') {
+            origEl.style.borderColor = 'var(--color-primary)';
+            origEl.style.backgroundColor = 'var(--color-primary-light)';
+        }
+        
         origEl.innerHTML = `
             <span style="font-size: 13px; font-weight: 500;">🇩🇪 Deutsch (Original)</span>
             <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Original</span>
         `;
+        
+        origEl.addEventListener('click', () => {
+            state.activeLanguage = 'original';
+            loadProjectDetails(projectId);
+            loadProjectLanguages(projectId);
+        });
         list.appendChild(origEl);
         
         // Add other branches
@@ -1707,6 +1791,12 @@ async function loadProjectLanguages(projectId) {
             el.style.display = 'flex';
             el.style.justifyContent = 'space-between';
             el.style.alignItems = 'center';
+            el.style.cursor = 'pointer';
+            
+            if (state.activeLanguage === lang) {
+                el.style.borderColor = 'var(--color-primary)';
+                el.style.backgroundColor = 'var(--color-primary-light)';
+            }
             
             // Map common language flags
             let flag = '🏳️';
@@ -1719,6 +1809,12 @@ async function loadProjectLanguages(projectId) {
                 <span style="font-size: 13px; font-weight: 500;">${flag} ${lang.toUpperCase()}</span>
                 <span style="font-size: 10px; background-color: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px;">Branch</span>
             `;
+            
+            el.addEventListener('click', () => {
+                state.activeLanguage = lang;
+                loadProjectDetails(projectId);
+                loadProjectLanguages(projectId);
+            });
             list.appendChild(el);
         });
         

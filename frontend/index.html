@@ -98,11 +98,24 @@
                     <div class="project-details-grid">
                         <div class="details-main">
                             <div class="list-container">
-                                <div class="list-header">
-                                    <h3 class="list-title">Kapitel</h3>
-                                    <button id="btn-create-chapter" class="btn btn-secondary">
-                                        <span>+</span> Kapitel hinzufügen
-                                    </button>
+                                <div class="list-header" style="flex-wrap: wrap; gap: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <h3 class="list-title" style="margin-bottom: 0;">Kapitel</h3>
+                                        <select id="project-branch-select" class="form-input" style="width: auto; height: auto; padding: 4px 8px; font-size: 12px; border-radius: 6px; font-weight: 500;">
+                                            <option value="original">🇩🇪 Original (Deutsch)</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button id="btn-sort-chapters" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;">
+                                            Sortierung: ⬆️ Alt zuerst
+                                        </button>
+                                        <button id="btn-create-chapter" class="btn btn-secondary">
+                                            <span>+</span> Kapitel hinzufügen
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="project-branch-warning-banner" style="display: none; align-items: center; gap: 8px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; border: 1px solid var(--border-color);">
+                                    <span>🌐</span> Du befindest dich im Sprachzweig: <strong id="active-branch-banner-name">EN</strong>. Kapitel werden in dieser Sprache geöffnet und editiert.
                                 </div>
                                 <div id="chapters-list" class="list-items">
                                     <!-- Chapters will be rendered here -->
