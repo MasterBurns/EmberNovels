@@ -10,7 +10,8 @@ let state = {
     autosaveTimer: null,
     autosaveInterval: 3000, // 3 seconds default
     isDirty: false,
-    lastSavedContent: ""
+    lastSavedContent: "",
+    editor: null
 };
 
 // Base API URL
@@ -56,6 +57,10 @@ function setTheme(theme) {
     } else {
         themeIcon.textContent = '🌙';
         themeText.textContent = 'Dark Mode';
+    }
+    
+    if (state.editor) {
+        state.editor.setTheme(theme);
     }
 }
 
@@ -191,13 +196,6 @@ function setupEventListeners() {
         document.querySelector('.editor-workspace').classList.remove('editor-layout-split');
     });
     
-    // Editor input changes
-    const wysiwygTextarea = document.getElementById('editor-wysiwyg-content');
-    const markdownTextarea = document.getElementById('editor-textarea');
-    
-    wysiwygTextarea.addEventListener('input', () => handleEditorInput(wysiwygTextarea.innerText));
-    markdownTextarea.addEventListener('input', () => handleEditorInput(markdownTextarea.value));
-    
     // Shortcut for Ctrl+S
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -205,14 +203,6 @@ function setupEventListeners() {
                 e.preventDefault();
                 handleExplicitSave();
             }
-        }
-    });
-    
-    // Smart Keyword Hover logic (simplified event delegation)
-    wysiwygTextarea.addEventListener('click', (e) => {
-        if (e.target.classList.contains('smart-keyword')) {
-            const keyword = e.target.getAttribute('data-keyword');
-            showLoreQuickview(keyword);
         }
     });
     
@@ -441,19 +431,43 @@ async function openEditor(projectId, chapterId) {
         state.lastSavedContent = data.content;
         state.isDirty = false;
         
-        // Populate inputs
-        const wysiwygTextarea = document.getElementById('editor-wysiwyg-content');
-        const markdownTextarea = document.getElementById('editor-textarea');
-        
-        // If recovery available, show warning banner
-        if (data.has_recovery) {
-            document.getElementById('recovery-chapter-title').textContent = data.id.replace('_', ' ').title();
-            banner.style.display = 'flex';
+        // Initialize Toast UI Editor if not done yet
+        if (!state.editor) {
+            state.editor = new toastui.Editor({
+                el: document.getElementById('editor-container'),
+                height: '100%',
+                initialEditType: 'wysiwyg',
+                previewStyle: 'vertical',
+                theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+                hideModeSwitch: true,
+                toolbarItems: [
+                    ['heading', 'bold', 'italic', 'strike'],
+                    ['hr', 'quote'],
+                    ['ul', 'ol', 'task', 'indent', 'outdent'],
+                    ['table', 'image', 'link'],
+                    ['code', 'codeblock']
+                ]
+            });
+            
+            // Set up change listener
+            state.editor.on('change', () => {
+                const content = state.editor.getMarkdown();
+                handleEditorInput(content);
+            });
         }
         
-        // Load original text (in real implementation, markdown would render to HTML)
-        wysiwygTextarea.innerText = data.content;
-        markdownTextarea.value = data.content;
+        // Make sure theme matches
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        state.editor.setTheme(currentTheme);
+
+        // Load chapter content
+        state.editor.setMarkdown(data.content);
+
+        // If recovery available, show warning banner
+        if (data.has_recovery) {
+            document.getElementById('recovery-chapter-title').textContent = data.id.replace(/_/g, ' ').title();
+            banner.style.display = 'flex';
+        }
         
         updateWordCount(data.content);
         saveStatus.textContent = 'Synchronisiert';
@@ -471,14 +485,6 @@ function handleEditorInput(content) {
     // 1. Mark State Dirty
     state.isDirty = true;
     
-    // Keep raw and Rich-text sync'd (naive synchronization for stub)
-    const activeMode = document.getElementById('btn-editor-view-wysiwyg').classList.contains('active') ? 'wysiwyg' : 'markdown';
-    if (activeMode === 'wysiwyg') {
-        document.getElementById('editor-textarea').value = content;
-    } else {
-        document.getElementById('editor-wysiwyg-content').innerText = content;
-    }
-    
     // 2. Safe Autosave to LocalStorage immediately on keypress (Zero Data Loss Frontend)
     const storageKey = `ember_backup_${state.currentProject.id}_${state.currentChapter.id}`;
     localStorage.setItem(storageKey, content);
@@ -493,7 +499,7 @@ function handleEditorInput(content) {
 async function handleAutosaveTick() {
     if (!state.isDirty || !state.currentChapter) return;
     
-    const content = document.getElementById('editor-textarea').value;
+    const content = state.editor ? state.editor.getMarkdown() : '';
     const saveStatus = document.getElementById('save-status');
     saveStatus.textContent = 'Automatisches Sichern...';
     
@@ -517,7 +523,7 @@ async function handleAutosaveTick() {
 async function handleExplicitSave() {
     if (!state.currentChapter) return;
     
-    const content = document.getElementById('editor-textarea').value;
+    const content = state.editor ? state.editor.getMarkdown() : '';
     const saveStatus = document.getElementById('save-status');
     saveStatus.textContent = 'Speichere endgültig...';
     
@@ -562,8 +568,9 @@ async function resolveRecovery(keep) {
         if (keep) {
             // Load recovery content into editor
             const recoveredContent = state.currentChapter.recovery_content;
-            document.getElementById('editor-wysiwyg-content').innerText = recoveredContent;
-            document.getElementById('editor-textarea').value = recoveredContent;
+            if (state.editor) {
+                state.editor.setMarkdown(recoveredContent);
+            }
             updateWordCount(recoveredContent);
             state.isDirty = true;
             showToast('Wiederherstellung geladen (Schattenkopie angewendet).', 'success');
@@ -584,19 +591,17 @@ function updateWordCount(text) {
 function setEditorMode(mode) {
     const btnWysiwyg = document.getElementById('btn-editor-view-wysiwyg');
     const btnMarkdown = document.getElementById('btn-editor-view-markdown');
-    const paneWysiwyg = document.getElementById('pane-wysiwyg');
-    const paneMarkdown = document.getElementById('pane-markdown');
+    
+    if (!state.editor) return;
     
     if (mode === 'wysiwyg') {
         btnWysiwyg.classList.add('active');
         btnMarkdown.classList.remove('active');
-        paneWysiwyg.style.display = 'block';
-        paneMarkdown.style.display = 'none';
+        state.editor.changeMode('wysiwyg');
     } else {
         btnWysiwyg.classList.remove('active');
         btnMarkdown.classList.add('active');
-        paneWysiwyg.style.display = 'none';
-        paneMarkdown.style.display = 'block';
+        state.editor.changeMode('markdown');
     }
 }
 

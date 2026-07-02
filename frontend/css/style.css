@@ -820,3 +820,47 @@ button, input, textarea, select {
     display: flex;
     gap: 12px;
 }
+
+/* Toast UI Editor Theme Integrations */
+.toastui-editor-defaultUI {
+    border: none !important;
+    background-color: var(--bg-surface) !important;
+}
+
+.toastui-editor-toolbar {
+    background-color: var(--bg-sidebar) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.toastui-editor-main {
+    background-color: var(--bg-surface) !important;
+}
+
+/* Text editor text colors & background syncing */
+.toastui-editor-contents,
+.toastui-editor-ww-container,
+.toastui-editor-md-container {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dark mode theme variables for Toast UI */
+[data-theme="dark"] .toastui-editor-defaultUI {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .toastui-editor-toolbar {
+    border-color: var(--border-color) !important;
+}
+
+/* Custom adjustments for fullscreen height styling */
+.toastui-editor-defaultUI {
+    display: flex;
+    flex-direction: column;
+    height: 100% !important;
+}
+
+.toastui-editor-main {
+    flex-grow: 1;
+    height: 0;
+}

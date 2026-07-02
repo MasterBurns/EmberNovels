@@ -6,6 +6,9 @@
     <title>EmberNovels - Deine lokale Autoren-Suite</title>
     <!-- CSS link -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Toast UI Editor CSS -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css">
 </head>
 <body>
     <div class="app-container">
@@ -167,20 +170,7 @@
                             </div>
                             
                             <!-- Editor Content Area -->
-                            <div class="editor-dual-view">
-                                <!-- Raw Markdown Pane (Hidden/Shown depending on view mode) -->
-                                <div id="pane-markdown" class="editor-pane editor-pane-raw" style="display: none;">
-                                    <textarea id="editor-textarea" class="editor-textarea" placeholder="Schreibe in Markdown..."></textarea>
-                                </div>
-                                <!-- WYSIWYG Editor Mockup Pane (Editable Content) -->
-                                <div id="pane-wysiwyg" class="editor-pane editor-pane-rich">
-                                    <!-- In a future step, this will render a proper editor widget. For now, it's a contenteditable placeholder. -->
-                                    <div id="editor-wysiwyg-content" contenteditable="true" class="editor-preview-content" style="outline: none; height: 100%;">
-                                        <h1>Kapitelüberschrift</h1>
-                                        <p>Hier steht dein Fließtext. <strong>Formatierter</strong> Text oder auch <span class="smart-keyword" data-keyword="Erzmagier">Erzmagier</span> als Keyword werden hier visualisiert.</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <div id="editor-container" style="flex-grow: 1; height: 0; overflow: hidden;"></div>
                         </div>
                         
                         <!-- Right Panel: Lore/Wiki view (Optional Split) -->
@@ -302,6 +292,8 @@
     <!-- TOAST CONTAINERS -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Toast UI Editor Library -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
     <!-- Application Script -->
     <script src="js/app.js"></script>
 </body>
