@@ -146,9 +146,10 @@ function navigateTo(view, params = {}) {
             btnBackDetails.onclick = () => {
                 // Warn user if uncommitted changes
                 if (state.isDirty) {
-                    if (confirm("Du hast ungespeicherte Änderungen! Möchtest du wirklich zurückgehen?")) {
+                    showConfirm("Ungespeicherte Änderungen", "Du hast ungespeicherte Änderungen! Möchtest du wirklich zurückgehen?", () => {
+                        state.isDirty = false;
                         navigateTo('project-details', { projectId: state.currentProject.id });
-                    }
+                    });
                 } else {
                     navigateTo('project-details', { projectId: state.currentProject.id });
                 }
@@ -374,6 +375,65 @@ function setupEventListeners() {
     
     // Manual Translate Trigger
     document.getElementById('btn-editor-translate-now').addEventListener('click', handleManualTranslate);
+
+    // Import Wizard Launcher
+    const btnOpenImport = document.getElementById('btn-open-import');
+    if (btnOpenImport) {
+        btnOpenImport.addEventListener('click', openImportWizard);
+    }
+    
+    // Import Wizard Tab Switching
+    document.getElementById('tab-import-folder').addEventListener('click', (e) => {
+        document.getElementById('tab-import-folder').classList.add('active');
+        document.getElementById('tab-import-file').classList.remove('active');
+        document.getElementById('panel-import-folder').style.display = 'flex';
+        document.getElementById('panel-import-file').style.display = 'none';
+    });
+    
+    document.getElementById('tab-import-file').addEventListener('click', (e) => {
+        document.getElementById('tab-import-file').classList.add('active');
+        document.getElementById('tab-import-folder').classList.remove('active');
+        document.getElementById('panel-import-file').style.display = 'flex';
+        document.getElementById('panel-import-folder').style.display = 'none';
+        
+        // Populate existing projects list dropdown
+        const projSelect = document.getElementById('import-file-target-project');
+        projSelect.innerHTML = '';
+        state.projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.title;
+            projSelect.appendChild(opt);
+        });
+    });
+    
+    // File Import Mode switcher
+    document.querySelectorAll('input[name="import-file-mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'project') {
+                document.getElementById('panel-import-file-new-project').style.display = 'flex';
+                document.getElementById('panel-import-file-exist-project').style.display = 'none';
+            } else {
+                document.getElementById('panel-import-file-new-project').style.display = 'none';
+                document.getElementById('panel-import-file-exist-project').style.display = 'flex';
+            }
+        });
+    });
+    
+    document.getElementById('btn-submit-import-wizard').addEventListener('click', handleImportWizardSubmit);
+
+    // Stats configuration dialog triggers
+    const btnEditStats = document.getElementById('btn-edit-project-stats');
+    if (btnEditStats) {
+        btnEditStats.addEventListener('click', () => {
+            if (!state.currentProject) return;
+            document.getElementById('stats-word-goal').value = state.currentProject.word_count_goal;
+            document.getElementById('stats-daily-goal').value = state.currentProject.daily_word_count_goal;
+            openModal('modal-project-stats');
+        });
+    }
+    
+    document.getElementById('btn-submit-project-stats').addEventListener('click', handleSaveProjectStats);
 }
 
 // 1. PROJECTS LOGIC
@@ -407,9 +467,9 @@ async function loadProjects() {
             // Delete listener
             card.querySelector('.btn-delete').addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (confirm(`Möchtest du das Projekt "${p.title}" wirklich in den Papierkorb verschieben?`)) {
+                showConfirm("Projekt löschen", `Möchtest du das Projekt "${p.title}" wirklich in den Papierkorb verschieben?`, () => {
                     deleteProject(p.id);
-                }
+                });
             });
             
             // View details listener
@@ -428,6 +488,7 @@ async function loadProjects() {
 async function handleCreateProject() {
     const title = document.getElementById('project-title').value;
     const author = document.getElementById('project-author').value;
+    const original_language = document.getElementById('project-language').value;
     const description = document.getElementById('project-description').value;
     
     if (!title.trim()) {
@@ -439,7 +500,7 @@ async function handleCreateProject() {
         const response = await fetch(`${API_URL}/projects`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, author, description })
+            body: JSON.stringify({ title, author, description, original_language })
         });
         
         if (!response.ok) throw new Error("Failed to create project");
@@ -537,9 +598,10 @@ async function loadProjectDetails(projectId) {
         if (chaptersCopy.length === 0) {
             list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">Keine Kapitel angelegt. Erstelle dein erstes Kapitel!</div>`;
         } else {
-            chaptersCopy.forEach(c => {
+            chaptersCopy.forEach((c, index) => {
                 const item = document.createElement('div');
                 item.className = 'list-item';
+                item.setAttribute('data-chapter-id', c.id);
                 if (c.has_recovery) {
                     item.style.borderColor = 'var(--color-warning)';
                 }
@@ -549,10 +611,13 @@ async function loadProjectDetails(projectId) {
                     metaText = `Bearbeitete Übersetzung (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
                 }
                 
+                // Determine layout sequence number
+                const displayIndex = state.chapterSortOrder === 'desc' ? chaptersCopy.length - index : index + 1;
+                
                 item.innerHTML = `
                     <div class="list-item-info">
                         <div class="list-item-title">
-                            ${escapeHtml(c.title)} 
+                            <strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong> ${escapeHtml(c.title)} 
                             ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">Branch: ${state.activeLanguage.toUpperCase()}</span>` : ''}
                             ${c.has_recovery && state.activeLanguage === 'original' ? '<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ Wiederherstellung verfügbar</span>' : ''}
                         </div>
@@ -571,13 +636,16 @@ async function loadProjectDetails(projectId) {
                 // Chapter Delete listener
                 item.querySelector('.btn-delete').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (confirm(`Möchtest du das Kapitel "${c.title}" wirklich löschen?`)) {
+                    showConfirm("Kapitel löschen", `Möchtest du das Kapitel "${c.title}" wirklich in den Papierkorb verschieben?`, () => {
                         deleteChapter(project.id, c.id);
-                    }
+                    });
                 });
                 
                 list.appendChild(item);
             });
+            
+            // Wire Drag & Drop Reordering
+            makeChaptersDraggable();
         }
     } catch (e) {
         showToast(e.message, 'danger');
@@ -629,9 +697,23 @@ async function openEditor(projectId, chapterId) {
     const saveStatus = document.getElementById('save-status');
     // Populate language selection dropdown
     const langSelect = document.getElementById('editor-language-select');
-    langSelect.innerHTML = '<option value="original">Deutsch (Original)</option>';
-    state.activeLanguage = 'original';
-    document.getElementById('btn-editor-translate-now').style.display = 'none';
+    
+    // Get actual project original language flag/name if possible
+    let originalLangText = "Original (Deutsch)";
+    if (state.currentProject && state.currentProject.original_language) {
+        const langMap = {
+            'de': 'Deutsch',
+            'en': 'Englisch',
+            'fr': 'Französisch',
+            'es': 'Spanisch',
+            'it': 'Italienisch'
+        };
+        const mapped = langMap[state.currentProject.original_language];
+        if (mapped) originalLangText = `Original (${mapped})`;
+    }
+    langSelect.innerHTML = `<option value="original">${originalLangText}</option>`;
+    
+    const initialLang = state.activeLanguage || 'original';
     
     try {
         const langResponse = await fetch(`${API_URL}/projects/${projectId}/languages`);
@@ -647,6 +729,11 @@ async function openEditor(projectId, chapterId) {
     } catch (e) {
         console.error("Could not fetch languages for dropdown", e);
     }
+    
+    // Restore and apply selection
+    langSelect.value = initialLang;
+    state.activeLanguage = initialLang;
+    document.getElementById('btn-editor-translate-now').style.display = initialLang === 'original' ? 'none' : 'block';
     
     langSelect.onchange = async () => {
         state.activeLanguage = langSelect.value;
@@ -927,9 +1014,9 @@ async function loadTrashedProjects() {
                 // Permanent Delete listener
                 card.querySelector('.btn-permanent').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (confirm(`ACHTUNG: Möchtest du das Projekt "${p.title}" wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden!`)) {
+                    showConfirm("Projekt endgültig löschen", `ACHTUNG: Möchtest du das Projekt "${p.title}" wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden!`, () => {
                         permanentDeleteProject(p.id);
-                    }
+                    });
                 });
                 
                 grid.appendChild(card);
@@ -1337,29 +1424,29 @@ async function handleSaveLore() {
 }
 
 async function deleteLoreEntry(loreId) {
-    if (!confirm("Möchtest du diesen Lore-Eintrag wirklich in den Papierkorb verschieben?")) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/${loreId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) throw new Error("Could not delete lore entry");
-        
-        showToast("Eintrag gelöscht.", "success");
-        
-        // Reset article panel
-        const container = document.getElementById('wiki-article-container');
-        container.innerHTML = `
-            <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
-                <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
-                <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
-            </div>
-        `;
-        
-        loadLoreEntries();
-    } catch (e) {
-        showToast(e.message, 'danger');
-    }
+    showConfirm("Lore-Eintrag löschen", "Möchtest du diesen Lore-Eintrag wirklich in den Papierkorb verschieben?", async () => {
+        try {
+            const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/${loreId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error("Could not delete lore entry");
+            
+            showToast("Eintrag gelöscht.", "success");
+            
+            // Reset article panel
+            const container = document.getElementById('wiki-article-container');
+            container.innerHTML = `
+                <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
+                    <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
+                    <p>Wähle einen Lore-Eintrag aus der Liste aus oder erstelle einen neuen, um Details anzuzeigen.</p>
+                </div>
+            `;
+            
+            loadLoreEntries();
+        } catch (e) {
+            showToast(e.message, 'danger');
+        }
+    });
 }
 
 function showLoreDetail(loreId) {
@@ -1908,33 +1995,33 @@ async function reloadEditorChapterContent(projectId, chapterId) {
 async function handleManualTranslate() {
     if (!state.currentProject || !state.currentChapter || state.activeLanguage === 'original') return;
     
-    if (!confirm(`Möchtest du dieses Kapitel jetzt neu aus dem deutschen Original in '${state.activeLanguage.toUpperCase()}' übersetzen? Eigene Änderungen an dieser Übersetzung werden überschrieben.`)) return;
-    
-    const saveStatus = document.getElementById('save-status');
-    saveStatus.style.display = 'inline-block';
-    saveStatus.textContent = 'Übersetze...';
-    
-    try {
-        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${state.currentChapter.id}/translate`, {
-            method: 'POST'
-        });
+    showConfirm("Kapitel übersetzen", `Möchtest du dieses Kapitel jetzt neu aus dem Original in '${state.activeLanguage.toUpperCase()}' übersetzen? Eigene Änderungen an dieser Übersetzung werden überschrieben.`, async () => {
+        const saveStatus = document.getElementById('save-status');
+        saveStatus.style.display = 'inline-block';
+        saveStatus.textContent = 'Übersetze...';
         
-        if (!response.ok) throw new Error("Translation failed");
-        const data = await response.json();
-        
-        if (state.editor) {
-            state.editor.setMarkdown(data.content || '');
+        try {
+            const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${state.currentChapter.id}/translate`, {
+                method: 'POST'
+            });
+            
+            if (!response.ok) throw new Error("Translation failed");
+            const data = await response.json();
+            
+            if (state.editor) {
+                state.editor.setMarkdown(data.content || '');
+            }
+            
+            state.lastSavedContent = data.content || '';
+            state.isDirty = false;
+            showToast("Kapitel erfolgreich neu übersetzt!", "success");
+            
+        } catch (e) {
+            showToast("Fehler bei der Übersetzung: " + e.message, 'danger');
+        } finally {
+            saveStatus.style.display = 'none';
         }
-        
-        state.lastSavedContent = data.content || '';
-        state.isDirty = false;
-        showToast("Kapitel erfolgreich neu übersetzt!", "success");
-        
-    } catch (e) {
-        showToast("Fehler bei der Übersetzung: " + e.message, 'danger');
-    } finally {
-        saveStatus.style.display = 'none';
-    }
+    });
 }
 
 async function handleAIAssistant(task) {
@@ -2005,4 +2092,343 @@ async function handleAIAssistant(task) {
     }
 }
 
+// ==========================================
+// CUSTOM DIALOG & WIZARD EXTENSIONS
+// ==========================================
 
+// Custom non-blocking web confirm implementation
+function showConfirm(title, message, onSubmit) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-body').textContent = message;
+    
+    const submitBtn = document.getElementById('btn-confirm-submit');
+    const cancelBtn = document.getElementById('btn-confirm-cancel');
+    
+    // Reset click listener
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+    
+    newSubmitBtn.addEventListener('click', () => {
+        closeModal('modal-confirm');
+        if (onSubmit) onSubmit();
+    });
+    
+    openModal('modal-confirm');
+}
+
+// Open Import Wizard Modal
+function openImportWizard() {
+    // Reset inputs
+    document.getElementById('import-folder-picker').value = '';
+    document.getElementById('import-file-picker').value = '';
+    
+    // Activate default tab
+    document.getElementById('tab-import-folder').classList.add('active');
+    document.getElementById('tab-import-file').classList.remove('active');
+    document.getElementById('panel-import-folder').style.display = 'flex';
+    document.getElementById('panel-import-file').style.display = 'none';
+    
+    openModal('modal-import');
+}
+
+// Process Markdown Single-File Chapter Extraction
+function parseMarkdownToChapters(text, defaultTitle) {
+    const lines = text.split('\n');
+    const chapters = [];
+    let currentTitle = "";
+    let currentContent = [];
+    
+    for (let line of lines) {
+        if (line.match(/^#+\s+/)) {
+            if (currentTitle || currentContent.length > 0) {
+                chapters.push({
+                    title: currentTitle || defaultTitle || "Kapitel",
+                    content: currentContent.join('\n')
+                });
+            }
+            currentTitle = line.replace(/^#+\s+/, '').trim();
+            currentContent = [];
+        } else {
+            currentContent.push(line);
+        }
+    }
+    
+    if (currentTitle || currentContent.length > 0) {
+        chapters.push({
+            title: currentTitle || defaultTitle || "Kapitel",
+            content: currentContent.join('\n')
+        });
+    }
+    
+    if (chapters.length === 0) {
+        chapters.push({
+            title: defaultTitle || "Kapitel 1",
+            content: text
+        });
+    }
+    
+    return chapters;
+}
+
+// Handle Import Submission
+async function handleImportWizardSubmit() {
+    const isFolder = document.getElementById('tab-import-folder').classList.contains('active');
+    
+    if (isFolder) {
+        const picker = document.getElementById('import-folder-picker');
+        if (!picker.files || picker.files.length === 0) {
+            showToast("Bitte wähle einen Ordner zum Importieren aus.", "warning");
+            return;
+        }
+        
+        const mdFiles = Array.from(picker.files).filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
+        if (mdFiles.length === 0) {
+            showToast("Keine Markdown (.md) Dateien im ausgewählten Ordner gefunden.", "warning");
+            return;
+        }
+        
+        // Sort files numerically/alphabetically
+        mdFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        
+        let folderName = "Importiertes Projekt";
+        if (mdFiles[0].webkitRelativePath) {
+            const parts = mdFiles[0].webkitRelativePath.split('/');
+            if (parts.length > 1) {
+                folderName = parts[0];
+            }
+        }
+        
+        const original_language = document.getElementById('import-folder-lang').value;
+        
+        showToast("Projekt wird erstellt...", "info");
+        try {
+            const projRes = await fetch(`${API_URL}/projects`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: folderName, author: "Importiert", description: `Ordner-Import von ${folderName}`, original_language })
+            });
+            if (!projRes.ok) throw new Error("Failed to create project");
+            const project = await projRes.json();
+            
+            for (let i = 0; i < mdFiles.length; i++) {
+                const file = mdFiles[i];
+                const title = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const content = await file.text();
+                
+                const chRes = await fetch(`${API_URL}/projects/${project.id}/chapters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title })
+                });
+                if (!chRes.ok) continue;
+                const chapter = await chRes.json();
+                
+                await fetch(`${API_URL}/projects/${project.id}/chapters/${chapter.id}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+            }
+            
+            showToast("Ordner-Import erfolgreich abgeschlossen!", "success");
+            closeModal('modal-import');
+            loadProjects();
+        } catch(err) {
+            showToast("Fehler beim Import: " + err.message, "danger");
+        }
+        
+    } else {
+        const picker = document.getElementById('import-file-picker');
+        if (!picker.files || picker.files.length === 0) {
+            showToast("Bitte wähle eine .md Datei zum Importieren aus.", "warning");
+            return;
+        }
+        
+        const file = picker.files[0];
+        const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        const mode = document.querySelector('input[name="import-file-mode"]:checked').value;
+        
+        showToast("Lese Datei...", "info");
+        const fileText = await file.text();
+        
+        if (mode === 'project') {
+            const original_language = document.getElementById('import-file-lang').value;
+            const parsedChapters = parseMarkdownToChapters(fileText, fileName);
+            
+            showToast(`Erstelle Projekt mit ${parsedChapters.length} Kapiteln...`, "info");
+            try {
+                const projRes = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: fileName, author: "Importiert", description: `Datei-Import von ${file.name}`, original_language })
+                });
+                if (!projRes.ok) throw new Error("Failed to create project");
+                const project = await projRes.json();
+                
+                for (let i = 0; i < parsedChapters.length; i++) {
+                    const chData = parsedChapters[i];
+                    
+                    const chRes = await fetch(`${API_URL}/projects/${project.id}/chapters`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: chData.title })
+                    });
+                    if (!chRes.ok) continue;
+                    const chapter = await chRes.json();
+                    
+                    await fetch(`${API_URL}/projects/${project.id}/chapters/${chapter.id}/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: chData.content })
+                    });
+                }
+                
+                showToast("Buch-Import erfolgreich abgeschlossen!", "success");
+                closeModal('modal-import');
+                loadProjects();
+            } catch(err) {
+                showToast("Fehler beim Import: " + err.message, "danger");
+            }
+        } else {
+            const projectId = document.getElementById('import-file-target-project').value;
+            if (!projectId) {
+                showToast("Bitte wähle ein Ziel-Projekt aus.", "warning");
+                return;
+            }
+            
+            try {
+                const chRes = await fetch(`${API_URL}/projects/${projectId}/chapters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: fileName })
+                });
+                if (!chRes.ok) throw new Error("Kapitel konnte nicht erstellt werden");
+                const chapter = await chRes.json();
+                
+                await fetch(`${API_URL}/projects/${projectId}/chapters/${chapter.id}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: fileText })
+                });
+                
+                showToast("Kapitel erfolgreich importiert!", "success");
+                closeModal('modal-import');
+                if (state.currentProject && state.currentProject.id === projectId) {
+                    loadProjectDetails(projectId);
+                } else {
+                    navigateTo('project-details', { projectId });
+                }
+            } catch(err) {
+                showToast("Fehler beim Import: " + err.message, "danger");
+            }
+        }
+    }
+}
+
+// Save Project stats from Modal
+async function handleSaveProjectStats() {
+    if (!state.currentProject) return;
+    
+    const word_count_goal = parseInt(document.getElementById('stats-word-goal').value) || 50000;
+    const daily_word_count_goal = parseInt(document.getElementById('stats-daily-goal').value) || 500;
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word_count_goal, daily_word_count_goal })
+        });
+        
+        if (!response.ok) throw new Error("Failed to update project stats");
+        
+        showToast("Projekt-Ziele erfolgreich aktualisiert!", "success");
+        closeModal('modal-project-stats');
+        loadProjectDetails(state.currentProject.id);
+    } catch(err) {
+        showToast(err.message, "danger");
+    }
+}
+
+// Drag & Drop sequence sorting of original chapters list
+function makeChaptersDraggable() {
+    if (state.activeLanguage !== 'original') return; // Read-only ordering for translation branches
+    
+    const list = document.getElementById('chapters-list');
+    const items = list.querySelectorAll('.list-item');
+    
+    let dragSrcEl = null;
+    
+    items.forEach(item => {
+        item.setAttribute('draggable', 'true');
+        item.style.cursor = 'grab';
+        
+        item.addEventListener('dragstart', (e) => {
+            dragSrcEl = item;
+            e.dataTransfer.effectAllowed = 'move';
+            item.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            return false;
+        });
+        
+        item.addEventListener('dragenter', (e) => {
+            if (item !== dragSrcEl) {
+                item.classList.add('drag-over');
+            }
+        });
+        
+        item.addEventListener('dragleave', (e) => {
+            item.classList.remove('drag-over');
+        });
+        
+        item.addEventListener('drop', async (e) => {
+            e.stopPropagation();
+            if (dragSrcEl !== item) {
+                const allItems = Array.from(list.children);
+                const dragIndex = allItems.indexOf(dragSrcEl);
+                const dropIndex = allItems.indexOf(item);
+                
+                if (dragIndex < dropIndex) {
+                    list.insertBefore(dragSrcEl, item.nextSibling);
+                } else {
+                    list.insertBefore(dragSrcEl, item);
+                }
+                
+                const newOrder = Array.from(list.children).map(child => {
+                    return child.getAttribute('data-chapter-id');
+                });
+                
+                try {
+                    const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/reorder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chapters_order: newOrder })
+                    });
+                    
+                    if (response.ok) {
+                        showToast("Reihenfolge aktualisiert!", "success");
+                        // Instantly update numbering labels in list items
+                        Array.from(list.children).forEach((chEl, idx) => {
+                            const titleEl = chEl.querySelector('.list-item-title strong');
+                            if (titleEl) {
+                                titleEl.textContent = `${idx + 1}.`;
+                            }
+                        });
+                    }
+                } catch(err) {
+                    showToast("Fehler beim Umsortieren: " + err.message, "danger");
+                }
+            }
+            return false;
+        });
+        
+        item.addEventListener('dragend', () => {
+            items.forEach(it => {
+                it.classList.remove('drag-over');
+                it.classList.remove('dragging');
+            });
+        });
+    });
+}

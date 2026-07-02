@@ -65,7 +65,7 @@ class StorageService:
         return projects
 
     @classmethod
-    def create_project(cls, title: str, description: str = "", author: str = "") -> Dict[str, Any]:
+    def create_project(cls, title: str, description: str = "", author: str = "", original_language: str = "de") -> Dict[str, Any]:
         """Create a new project folder and metadata."""
         project_id = sanitize_filename(title)
         projects_dir = cls.get_projects_dir()
@@ -94,11 +94,13 @@ class StorageService:
             "title": title,
             "description": description,
             "author": author,
+            "original_language": original_language,
             "created_at": now_str,
             "updated_at": now_str,
             "word_count_goal": 50000,
             "daily_word_count_goal": 500,
-            "status": "active"
+            "status": "active",
+            "chapters_order": []
         }
         
         with open(project_path / "project.json", 'w', encoding='utf-8') as f:
@@ -220,9 +222,7 @@ class StorageService:
         chapters_dir = cls.get_chapters_dir(project_id)
         chapters = []
         
-        # Load chapter list (sorted or we read md files)
-        # To maintain a custom sorting order, we could have a list in project.json,
-        # but let's inspect the files. We'll default sort by filename.
+        # Load chapter list
         for file in chapters_dir.iterdir():
             if file.is_file() and file.suffix == '.md' and not file.name.startswith('.'):
                 stat = file.stat()
@@ -232,10 +232,9 @@ class StorageService:
                 tmp_file = chapters_dir / f".{file.name}.tmp"
                 has_recovery = False
                 if tmp_file.exists():
-                    # If tmp file is newer than original file
                     if tmp_file.stat().st_mtime > stat.st_mtime:
                         has_recovery = True
-
+                
                 # Word count calculation
                 word_count = 0
                 try:
@@ -253,6 +252,21 @@ class StorageService:
                     "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
                     "has_recovery": has_recovery
                 })
+                
+        # Sort based on chapters_order in project.json if available
+        meta_path = cls.get_projects_dir() / project_id / "project.json"
+        if meta_path.exists():
+            try:
+                with open(meta_path, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                    order = meta.get("chapters_order", [])
+                    if order:
+                        order_map = {ch_id: i for i, ch_id in enumerate(order)}
+                        # Return sorted by order map index, appending unknown chapters at end
+                        return sorted(chapters, key=lambda x: order_map.get(x['id'], len(order) + chapters.index(x)))
+            except Exception:
+                pass
+                
         return sorted(chapters, key=lambda x: x['id'])
 
     @classmethod
@@ -287,10 +301,26 @@ class StorageService:
             f.write(f"# {title}\n\nSchreibe dein Kapitel hier...")
             
         stat = file_path.stat()
+        
+        # Update chapters_order in project.json
+        meta_path = cls.get_projects_dir() / project_id / "project.json"
+        if meta_path.exists():
+            try:
+                with open(meta_path, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                order = meta.get("chapters_order", [])
+                if chapter_id not in order:
+                    order.append(chapter_id)
+                meta["chapters_order"] = order
+                with open(meta_path, 'w', encoding='utf-8') as f:
+                    json.dump(meta, f, indent=4, ensure_ascii=False)
+            except Exception:
+                pass
+                
         return {
             "id": chapter_id,
             "title": title,
-            "word_count": 4, # 'Schreibe dein Kapitel hier...' is 4 words
+            "word_count": 4,
             "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
             "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
             "has_recovery": False
@@ -709,3 +739,19 @@ class StorageService:
                     f.write(translated_content)
             except Exception as e:
                 print(f"Failed to auto-translate chapter {chapter_id} to {lang}: {e}")
+
+    @classmethod
+    def save_chapters_order(cls, project_id: str, chapters_order: List[str]) -> bool:
+        """Save custom sorted sequence order of chapters inside project metadata."""
+        meta_path = cls.get_projects_dir() / project_id / "project.json"
+        if not meta_path.exists():
+            return False
+        try:
+            with open(meta_path, 'r', encoding='utf-8') as f:
+                meta = json.load(f)
+            meta["chapters_order"] = chapters_order
+            with open(meta_path, 'w', encoding='utf-8') as f:
+                json.dump(meta, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception:
+            return False

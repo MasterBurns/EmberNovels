@@ -483,6 +483,17 @@ button, input, textarea, select {
     background-color: var(--bg-surface);
 }
 
+.list-item.dragging {
+    opacity: 0.4;
+    border: 2px dashed var(--color-primary);
+}
+
+.list-item.drag-over {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-light);
+    transform: scale(1.01);
+}
+
 .list-item-info {
     display: flex;
     flex-direction: column;

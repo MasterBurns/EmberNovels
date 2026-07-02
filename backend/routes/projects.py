@@ -9,6 +9,7 @@ class ProjectCreate(BaseModel):
     title: str
     description: Optional[str] = ""
     author: Optional[str] = ""
+    original_language: Optional[str] = "de"
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
@@ -29,7 +30,9 @@ def list_trashed_projects():
 def create_project(project: ProjectCreate):
     if not project.title.strip():
         raise HTTPException(status_code=400, detail="Title cannot be empty")
-    return StorageService.create_project(project.title, project.description, project.author)
+    return StorageService.create_project(
+        project.title, project.description, project.author, project.original_language
+    )
 
 @router.get("/{project_id}")
 def get_project(project_id: str):
@@ -65,9 +68,19 @@ def restore_project(project_id: str):
         raise HTTPException(status_code=404, detail="Project not found in trash or could not be restored")
     return {"message": "Project restored successfully"}
 
+class ReorderRequest(BaseModel):
+    chapters_order: List[str]
+
 @router.delete("/{project_id}/permanent")
 def permanent_delete_project(project_id: str):
     success = StorageService.permanent_delete_project(project_id)
     if not success:
         raise HTTPException(status_code=404, detail="Project not found in trash")
     return {"message": "Project permanently deleted"}
+
+@router.post("/{project_id}/reorder")
+def reorder_chapters(project_id: str, data: ReorderRequest):
+    success = StorageService.save_chapters_order(project_id, data.chapters_order)
+    if not success:
+        raise HTTPException(status_code=404, detail="Project not found or reorder failed")
+    return {"message": "Reordered successfully"}
