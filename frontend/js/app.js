@@ -59,8 +59,18 @@ function setTheme(theme) {
         themeText.textContent = 'Dark Mode';
     }
     
-    if (state.editor) {
-        state.editor.setTheme(theme);
+    updateEditorTheme(theme);
+}
+
+function updateEditorTheme(theme) {
+    if (!state.editor) return;
+    const editorEl = document.querySelector('#editor-container .toastui-editor-defaultUI');
+    if (editorEl) {
+        if (theme === 'dark') {
+            editorEl.classList.add('toastui-editor-theme-dark');
+        } else {
+            editorEl.classList.remove('toastui-editor-theme-dark');
+        }
     }
 }
 
@@ -173,6 +183,16 @@ function setupEventListeners() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         setTheme(currentTheme === 'dark' ? 'light' : 'dark');
     });
+    
+    // Project and Chapter creation triggers
+    const cardCreateProject = document.getElementById('card-create-project');
+    if (cardCreateProject) {
+        cardCreateProject.addEventListener('click', () => openModal('modal-project'));
+    }
+    const btnCreateChapter = document.getElementById('btn-create-chapter');
+    if (btnCreateChapter) {
+        btnCreateChapter.addEventListener('click', () => openModal('modal-chapter'));
+    }
     
     // Submit forms
     document.getElementById('btn-submit-project').addEventListener('click', handleCreateProject);
@@ -458,7 +478,7 @@ async function openEditor(projectId, chapterId) {
         
         // Make sure theme matches
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        state.editor.setTheme(currentTheme);
+        updateEditorTheme(currentTheme);
 
         // Load chapter content
         state.editor.setMarkdown(data.content);
