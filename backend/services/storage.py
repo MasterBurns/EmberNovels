@@ -502,18 +502,22 @@ class StorageService:
         return entries
 
     @classmethod
-    def create_lore(cls, project_id: str, name: str, category: str, short_description: str = "", description: str = "", keywords: List[str] = None) -> Dict[str, Any]:
-        """Create a new lore JSON entry."""
-        lore_dir = cls.get_lore_dir(project_id)
+    def create_lore(cls, project_id: str, name: str, category: str, short_description: str = "", description: str = "", keywords: List[str] = None, project_ids: List[str] = None) -> Dict[str, Any]:
+        """Create a new lore JSON entry and sync it to all selected projects."""
+        if not project_ids:
+            project_ids = [project_id]
+        if project_id not in project_ids:
+            project_ids.append(project_id)
+            
         lore_id = sanitize_filename(name)
         
-        base_id = lore_id
+        # Avoid collisions in any of the target projects
         counter = 1
-        while (lore_dir / f"{lore_id}.json").exists() or (lore_dir / ".trash" / f"{lore_id}.json").exists():
+        base_id = lore_id
+        while any((cls.get_lore_dir(p_id) / f"{lore_id}.json").exists() for p_id in project_ids):
             lore_id = f"{base_id}_{counter}"
             counter += 1
             
-        file_path = lore_dir / f"{lore_id}.json"
         now_str = datetime.now().isoformat()
         
         entry = {
@@ -523,13 +527,18 @@ class StorageService:
             "short_description": short_description,
             "description": description,
             "keywords": keywords or [name],
+            "project_ids": project_ids,
             "created_at": now_str,
             "updated_at": now_str
         }
         
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(entry, f, indent=4, ensure_ascii=False)
-            
+        # Save to all selected projects
+        for p_id in project_ids:
+            lore_dir = cls.get_lore_dir(p_id)
+            file_path = lore_dir / f"{lore_id}.json"
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(entry, f, indent=4, ensure_ascii=False)
+                
         return entry
 
     @classmethod
@@ -552,23 +561,34 @@ class StorageService:
 
     @classmethod
     def update_lore(cls, project_id: str, lore_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Update a specific lore entry."""
-        lore_dir = cls.get_lore_dir(project_id)
-        file_path = lore_dir / f"{lore_id}.json"
-        if not file_path.exists():
-            return None
-            
+        """Update a specific lore entry and sync/desync across projects."""
         entry = cls.get_lore(project_id, lore_id)
         if not entry:
             return None
             
+        old_project_ids = entry.get('project_ids', [project_id])
+        new_project_ids = data.get('project_ids', old_project_ids)
+        if project_id not in new_project_ids:
+            new_project_ids.append(project_id)
+            
+        # Update fields
         for k, v in data.items():
             if k not in ['id', 'created_at']:
                 entry[k] = v
+        entry['project_ids'] = new_project_ids
         entry['updated_at'] = datetime.now().isoformat()
         
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(entry, f, indent=4, ensure_ascii=False)
+        # Save/Update in all new checked projects
+        for p_id in new_project_ids:
+            lore_dir = cls.get_lore_dir(p_id)
+            with open(lore_dir / f"{lore_id}.json", 'w', encoding='utf-8') as f:
+                json.dump(entry, f, indent=4, ensure_ascii=False)
+                
+        # Delete/Soft-delete from projects that were unchecked
+        for p_id in old_project_ids:
+            if p_id not in new_project_ids:
+                cls.delete_lore(p_id, lore_id)
+                
         return entry
 
     @classmethod

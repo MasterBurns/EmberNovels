@@ -287,6 +287,16 @@ function setupEventListeners() {
     document.getElementById('wiki-filter-category').addEventListener('change', filterLoreEntries);
     document.getElementById('btn-submit-lore').addEventListener('click', handleSaveLore);
     
+    document.getElementById('btn-editor-create-lore').addEventListener('click', () => {
+        if (!state.editor) return;
+        const selectedText = state.editor.getSelectedText().trim();
+        if (!selectedText) {
+            showToast('Bitte markiere zuerst ein Wort oder einen Begriff im Text.', 'warning');
+            return;
+        }
+        openLoreModal(null, selectedText);
+    });
+    
     // Editor keyword event delegation click listener
     const editorContainer = document.getElementById('editor-container');
     if (editorContainer) {
@@ -1065,7 +1075,7 @@ function filterLoreEntries() {
     renderLoreList(filtered);
 }
 
-function openLoreModal(loreId = null) {
+function openLoreModal(loreId = null, prefilledName = null) {
     state.editingLoreId = loreId;
     
     const titleEl = document.getElementById('lore-modal-title');
@@ -1074,6 +1084,9 @@ function openLoreModal(loreId = null) {
     const keywordsEl = document.getElementById('lore-keywords');
     const shortDescEl = document.getElementById('lore-short-desc');
     const descEl = document.getElementById('lore-desc');
+    
+    // Render project assignment checkboxes
+    renderLoreProjectCheckboxes(loreId);
     
     if (loreId) {
         // Edit mode
@@ -1089,14 +1102,42 @@ function openLoreModal(loreId = null) {
     } else {
         // Create mode
         titleEl.textContent = 'Neuer Lore-Eintrag';
-        nameEl.value = '';
+        nameEl.value = prefilledName || '';
         categoryEl.value = 'character';
-        keywordsEl.value = '';
+        keywordsEl.value = prefilledName || '';
         shortDescEl.value = '';
         descEl.value = '';
     }
     
     openModal('modal-lore');
+}
+
+function renderLoreProjectCheckboxes(loreId = null) {
+    const container = document.getElementById('lore-projects-checkboxes');
+    container.innerHTML = '';
+    
+    const entry = loreId ? state.loreList.find(e => e.id === loreId) : null;
+    const assignedProjectIds = entry ? (entry.project_ids || [state.currentProject.id]) : [state.currentProject.id];
+    
+    state.projects.forEach(project => {
+        const itemEl = document.createElement('div');
+        itemEl.style.display = 'flex';
+        itemEl.style.alignItems = 'center';
+        itemEl.style.gap = '8px';
+        itemEl.style.marginBottom = '4px';
+        
+        const isCurrent = project.id === state.currentProject.id;
+        const isChecked = assignedProjectIds.includes(project.id) || isCurrent;
+        
+        itemEl.innerHTML = `
+            <input type="checkbox" id="lore-project-chk-${project.id}" class="lore-project-chk" value="${project.id}" 
+                   ${isChecked ? 'checked' : ''} ${isCurrent ? 'disabled' : ''}>
+            <label for="lore-project-chk-${project.id}" style="font-size: 13px; cursor: ${isCurrent ? 'default' : 'pointer'};">
+                ${escapeHtml(project.title)} ${isCurrent ? '<span style="color: var(--text-muted); font-size: 11px;">(Aktuelles Projekt)</span>' : ''}
+            </label>
+        `;
+        container.appendChild(itemEl);
+    });
 }
 
 async function handleSaveLore() {
@@ -1123,7 +1164,15 @@ async function handleSaveLore() {
         keywords.push(name);
     }
     
-    const payload = { name, category, short_description, description, keywords };
+    // Gather selected project IDs
+    const project_ids = [];
+    document.querySelectorAll('.lore-project-chk').forEach(chk => {
+        if (chk.checked || chk.value === state.currentProject.id) {
+            project_ids.push(chk.value);
+        }
+    });
+    
+    const payload = { name, category, short_description, description, keywords, project_ids };
     
     const isEdit = !!state.editingLoreId;
     const url = isEdit 
@@ -1215,7 +1264,7 @@ function showLoreDetail(loreId) {
     document.getElementById('btn-wiki-delete-act').addEventListener('click', () => deleteLoreEntry(entry.id));
     
     // Render Markdown full article using Toast UI Viewer
-    new toastui.Viewer({
+    new toastui.Editor.onlyViewer({
         el: document.getElementById('wiki-rendered-markdown'),
         initialValue: entry.description || '_Keine ausführliche Beschreibung vorhanden._',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
@@ -1243,7 +1292,7 @@ function showLoreQuickviewById(loreId) {
     descEl.innerHTML = '';
     
     // Render detail Markdown in quickview sidebar using Toast UI Viewer
-    new toastui.Viewer({
+    new toastui.Editor.onlyViewer({
         el: descEl,
         initialValue: entry.description || entry.short_description || '_Keine Beschreibung vorhanden._',
         theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
@@ -1267,7 +1316,8 @@ function escapeRegExp(string) {
 }
 
 function highlightKeywordsInPreview() {
-    const previewContainer = document.querySelector('.toastui-editor-contents');
+    // Only query the active editor preview pane, not any other viewers
+    const previewContainer = document.querySelector('#editor-container .toastui-editor-md-preview .toastui-editor-contents');
     if (!previewContainer || !state.loreList || state.loreList.length === 0) return;
     
     highlightKeywords(previewContainer, state.loreList);

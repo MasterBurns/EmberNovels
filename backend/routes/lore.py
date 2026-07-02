@@ -11,6 +11,7 @@ class LoreCreate(BaseModel):
     short_description: Optional[str] = ""
     description: Optional[str] = ""
     keywords: Optional[List[str]] = None
+    project_ids: Optional[List[str]] = None
 
 class LoreUpdate(BaseModel):
     name: Optional[str] = None
@@ -18,6 +19,7 @@ class LoreUpdate(BaseModel):
     short_description: Optional[str] = None
     description: Optional[str] = None
     keywords: Optional[List[str]] = None
+    project_ids: Optional[List[str]] = None
 
 @router.get("")
 def list_lore(project_id: str):
@@ -46,7 +48,8 @@ def create_lore(project_id: str, lore: LoreCreate):
         lore.category, 
         lore.short_description, 
         lore.description, 
-        lore.keywords
+        lore.keywords,
+        lore.project_ids
     )
 
 @router.get("/{lore_id}")
