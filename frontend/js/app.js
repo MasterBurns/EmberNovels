@@ -638,18 +638,9 @@ async function openEditor(projectId, chapterId) {
         // Load chapter content depending on active branch
         await reloadEditorChapterContent(projectId, chapterId);
         
-        // Initial highlight & scanning
-        setTimeout(() => {
-            highlightKeywordsInPreview();
-            updateDetectedKeywords();
-        }, 150);
-
-        // If recovery available, show warning banner
-        if (data.has_recovery) {
-            banner.style.display = 'flex';
+        if (state.currentChapter) {
+            updateWordCount(state.currentChapter.content || '');
         }
-        
-        updateWordCount(data.content);
         saveStatus.textContent = 'Synchronisiert';
         
         // Start Autosave Timer (every X seconds checks if dirty, saves to .tmp)
