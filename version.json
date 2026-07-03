@@ -1,7 +1,7 @@
 {
-    "version": "0.2.0.1",
+    "version": "0.2.1.0",
     "release_notes": {
-        "de": "Version 0.2.0.1 (Hotfix).\n- Behebung des 'Text file busy' (Errno 26) Fehlers beim Linux/macOS Auto-Update durch temporäres Zwischenentpacken.",
-        "en": "Version 0.2.0.1 (Hotfix).\n- Fixed Linux/macOS hot update lock ('Text file busy' Errno 26) by extracting to temporary filenames before filesystem swapping."
+        "de": "Version 0.2.1.0 (Minor Update).\n- Löschen von Übersetzungs-Sprachzweigen (Branches) direkt in der Seitenleiste.\n- Dynamische Anzeige der Originalsprache im Sprachzweig-Panel statt Hardcodierung.\n- Verbesserte Fehlertoleranz bei KI-Übersetzungen im Hintergrund zur Vermeidung von Serverabstürzen.",
+        "en": "Version 0.2.1.0 (Minor Update).\n- Delete translation branches directly from the sidebar.\n- Dynamic original language name rendering in the branches list instead of hardcoding.\n- Added try-catch safety around background translations to prevent process crashes."
     }
 }

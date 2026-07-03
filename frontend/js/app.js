@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.2.0.1"; // default fallback
+        state.localVersion = "0.2.1.0"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -603,7 +603,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.2.0.1";
+            const version = state.localVersion || "0.2.1.0";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -2457,7 +2457,7 @@ async function loadProjectLanguages(projectId) {
         
         list.innerHTML = '';
         
-        // Add German (Original) always as static
+        // Add Original dynamic element based on currentProject original language
         const origEl = document.createElement('div');
         origEl.className = 'list-item';
         origEl.style.padding = '8px 12px';
@@ -2471,8 +2471,20 @@ async function loadProjectLanguages(projectId) {
             origEl.style.backgroundColor = 'var(--color-primary-light)';
         }
         
+        const origLang = (state.currentProject && state.currentProject.original_language) || "de";
+        const langMap = {
+            "de": { flag: "🇩🇪", label: t('lang_de', "Deutsch") },
+            "en": { flag: "🇬🇧", label: t('lang_en', "Englisch") },
+            "fr": { flag: "🇫🇷", label: t('lang_fr', "Französisch") },
+            "es": { flag: "🇪🇸", label: t('lang_es', "Spanisch") },
+            "it": { flag: "🇮🇹", label: t('lang_it', "Italienisch") },
+            "ja": { flag: "🇯🇵", label: t('lang_ja', "Japanisch") },
+            "zh": { flag: "🇨🇳", label: t('lang_zh', "Chinesisch") }
+        };
+        const origMapping = langMap[origLang] || { flag: "🌐", label: origLang.toUpperCase() };
+        
         origEl.innerHTML = `
-            <span style="font-size: 13px; font-weight: 500;">🇩🇪 Deutsch (${t('branch_original_badge', 'Original')})</span>
+            <span style="font-size: 13px; font-weight: 500;">${origMapping.flag} ${origMapping.label} (${t('branch_original_badge', 'Original')})</span>
             <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">${t('branch_original_badge', 'Original')}</span>
         `;
         
@@ -2498,16 +2510,14 @@ async function loadProjectLanguages(projectId) {
                 el.style.backgroundColor = 'var(--color-primary-light)';
             }
             
-            // Map common language flags
-            let flag = '🏳️';
-            if (lang === 'en') flag = '🇬🇧';
-            else if (lang === 'fr') flag = '🇫🇷';
-            else if (lang === 'es') flag = '🇪🇸';
-            else if (lang === 'it') flag = '🇮🇹';
+            const mapping = langMap[lang] || { flag: "🏳️", label: lang.toUpperCase() };
             
             el.innerHTML = `
-                <span style="font-size: 13px; font-weight: 500;">${flag} ${lang.toUpperCase()}</span>
-                <span style="font-size: 10px; background-color: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px;">Branch</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 13px; font-weight: 500;">${mapping.flag} ${mapping.label}</span>
+                    <span style="font-size: 10px; background-color: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px;">Branch</span>
+                </div>
+                <button class="card-action-btn btn-delete-branch" title="Sprachzweig löschen" style="background: none; border: none; cursor: pointer; padding: 4px;">🗑️</button>
             `;
             
             el.addEventListener('click', () => {
@@ -2515,6 +2525,29 @@ async function loadProjectLanguages(projectId) {
                 loadProjectDetails(projectId);
                 loadProjectLanguages(projectId);
             });
+            
+            const btnDelete = el.querySelector('.btn-delete-branch');
+            if (btnDelete) {
+                btnDelete.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showConfirm("Sprachzweig löschen", `Möchtest du den Sprachzweig "${mapping.label}" und alle darin übersetzten Kapitel wirklich unwiderruflich löschen?`, async () => {
+                        try {
+                            const delRes = await fetch(`${API_URL}/projects/${projectId}/languages/${lang}`, { method: 'DELETE' });
+                            if (!delRes.ok) throw new Error("Could not delete translation branch");
+                            
+                            showToast("Sprachzweig erfolgreich gelöscht.", "success");
+                            if (state.activeLanguage === lang) {
+                                state.activeLanguage = 'original';
+                            }
+                            loadProjectDetails(projectId);
+                            loadProjectLanguages(projectId);
+                        } catch (err) {
+                            showToast(err.message, "danger");
+                        }
+                    });
+                });
+            }
+            
             list.appendChild(el);
         });
     } catch (e) {
@@ -3170,7 +3203,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.2.0.1";
+    const currentVersion = state.localVersion || "0.2.1.0";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -3178,7 +3211,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.2.0.1";
+        const latestVersion = data.version || "0.2.1.0";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -4736,7 +4769,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.0.1
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.0
 // ==========================================
 
 let physicsInterval = null;

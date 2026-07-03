@@ -693,22 +693,34 @@ class StorageService:
     @classmethod
     def create_language_branch(cls, project_id: str, lang_code: str):
         """Create language branch directory and translate all existing active chapters."""
-        from backend.services.ai import AIService
-        lang_dir = cls.get_translations_dir(project_id, lang_code)
-        
-        # Translate all active chapters
-        chapters = cls.list_chapters(project_id)
-        for ch in chapters:
-            ch_data = cls.get_chapter_content(project_id, ch['id'])
-            original_content = ch_data.get('content', '')
+        try:
+            from backend.services.ai import AIService
+            lang_dir = cls.get_translations_dir(project_id, lang_code)
             
-            # Translate content
-            translated_content = AIService.translate_text(original_content, lang_code)
-            
-            # Save to translated chapter file
-            ch_file = lang_dir / f"{ch['id']}.md"
-            with open(ch_file, 'w', encoding='utf-8') as f:
-                f.write(translated_content)
+            # Translate all active chapters
+            chapters = cls.list_chapters(project_id)
+            for ch in chapters:
+                ch_data = cls.get_chapter_content(project_id, ch['id'])
+                original_content = ch_data.get('content', '')
+                
+                # Translate content
+                translated_content = AIService.translate_text(original_content, lang_code)
+                
+                # Save to translated chapter file
+                ch_file = lang_dir / f"{ch['id']}.md"
+                with open(ch_file, 'w', encoding='utf-8') as f:
+                    f.write(translated_content)
+        except Exception as e:
+            print(f"Error in background create_language_branch: {e}")
+
+    @classmethod
+    def delete_language_branch(cls, project_id: str, lang_code: str):
+        """Delete translation branch directory."""
+        import shutil
+        t_dir = cls.get_translations_dir(project_id)
+        l_dir = t_dir / lang_code
+        if l_dir.exists() and l_dir.is_dir():
+            shutil.rmtree(l_dir)
 
     @classmethod
     def get_translated_chapter(cls, project_id: str, lang_code: str, chapter_id: str) -> Dict[str, Any]:

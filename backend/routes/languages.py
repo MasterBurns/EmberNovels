@@ -88,3 +88,17 @@ def translate_chapter_now(project_id: str, lang_code: str, chapter_id: str):
     StorageService.save_translated_chapter(project_id, lang_code, chapter_id, translated_content)
     
     return {"id": chapter_id, "content": translated_content}
+
+@router.delete("/{lang_code}")
+def delete_language_branch(project_id: str, lang_code: str):
+    """Delete a translation branch and all its translated chapters."""
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        
+    active_langs = StorageService.list_languages(project_id)
+    if lang_code not in active_langs:
+        raise HTTPException(status_code=404, detail="Sprachzweig nicht gefunden")
+        
+    StorageService.delete_language_branch(project_id, lang_code)
+    return {"message": f"Sprachzweig '{lang_code}' wurde erfolgreich gelöscht."}
