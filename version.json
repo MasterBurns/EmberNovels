@@ -1,7 +1,7 @@
 {
-    "version": "0.2.0.0",
+    "version": "0.2.0.1",
     "release_notes": {
-        "de": "Version 0.2.0.0 (Minor Release).\n- Bearbeiten von Buchprojekt-Metadaten (Titel, Autor) in den Projekt-Einstellungen\n- Drag & Drop zum Einsortieren von Kapiteln in Bände/Bücher\n- Korrektur der Sprachzweig-Anzeige und Übersetzungslabels (z.B. Original Englisch)\n- Automatisches Vorladen der Lore-Wiki-Einträge für das Beziehungsnetzwerk direkt beim Laden des Projekts",
-        "en": "Version 0.2.0.0 (Minor Release).\n- Edit project metadata (Title, Author) inside the project configuration panel\n- Drag & Drop chapters directly into volumes/unassigned groups\n- Fixed language branch label formatting and translation mapping (e.g. Original English)\n- Preload Lore Wiki entries on project load so the Relationship network renders character nodes immediately"
+        "de": "Version 0.2.0.1 (Hotfix).\n- Behebung des 'Text file busy' (Errno 26) Fehlers beim Linux/macOS Auto-Update durch temporäres Zwischenentpacken.",
+        "en": "Version 0.2.0.1 (Hotfix).\n- Fixed Linux/macOS hot update lock ('Text file busy' Errno 26) by extracting to temporary filenames before filesystem swapping."
     }
 }

@@ -16,6 +16,16 @@ def extract_binary_from_archive(archive_path, target_exe_path):
     binary_name = "EmberNovels.exe" if sys.platform == "win32" else "EmberNovels"
     extracted_path = None
     
+    # Extract to a temp filename to prevent OS locks on running executables
+    temp_extracted_name = "EmberNovels_extracted_temp.exe" if sys.platform == "win32" else "EmberNovels_extracted_temp"
+    temp_extracted_path = os.path.join(temp_dir, temp_extracted_name)
+    
+    if os.path.exists(temp_extracted_path):
+        try:
+            os.remove(temp_extracted_path)
+        except Exception:
+            pass
+            
     if archive_path.endswith(".tar.gz") or archive_path.endswith(".tgz"):
         import tarfile
         with tarfile.open(archive_path, "r:gz") as tar:
@@ -25,9 +35,9 @@ def extract_binary_from_archive(archive_path, target_exe_path):
                     member = m
                     break
             if member:
-                member.name = os.path.basename(member.name)
+                member.name = temp_extracted_name
                 tar.extract(member, path=temp_dir)
-                extracted_path = os.path.join(temp_dir, member.name)
+                extracted_path = temp_extracted_path
                 
     elif archive_path.endswith(".zip"):
         import zipfile
@@ -38,14 +48,35 @@ def extract_binary_from_archive(archive_path, target_exe_path):
                     filename = name
                     break
             if filename:
-                zip_ref.extract(filename, path=temp_dir)
-                extracted_path = os.path.join(temp_dir, filename)
+                # Extract to a temp directory to avoid naming clashes
+                temp_extract_subfolder = os.path.join(temp_dir, "temp_extracted_zip_dir")
+                if os.path.exists(temp_extract_subfolder):
+                    import shutil
+                    try:
+                        shutil.rmtree(temp_extract_subfolder)
+                    except Exception:
+                        pass
+                zip_ref.extract(filename, path=temp_extract_subfolder)
+                
+                original_extracted = os.path.join(temp_extract_subfolder, filename)
+                if os.path.exists(original_extracted):
+                    os.rename(original_extracted, temp_extracted_path)
+                    extracted_path = temp_extracted_path
+                    
+                if os.path.exists(temp_extract_subfolder):
+                    import shutil
+                    try:
+                        shutil.rmtree(temp_extract_subfolder)
+                    except Exception:
+                        pass
                 
     if extracted_path and os.path.exists(extracted_path):
-        if extracted_path != target_exe_path:
-            if os.path.exists(target_exe_path):
+        if os.path.exists(target_exe_path):
+            try:
                 os.remove(target_exe_path)
-            os.rename(extracted_path, target_exe_path)
+            except Exception:
+                pass
+        os.rename(extracted_path, target_exe_path)
         return True
     return False
 

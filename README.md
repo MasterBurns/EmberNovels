@@ -16,7 +16,7 @@ Select your language below / Wähle deine Sprache:
 ### Über EmberNovels
 EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft. Deine Manuskripte werden in offenen Textformaten gespeichert (Markdown/JSON) - maximale Datensicherheit ohne Cloud-Zwang.
 
-### Aktuelle Features (v0.2.0.0)
+### Aktuelle Features (v0.2.0.1)
 1. **Zen-Modus & einklappbare Sidebars**: Konzentriere dich voll und ganz auf dein Schreiben. Sidebars lassen sich einklappen und bei Bedarf über ein Pinning-System (`📌`/`📍`) anheften, um permanent sichtbar zu bleiben.
 2. **Lore-Wiki (Weltenbau)**: Lege Charaktere, Orte, Gegenstände und historische Ereignisse an. EmberNovels erkennt Lore-Keywords automatisch im Text und blendet beim Hovern ein elegantes schwebendes Infofenster mit Details ein.
 3. **Zeitleisten-Editor (Timeline)**: Organisiere die Chronologie deiner Geschichte. Verknüpfe Ereignisse direkt mit Lore-Einträgen für ein interaktives Planungserlebnis.
@@ -43,7 +43,7 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 ### About EmberNovels
 EmberNovels is a feature-rich desktop application for authors and novel writers. It runs entirely locally, storing your manuscripts in open file formats (Markdown/JSON) - providing maximum data privacy.
 
-### Existing Features (v0.2.0.0)
+### Existing Features (v0.2.0.1)
 1. **Zen Mode & Collapsible Sidebars**: Write distraction-free. Collapse both sidebars to focus on your writing, or pin them using the pinning system (`📌`/`📍`) to keep them visible.
 2. **Lore Wiki (Worldbuilding)**: Create entries for characters, locations, items, and historical events. EmberNovels automatically detects these keywords in your manuscript and displays detailed facts in glassmorphic hover tooltips.
 3. **Timeline Editor**: Plan your novel's chronology. Link historical events directly to Lore Wiki entries for interactive planning.
@@ -70,7 +70,7 @@ EmberNovels is a feature-rich desktop application for authors and novel writers.
 ### Sobre EmberNovels
 EmberNovels es una herramienta de escritorio rica en funciones para novelistas y escritores. Funciona localmente en tu ordenador, almacenando manuscritos en formatos abiertos (Markdown/JSON) para máxima privacidad de datos.
 
-### Características actuales (v0.2.0.0)
+### Características actuales (v0.2.0.1)
 1. **Modo Zen y paneles colapsables**: Escribe sin distracciones. Contrae los paneles laterales o fíjalos con el sistema de pins (`📌`/`📍`) para mantenerlos visibles.
 2. **Lore Wiki (Construcción de mundos)**: Crea fichas de personajes, lugares, objetos y eventos. EmberNovels detecta las palabras clave automáticamente en el manuscrito y muestra detalles en tarjetas flotantes.
 3. **Editor de Línea de Tiempo**: Organiza la cronología de tu novela. Vincula acontecimientos directamente con Lore Wiki para una planificación interactiva.
@@ -92,7 +92,7 @@ EmberNovels es una herramienta de escritorio rica en funciones para novelistas y
 ### À propos d'EmberNovels
 EmberNovels est une application de bureau complète pour les écrivains et romanciers. Elle s'exécute localement et stocke vos manuscrits dans des formats ouverts (Markdown/JSON) pour préserver vos données privées.
 
-### Fonctionnalités actuelles (v0.2.0.0)
+### Fonctionnalités actuelles (v0.2.0.1)
 1. **Mode Zen & Panneaux repliables**: Écrivez sans distraction. Masquez les barres latérales ou épinglez-les (`📌`/`📍`) pour les garder à l'écran.
 2. **Encyclopédie (Lore Wiki)**: Créez des fiches de personnages, lieux, objets. EmberNovels détecte automatiquement les mots-clés dans votre texte et affiche des info-bulles élégantes au survol.
 3. **Éditeur de Chronologie**: Structurez l'historique de votre récit. Liez des événements directement à vos entrées d'encyclopédie.
@@ -114,7 +114,7 @@ EmberNovels est une application de bureau complète pour les écrivains et roman
 ### Info su EmberNovels
 EmberNovels è un'applicazione desktop ricca di funzionalità per scrittori e romanzieri. Funziona localmente sul tuo PC, salvando i manoscritti in formati aperti (Markdown/JSON) per garantire la massima riservatezza dei dati.
 
-### Caratteristiche attuali (v0.2.0.0)
+### Caratteristiche attuali (v0.2.0.1)
 1. **Modalità Zen & Pannelli comprimibili**: Scrivi senza distrazioni. Nascondi le barre laterali o bloccale (`📌`/`📍`) per tenerle fisse sullo schermo.
 2. **Lore Wiki (Worldbuilding)**: Crea schede per personaggi, luoghi e oggetti. I termini chiave vengono rilevati nel testo mostrando popup informativi al passaggio del mouse.
 3. **Cronologia (Timeline)**: Gestisci la linea temporale degli eventi del tuo romanzo, collegandoli direttamente al Lore Wiki.
@@ -136,7 +136,7 @@ EmberNovels è un'applicazione desktop ricca di funzionalità per scrittori e ro
 ### EmberNovels について
 EmberNovelsは、小説家や創作活動を行う作家のための多機能デスクトップアプリケーションです。完全にローカルで動作し、原稿はオープンな形式（Markdown/JSON）で保存されるため、データのプライバシーが厳重に守られます。
 
-### 主な機能 (v0.2.0.0)
+### 主な機能 (v0.2.0.1)
 1. **禅モードと折りたたみ式サイドバー**：執筆に集中できる環境を提供します。サイドバーを折りたたむか、ピン（`📌`/`📍`）を使用して画面に固定することができます。
 2. **設定資料集（Lore Wiki）**：登場人物、地名、アイテムなどを管理。原稿内のキーワードを自動検出し、マウスホバーで美しい情報カードをポップアップ表示します。
 3. **タイムラインエディター**：物語のクロノロジー（時系列）を整理。歴史的出来事をLore Wikiのエントリとリンクさせることができます。
@@ -158,7 +158,7 @@ EmberNovelsは、小説家や創作活動を行う作家のための多機能デ
 ### 关于 EmberNovels
 EmberNovels 是一款专为小说创作者和作家设计的桌面写作应用。它完全在本地运行，使用开放格式（Markdown/JSON）存储您的手稿，确保最大程度的数据隐私和安全。
 
-### 当前功能 (v0.2.0.0)
+### 当前功能 (v0.2.0.1)
 1. **禅模式与可折叠侧边栏**：无干扰写作。隐藏两侧边栏以专注于创作，或使用固定按钮（`📌`/`📍`）将其常驻显示。
 2. **设定百科（Lore Wiki）**：创建角色、地点、道具等的背景档案。EmberNovels 会在文本中自动识别这些关键字，并在悬停时弹出半透明的浮动卡片展示详情。
 3. **时间线编辑器（Timeline）**：规划小说故事发生的时间序列。将历史事件直接与 Lore Wiki 词条相关联，进行交互式大纲设计。
