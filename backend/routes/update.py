@@ -11,6 +11,44 @@ router = APIRouter(prefix="/update", tags=["update"])
 class UpdateTrigger(BaseModel):
     download_url: str
 
+def extract_binary_from_archive(archive_path, target_exe_path):
+    temp_dir = os.path.dirname(target_exe_path)
+    binary_name = "EmberNovels.exe" if sys.platform == "win32" else "EmberNovels"
+    extracted_path = None
+    
+    if archive_path.endswith(".tar.gz") or archive_path.endswith(".tgz"):
+        import tarfile
+        with tarfile.open(archive_path, "r:gz") as tar:
+            member = None
+            for m in tar.getmembers():
+                if os.path.basename(m.name) == binary_name:
+                    member = m
+                    break
+            if member:
+                member.name = os.path.basename(member.name)
+                tar.extract(member, path=temp_dir)
+                extracted_path = os.path.join(temp_dir, member.name)
+                
+    elif archive_path.endswith(".zip"):
+        import zipfile
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            filename = None
+            for name in zip_ref.namelist():
+                if os.path.basename(name) == binary_name:
+                    filename = name
+                    break
+            if filename:
+                zip_ref.extract(filename, path=temp_dir)
+                extracted_path = os.path.join(temp_dir, filename)
+                
+    if extracted_path and os.path.exists(extracted_path):
+        if extracted_path != target_exe_path:
+            if os.path.exists(target_exe_path):
+                os.remove(target_exe_path)
+            os.rename(extracted_path, target_exe_path)
+        return True
+    return False
+
 def perform_hot_update(download_url: str):
     # Give the HTTP response time to complete sending to the client
     time.sleep(1.0)
@@ -23,16 +61,40 @@ def perform_hot_update(download_url: str):
         new_exe_name = "EmberNovels_new.exe" if sys.platform == "win32" else "EmberNovels_new"
         new_exe_path = os.path.join(exe_dir, new_exe_name)
         
-        print(f"Downloading update from {download_url} to {new_exe_path}...")
+        # Check if URL points to an archive
+        url_lower = download_url.lower()
+        is_archive = url_lower.endswith(".tar.gz") or url_lower.endswith(".tgz") or url_lower.endswith(".zip")
+        
+        download_target = new_exe_path
+        if is_archive:
+            archive_ext = ".tar.gz" if ".tar.gz" in url_lower or ".tgz" in url_lower else ".zip"
+            download_target = os.path.join(exe_dir, "temp_update_archive" + archive_ext)
+            
+        print(f"Downloading update from {download_url} to {download_target}...")
         response = requests.get(download_url, stream=True, timeout=60)
         response.raise_for_status()
         
-        with open(new_exe_path, "wb") as f:
+        with open(download_target, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
                 
         print("Download complete.")
         
+        if is_archive:
+            print(f"Extracting binary from archive {download_target}...")
+            success = False
+            try:
+                success = extract_binary_from_archive(download_target, new_exe_path)
+            finally:
+                if os.path.exists(download_target):
+                    try:
+                        os.remove(download_target)
+                    except Exception:
+                        pass
+            if not success:
+                raise Exception("Failed to extract executable binary from downloaded archive.")
+            print("Extraction complete.")
+            
         if not is_frozen:
             print("Running in development mode. Simulating success, skipping hot-swap.")
             if os.path.exists(new_exe_path):

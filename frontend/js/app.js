@@ -3126,7 +3126,7 @@ async function checkAppUpdates() {
                             let targetAsset = null;
 
                             if (platform.includes('win')) {
-                                targetAsset = releaseData.assets.find(a => a.name.endsWith('.exe'));
+                                targetAsset = releaseData.assets.find(a => a.name.includes('Windows') && a.name.endsWith('.zip'));
                             } else if (platform.includes('mac') || platform.includes('darwin')) {
                                 targetAsset = releaseData.assets.find(a => a.name.includes('macOS') || a.name.endsWith('.zip'));
                             } else if (platform.includes('linux')) {
