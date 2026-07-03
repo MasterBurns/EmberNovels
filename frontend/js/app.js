@@ -31,6 +31,10 @@ const state = {
     relationships: { nodes: {}, links: [] },
     relationshipDragNode: null,
     relationshipDragOffset: { x: 0, y: 0 },
+    relationshipPan: { x: 0, y: 0 },
+    relationshipZoom: 1.0,
+    relationshipPanning: false,
+    relationshipPanStart: { x: 0, y: 0 },
     loadingChapter: false,
     collapsedVolumes: {}
 };
@@ -60,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.1.2.1"; // default fallback
+        state.localVersion = "0.1.2.2"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -597,7 +601,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.1.2.1";
+            const version = state.localVersion || "0.1.2.2";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -701,6 +705,23 @@ function setupEventListeners() {
                 const result = await response.json();
                 showToast(result.message, "success");
                 await loadWikiData();
+                
+                let allSuggestions = [];
+                if (result.created_entries && result.created_entries.length > 0) {
+                    result.created_entries.forEach(lore => {
+                        const combinedText = (lore.short_description || '') + '\n' + (lore.description || '');
+                        const sugs = extractTimepointsFromText(combinedText);
+                        sugs.forEach(s => {
+                            s.lore_id = lore.id;
+                            s.lore_name = lore.name;
+                            allSuggestions.push(s);
+                        });
+                    });
+                }
+                
+                if (allSuggestions.length > 0) {
+                    setTimeout(() => showTimelineSuggestionsModal(allSuggestions), 300);
+                }
             } catch (e) {
                 showToast("Fehler beim Lore-Scan: " + e.message, "danger");
             } finally {
@@ -838,7 +859,17 @@ async function loadProjectDetails(projectId) {
         const branchSelect = document.getElementById('project-branch-select');
         if (branchSelect) {
             const currentSelected = state.activeLanguage;
-            branchSelect.innerHTML = `<option value="original">🇩🇪 Original (${t('branch_original_badge', 'Deutsch')})</option>`;
+            
+            const origLang = project.original_language || "de";
+            const langMap = {
+                "de": { flag: "🇩🇪", label: "Deutsch" },
+                "en": { flag: "🇬🇧", label: "Englisch" },
+                "fr": { flag: "🇫🇷", label: "Französisch" },
+                "es": { flag: "🇪🇸", label: "Spanisch" },
+                "it": { flag: "🇮🇹", label: "Italienisch" }
+            };
+            const mapping = langMap[origLang] || { flag: "🌐", label: origLang.toUpperCase() };
+            branchSelect.innerHTML = `<option value="original">${mapping.flag} Original (${t('branch_original_badge', mapping.label)})</option>`;
             
             try {
                 const langRes = await fetch(`${API_URL}/projects/${projectId}/languages`);
@@ -1875,6 +1906,15 @@ async function handleSaveLore() {
         } else {
             showLoreDetail(saved.id);
         }
+
+        // Evaluate if timepoints are mentioned and suggest timeline entries
+        const combinedText = (saved.short_description || '') + '\n' + (saved.description || '');
+        const suggestions = extractTimepointsFromText(combinedText);
+        if (suggestions.length > 0) {
+            suggestions.forEach(s => s.lore_id = saved.id);
+            // Wait slightly for modal transition animations to finish
+            setTimeout(() => showTimelineSuggestionsModal(suggestions), 300);
+        }
         
     } catch (e) {
         showToast(e.message, 'danger');
@@ -2605,6 +2645,43 @@ function showConfirm(title, message, onSubmit) {
     openModal('modal-confirm');
 }
 
+// Custom non-blocking web prompt implementation
+function showPrompt(title, message, defaultValue, callback) {
+    const modal = document.getElementById('modal-prompt');
+    const titleEl = document.getElementById('prompt-title');
+    const msgEl = document.getElementById('prompt-message');
+    const inputEl = document.getElementById('prompt-input');
+    const submitBtn = document.getElementById('btn-prompt-submit');
+
+    if (!modal || !titleEl || !msgEl || !inputEl || !submitBtn) {
+        const res = prompt(message, defaultValue);
+        callback(res);
+        return;
+    }
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    inputEl.value = defaultValue || '';
+    
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+    
+    newSubmitBtn.addEventListener('click', () => {
+        const val = inputEl.value;
+        closeModal('modal-prompt');
+        callback(val);
+    });
+
+    inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            newSubmitBtn.click();
+        }
+    };
+
+    openModal('modal-prompt');
+    setTimeout(() => inputEl.focus(), 100);
+}
+
 // Open Import Wizard Modal
 function openImportWizard() {
     // Reset inputs
@@ -2981,7 +3058,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.1.2.1";
+    const currentVersion = state.localVersion || "0.1.2.2";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -2989,7 +3066,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.1.2.1";
+        const latestVersion = data.version || "0.1.2.2";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -3542,6 +3619,146 @@ async function performAutoBackup() {
     }
 }
 
+function extractTimepointsFromText(text) {
+    if (!text) return [];
+    
+    const events = [];
+    const regexes = [
+        /(?:im Jahr(?:e)?|anno|seit|im|in der Epoche|um)\s+(\d{3,4})(?:\s*(?:n\.\s*Chr\.|v\.\s*Chr\.|n\.Chr\.|v\.Chr\.|BC|AD))?/gi,
+        /(\d{3,4})\s*(?:n\.\s*Chr\.|v\.\s*Chr\.|n\.Chr\.|v\.Chr\.)/gi,
+        /(?:geboren|starb|gegründet|errichtet|zerstört)\s+(\d{3,4})/gi,
+        /(?:^|\s)(\d{4})(?:\s|$|\.|\,)/g
+    ];
+    
+    const lines = text.split(/[.\n]/);
+    const seenYears = new Set();
+    
+    lines.forEach(line => {
+        for (const regex of regexes) {
+            let match;
+            regex.lastIndex = 0;
+            while ((match = regex.exec(line)) !== null) {
+                const year = match[1];
+                if (year && !seenYears.has(year)) {
+                    const yearNum = parseInt(year);
+                    if (yearNum >= 1 && yearNum <= 3000) {
+                        seenYears.add(year);
+                        let eventTitle = line.trim();
+                        if (eventTitle.length > 80) {
+                            eventTitle = eventTitle.substring(0, 77) + "...";
+                        }
+                        events.push({
+                            date: year,
+                            title: eventTitle || `Ereignis im Jahr ${year}`,
+                            desc: line.trim()
+                        });
+                    }
+                }
+            }
+        }
+    });
+    
+    return events;
+}
+
+function showTimelineSuggestionsModal(suggestions) {
+    const listContainer = document.getElementById('timeline-suggestions-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+    
+    suggestions.forEach((sug, idx) => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.alignItems = 'flex-start';
+        item.style.gap = '10px';
+        item.style.padding = '8px';
+        item.style.backgroundColor = 'var(--bg-surface)';
+        item.style.border = '1px solid var(--border-color)';
+        item.style.borderRadius = '6px';
+        item.style.marginBottom = '8px';
+        
+        const contextText = sug.lore_name ? `<div style="font-size: 11px; color: var(--color-primary); margin-bottom: 2px;">📖 Gefunden in: ${escapeHtml(sug.lore_name)}</div>` : '';
+        
+        item.innerHTML = `
+            <input type="checkbox" class="timeline-sug-chk" value="${idx}" checked style="margin-top: 4px; width: auto;">
+            <div style="flex-grow: 1;">
+                ${contextText}
+                <div style="font-size: 13px; font-weight: bold; color: var(--text-base);">
+                    <input type="text" class="timeline-sug-date" value="${sug.date}" style="width: 60px; display: inline-block; padding: 2px 4px; font-size: 12px; margin-right: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-surface); color: var(--text-base);"> - 
+                    <input type="text" class="timeline-sug-title" value="${escapeHtml(sug.title)}" style="width: 250px; display: inline-block; padding: 2px 4px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-surface); color: var(--text-base);">
+                </div>
+                <textarea class="timeline-sug-desc" style="width: 100%; font-size: 12px; margin-top: 4px; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-surface); color: var(--text-muted); resize: vertical;" rows="2">${escapeHtml(sug.desc)}</textarea>
+                <input type="hidden" class="timeline-sug-lore-id" value="${sug.lore_id || ''}">
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+    
+    const submitBtn = document.getElementById('btn-submit-timeline-suggestions');
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+    
+    newSubmitBtn.addEventListener('click', async () => {
+        const checkboxes = document.querySelectorAll('.timeline-sug-chk');
+        let newEventsAdded = false;
+        
+        if (!state.timelineEvents || state.timelineEvents.length === 0) {
+            try {
+                const timelineRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/timeline`);
+                if (timelineRes.ok) {
+                    state.timelineEvents = await timelineRes.json();
+                }
+            } catch(e) {
+                state.timelineEvents = [];
+            }
+        }
+        
+        checkboxes.forEach((chk) => {
+            if (chk.checked) {
+                const parent = chk.parentNode;
+                const dateVal = parent.querySelector('.timeline-sug-date').value.trim();
+                const titleVal = parent.querySelector('.timeline-sug-title').value.trim();
+                const descVal = parent.querySelector('.timeline-sug-desc').value.trim();
+                const loreIdVal = parent.querySelector('.timeline-sug-lore-id').value;
+                
+                if (dateVal && titleVal) {
+                    const evtId = 'evt_' + Math.random().toString(36).substr(2, 9);
+                    state.timelineEvents.push({
+                        id: evtId,
+                        date: dateVal,
+                        title: titleVal,
+                        desc: descVal,
+                        lore_id: loreIdVal || null
+                    });
+                    newEventsAdded = true;
+                }
+            }
+        });
+        
+        if (newEventsAdded) {
+            try {
+                const saveRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/timeline`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state.timelineEvents)
+                });
+                if (saveRes.ok) {
+                    showToast("Ereignisse erfolgreich zur Zeitleiste hinzugefügt!", "success");
+                    if (state.currentView === 'timeline') {
+                        loadTimelineData();
+                    }
+                }
+            } catch(e) {
+                showToast("Fehler beim Speichern der Zeitleiste: " + e.message, "danger");
+            }
+        }
+        closeModal('modal-timeline-suggestions');
+    });
+    
+    openModal('modal-timeline-suggestions');
+}
+
 // Timeline Management
 async function loadTimelineData() {
     if (!state.currentProject) return;
@@ -4007,9 +4224,9 @@ function setupRelationshipsCanvasEvents() {
     const canvas = document.getElementById('relationships-canvas');
     if (!canvas) return;
     
-    const rect = canvas.getBoundingClientRect();
+    // Auto resize canvas width/height to matches clientWidth/clientHeight (prevents oval/egg-shaped stretching)
     canvas.width = canvas.clientWidth || 700;
-    canvas.height = 500;
+    canvas.height = canvas.clientHeight || 500;
     
     const newCanvas = canvas.cloneNode(true);
     canvas.parentNode.replaceChild(newCanvas, canvas);
@@ -4019,6 +4236,28 @@ function setupRelationshipsCanvasEvents() {
     newCanvas.addEventListener('mouseup', handleRelationshipMouseUp);
     newCanvas.addEventListener('mouseleave', handleRelationshipMouseUp);
     newCanvas.addEventListener('dblclick', handleRelationshipDoubleClick);
+    newCanvas.addEventListener('wheel', handleRelationshipWheel, { passive: false });
+}
+
+function handleRelationshipWheel(e) {
+    e.preventDefault();
+    const canvas = e.target;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const zoomIntensity = 0.1;
+    const wheel = e.deltaY < 0 ? 1 : -1;
+    const zoomFactor = Math.exp(wheel * zoomIntensity);
+    
+    const newZoom = Math.min(Math.max(state.relationshipZoom * zoomFactor, 0.2), 4.0);
+    
+    // Adjust panning to zoom into the mouse pointer context
+    state.relationshipPan.x = mouseX - (mouseX - state.relationshipPan.x) * (newZoom / state.relationshipZoom);
+    state.relationshipPan.y = mouseY - (mouseY - state.relationshipPan.y) * (newZoom / state.relationshipZoom);
+    state.relationshipZoom = newZoom;
+    
+    drawRelationships();
 }
 
 function handleRelationshipMouseDown(e) {
@@ -4026,6 +4265,10 @@ function handleRelationshipMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    
+    // Convert screen coordinates to world coordinates
+    const worldX = (x - state.relationshipPan.x) / state.relationshipZoom;
+    const worldY = (y - state.relationshipPan.y) / state.relationshipZoom;
     
     const characters = state.loreList.filter(entry => entry.category === 'character');
     const nodeRadius = 45;
@@ -4035,10 +4278,10 @@ function handleRelationshipMouseDown(e) {
         const c = characters[i];
         const coord = state.relationships.nodes[c.id];
         if (coord) {
-            const dist = Math.hypot(x - coord.x, y - coord.y);
+            const dist = Math.hypot(worldX - coord.x, worldY - coord.y);
             if (dist <= nodeRadius) {
                 hitNodeId = c.id;
-                state.relationshipDragOffset = { x: x - coord.x, y: y - coord.y };
+                state.relationshipDragOffset = { x: worldX - coord.x, y: worldY - coord.y };
                 break;
             }
         }
@@ -4047,29 +4290,66 @@ function handleRelationshipMouseDown(e) {
     if (hitNodeId) {
         state.relationshipDragNode = hitNodeId;
         canvas.style.cursor = 'grabbing';
+    } else {
+        // Start background panning
+        state.relationshipPanning = true;
+        state.relationshipPanStart = { x: e.clientX - state.relationshipPan.x, y: e.clientY - state.relationshipPan.y };
+        canvas.style.cursor = 'move';
     }
 }
 
 function handleRelationshipMouseMove(e) {
-    if (!state.relationshipDragNode) return;
-    
     const canvas = e.target;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const newX = Math.max(50, Math.min(canvas.width - 50, x - state.relationshipDragOffset.x));
-    const newY = Math.max(50, Math.min(canvas.height - 50, y - state.relationshipDragOffset.y));
-    
-    state.relationships.nodes[state.relationshipDragNode] = { x: newX, y: newY };
-    drawRelationships();
+    if (state.relationshipDragNode) {
+        // Convert screen coordinates to world coordinates
+        const worldX = (x - state.relationshipPan.x) / state.relationshipZoom;
+        const worldY = (y - state.relationshipPan.y) / state.relationshipZoom;
+        
+        // Drag node inside boundary
+        state.relationships.nodes[state.relationshipDragNode] = { 
+            x: worldX - state.relationshipDragOffset.x, 
+            y: worldY - state.relationshipDragOffset.y 
+        };
+        drawRelationships();
+    } else if (state.relationshipPanning) {
+        // Drag background camera
+        state.relationshipPan = { 
+            x: e.clientX - state.relationshipPanStart.x, 
+            y: e.clientY - state.relationshipPanStart.y 
+        };
+        drawRelationships();
+    } else {
+        // Hover pointer cursor check
+        const worldX = (x - state.relationshipPan.x) / state.relationshipZoom;
+        const worldY = (y - state.relationshipPan.y) / state.relationshipZoom;
+        const characters = state.loreList.filter(entry => entry.category === 'character');
+        const nodeRadius = 45;
+        let hover = false;
+        for (const c of characters) {
+            const coord = state.relationships.nodes[c.id];
+            if (coord && Math.hypot(worldX - coord.x, worldY - coord.y) <= nodeRadius) {
+                hover = true;
+                break;
+            }
+        }
+        canvas.style.cursor = hover ? 'pointer' : 'grab';
+    }
 }
 
 function handleRelationshipMouseUp(e) {
+    const canvas = e.target;
     if (state.relationshipDragNode) {
         state.relationshipDragNode = null;
-        e.target.style.cursor = 'grab';
+        canvas.style.cursor = 'grab';
         saveRelationshipsLayout(true);
+    }
+    if (state.relationshipPanning) {
+        state.relationshipPanning = false;
+        canvas.style.cursor = 'grab';
     }
 }
 
@@ -4079,6 +4359,9 @@ function handleRelationshipDoubleClick(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    const worldX = (x - state.relationshipPan.x) / state.relationshipZoom;
+    const worldY = (y - state.relationshipPan.y) / state.relationshipZoom;
+    
     const characters = state.loreList.filter(entry => entry.category === 'character');
     const nodeRadius = 45;
     
@@ -4086,7 +4369,7 @@ function handleRelationshipDoubleClick(e) {
     for (const c of characters) {
         const coord = state.relationships.nodes[c.id];
         if (coord) {
-            const dist = Math.hypot(x - coord.x, y - coord.y);
+            const dist = Math.hypot(worldX - coord.x, worldY - coord.y);
             if (dist <= nodeRadius) {
                 hitNodeId = c.id;
                 break;
@@ -4097,6 +4380,11 @@ function handleRelationshipDoubleClick(e) {
     if (hitNodeId) {
         navigateTo('lore');
         setTimeout(() => showLoreDetail(hitNodeId), 150);
+    } else {
+        // Reset zoom and pan on background double click
+        state.relationshipPan = { x: 0, y: 0 };
+        state.relationshipZoom = 1.0;
+        drawRelationships();
     }
 }
 
@@ -4104,8 +4392,19 @@ function drawRelationships() {
     const canvas = document.getElementById('relationships-canvas');
     if (!canvas) return;
     
+    // Auto resize canvas width/height to matches clientWidth/clientHeight (prevents oval/egg-shaped stretching)
+    if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+        canvas.width = canvas.clientWidth || 700;
+        canvas.height = canvas.clientHeight || 500;
+    }
+    
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Save, translate & scale context for pan & zoom support
+    ctx.save();
+    ctx.translate(state.relationshipPan.x, state.relationshipPan.y);
+    ctx.scale(state.relationshipZoom, state.relationshipZoom);
     
     const characters = state.loreList.filter(entry => entry.category === 'character');
     
@@ -4192,6 +4491,9 @@ function drawRelationships() {
             ctx.fillText(displayName, coord.x, coord.y);
         }
     });
+    
+    // Restore transformation context state
+    ctx.restore();
 }
 
 async function addRelationshipLink() {
@@ -4322,7 +4624,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.1.2.1
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.1.2.2
 // ==========================================
 
 let physicsInterval = null;

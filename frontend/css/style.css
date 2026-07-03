@@ -1159,7 +1159,7 @@ button, input, textarea, select {
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-grow: 1;
+    flex: 0 0 60px; /* Fixed width per bar, do not grow, do not shrink */
     height: 100%;
     justify-content: flex-end;
 }

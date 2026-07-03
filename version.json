@@ -1,7 +1,7 @@
 {
-    "version": "0.1.2.1",
+    "version": "0.1.2.2",
     "release_notes": {
-        "de": "Version 0.1.2.1 Release.\n- Behebung des leeren Log-Fensters im EmberNovels-Kontrollzentrum\n- Hinzufügen eines schicken Flammen-Icons für das Kontrollzentrum in der Taskleiste\n- Weitere Stabilitätsverbesserungen beim automatischen Hot-Update",
-        "en": "Version 0.1.2.1 Release.\n- Fix for the empty log panel inside the EmberNovels control center\n- Added a premium fire flame icon for the control center in the system taskbar\n- Stability enhancements for the seamless in-app auto-update flow"
+        "de": "Version 0.1.2.2 Release.\n- Behebung des nicht übernommenen Projektsprachen-Bugs\n- Korrektur des 'Band hinzufügen' Buttons mit neuem modalen Prompt-Fenster\n- Behebung des Diagramm-Überlauf-Bugs bei den Schreibstatistiken (jetzt scrollbar)\n- Verzerrungsfreie Darstellung des Beziehungsnetzwerks mit Zoom- und Drag-to-Pan-Steuerung\n- Automatische Extraktion und Vorschläge von Zeitleisten-Ereignissen beim Erstellen von Lore-Einträgen",
+        "en": "Version 0.1.2.2 Release.\n- Fixed project language persistence select display bug\n- Fixed 'Add Volume' button behavior with new custom prompt dialogs\n- Fixed chart overflow in writing stats (now horizontally scrollable)\n- Stretched-free relationship canvas with wheel zoom and drag-to-pan controls\n- Automated timeline events extraction and interactive suggestions on Wiki lore creation"
     }
 }
