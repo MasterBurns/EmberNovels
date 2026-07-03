@@ -142,6 +142,9 @@
                                         </select>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button id="btn-create-volume" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;">
+                                            <span>+</span> Band hinzufügen
+                                        </button>
                                         <button id="btn-sort-chapters" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" data-i18n="btn_sort_chapters_asc">
                                             Sortierung: ⬆️ Alt zuerst
                                         </button>
@@ -252,6 +255,7 @@
                                     <button id="btn-editor-view-markdown" class="toolbar-btn" data-i18n="editor_view_markdown">💻 Markdown</button>
                                     <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
                                     <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
+                                    <button id="btn-editor-history" class="toolbar-btn">🕒 Versionsverlauf</button>
                                     <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
                                 <div class="toolbar-group" style="gap: 6px;">
@@ -264,20 +268,29 @@
                                         <option value="original">Deutsch (Original)</option>
                                     </select>
                                     <button id="btn-editor-translate-now" class="toolbar-btn" style="margin-right: 12px; display: none; padding: 4px 8px;" title="Kapitel jetzt neu aus dem Original übersetzen">🔄 Übersetzen</button>
+                                    <button id="btn-chapter-settings" class="toolbar-btn" style="margin-right: 8px; padding: 4px 8px;" title="Kapitel-Einstellungen">⚙️ Einstellungen</button>
                                     <button id="btn-editor-save" class="btn" style="padding: 6px 16px;" data-i18n="editor_btn_save">Speichern (Strg+S)</button>
                                 </div>
                             </div>
                             
                             <!-- Editor Content Area -->
                             <div id="editor-container" style="flex-grow: 1; height: 0; overflow: hidden;"></div>
+                            
+                            <!-- Editor Chapter Navigation Buttons -->
+                            <div class="editor-navigation-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border-color); background-color: var(--bg-surface);">
+                                <button id="btn-editor-prev-chapter" class="btn btn-secondary" style="padding: 8px 16px;">◀ Vorheriges Kapitel</button>
+                                <span id="editor-nav-current-chapter-title" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Kapiteltitel</span>
+                                <button id="btn-editor-next-chapter" class="btn btn-secondary" style="padding: 8px 16px;">Nächstes Kapitel ▶</button>
+                            </div>
                         </div>
                         
                         <!-- Right Panel: Lore & AI Side Panel -->
                         <div id="editor-lore-panel" class="lore-side-panel" style="display: none; border-left: 1px solid var(--border-color); width: 380px; flex-direction: column;">
                             <div class="side-panel-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); background-color: var(--bg-surface); align-items: center; justify-content: space-between;">
                                 <div style="display: flex; flex-grow: 1;">
-                                    <button id="tab-btn-lore" class="tab-btn active" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-base); font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--color-primary); font-size: 13px;" data-i18n="editor_tab_lore">📖 Lore-Quickview</button>
-                                    <button id="tab-btn-ai" class="tab-btn" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px;" data-i18n="editor_tab_ai">🤖 KI-Schreiben</button>
+                                    <button id="tab-btn-lore" class="tab-btn active" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-base); font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--color-primary); font-size: 13px;" data-i18n="editor_tab_lore">📖 Lore</button>
+                                    <button id="tab-btn-ai" class="tab-btn" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px;" data-i18n="editor_tab_ai">🤖 KI</button>
+                                    <button id="tab-btn-style" class="tab-btn" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px;">🔍 Stil-Check</button>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 4px; padding-right: 8px;">
                                     <button id="btn-pin-right-sidebar" class="pin-btn active" style="background: none; border: none; cursor: pointer; font-size: 14px; color: var(--color-primary); padding: 4px;" title="Rechte Seitenleiste anpinnen">📌</button>
@@ -333,6 +346,16 @@
                                         <button id="btn-ai-chat-submit" class="btn" style="flex: 1; padding: 8px; font-size: 13px;" data-i18n="btn_ai_generate">🤖 Generieren</button>
                                         <button id="btn-ai-chat-clear" class="btn btn-secondary" style="padding: 8px 12px; font-size: 13px;" title="Verlauf leeren">🗑️</button>
                                     </div>
+                            </div>
+
+                            <!-- Tab Content: Style Check -->
+                            <div id="tab-content-style" class="side-panel-content" style="display: none; flex-direction: column; gap: 16px; overflow-y: auto; padding: 16px; flex-grow: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="margin: 0;">Stil & Grammatik</h4>
+                                    <button id="btn-run-style-check" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">🔍 Prüfen</button>
+                                </div>
+                                <div id="style-check-results" style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px;">Klicke auf "Prüfen", um deinen Text zu scannen.</div>
                                 </div>
                             </div>
                         </div>
@@ -345,9 +368,12 @@
                         <!-- Left: Wiki Sidebar List -->
                         <div class="details-sidebar" style="display: flex; flex-direction: column; gap: 16px;">
                             <div class="list-container">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <h3 class="list-title" data-i18n="lore_sidebar_title">Einträge</h3>
-                                    <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="lore_btn_new">+ Neu</button>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                                    <h3 class="list-title" style="margin-bottom: 0;" data-i18n="lore_sidebar_title">Einträge</h3>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button id="btn-wiki-scan" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">🔍 Projekt nach Lore scannen</button>
+                                        <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="lore_btn_new">+ Neu</button>
+                                    </div>
                                 </div>
                                 <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." style="margin-bottom: 12px;" data-i18n="lore_search_placeholder">
                                 <select id="wiki-filter-category" class="form-input" style="margin-bottom: 16px; height: auto;">
@@ -478,6 +504,42 @@
                             <!-- Visual bars drawn by JS -->
                         </div>
                     </div>
+
+                    <!-- NaNoWriMo / Schreibziel-Planer Card -->
+                    <div class="list-container" style="padding: 24px; border-radius: 12px; margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 class="list-title" style="margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🏆 Schreibziele-Planer (NaNoWriMo-Modus)</span>
+                            <span id="nanowrimo-active-badge" style="font-size: 11px; background-color: var(--color-success-light); color: var(--color-success); padding: 2px 8px; border-radius: 12px; font-weight: bold; display: none;">Aktiv</span>
+                        </h3>
+                        <div id="nanowrimo-config-hint" style="color: var(--text-muted); font-size: 13px; font-style: italic;">
+                            Um den Schreibziele-Planer zu nutzen, trage bitte ein Enddatum (Deadline) in den Projekt-Einstellungen ein.
+                        </div>
+                        <div id="nanowrimo-stats-content" style="display: none; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <span style="color: var(--text-secondary);">Verbleibende Tage:</span>
+                                    <strong id="nanowrimo-days-left">0</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <span style="color: var(--text-secondary);">Benötigte Wörter pro Tag:</span>
+                                    <strong id="nanowrimo-required-daily">0</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                    <span style="color: var(--text-secondary);">Schreib-Fortschritt gesamt:</span>
+                                    <strong id="nanowrimo-progress-percent">0%</strong>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+                                <div style="font-size: 12px; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                                    <span>Fortschritt</span>
+                                    <span id="nanowrimo-progress-bar-lbl">0 / 0 Wörter</span>
+                                </div>
+                                <div style="width: 100%; height: 12px; background-color: var(--bg-base); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div id="nanowrimo-progress-bar-fill" style="width: 0%; height: 100%; background-color: var(--color-primary); transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- 4.7. GLOBAL SEARCH VIEW -->
@@ -505,6 +567,8 @@
                     <div class="section-header">
                         <h2 class="section-title" data-i18n="nav_relationships">Beziehungsnetzwerk</h2>
                         <div style="display: flex; gap: 8px;">
+                            <button id="btn-relationships-physics" class="btn btn-secondary" style="padding: 8px 16px;">Physik-Layout</button>
+                            <button id="btn-relationships-hierarchical" class="btn btn-secondary" style="padding: 8px 16px;">Hierarchisch</button>
                             <button id="btn-relationships-reset" class="btn btn-secondary" style="padding: 8px 16px;">Anordnung zurücksetzen</button>
                             <button id="btn-relationships-save" class="btn" style="padding: 8px 16px;">Layout speichern</button>
                         </div>
@@ -677,7 +741,7 @@
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.1.0</strong></span>
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.2.0</strong></span>
                                 <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
                             </div>
                             <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">
@@ -1014,10 +1078,77 @@
                     <label class="form-label" for="stats-daily-goal" data-i18n="modal_stats_daily_goal_lbl">Tägliches Schreibziel (Wörter)</label>
                     <input type="number" id="stats-daily-goal" class="form-input" min="0" value="500">
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="stats-deadline-date">Deadline / Enddatum</label>
+                    <input type="date" id="stats-deadline-date" class="form-input">
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-project-stats')" data-i18n="btn_cancel">Abbrechen</button>
                 <button id="btn-submit-project-stats" class="btn" data-i18n="btn_save">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CHAPTER SETTINGS -->
+    <div id="modal-chapter-settings" class="modal-overlay" style="z-index: 105;">
+        <div class="modal" style="max-width: 400px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Kapitel-Einstellungen</h3>
+                <button class="modal-close" onclick="closeModal('modal-chapter-settings')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="chapter-settings-volume">Zugehöriger Band</label>
+                    <select id="chapter-settings-volume" class="form-input" style="height: auto;"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-chapter-settings')">Abbrechen</button>
+                <button id="btn-submit-chapter-settings" class="btn">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REVISION HISTORY -->
+    <div id="modal-history" class="modal-overlay" style="z-index: 105;">
+        <div class="modal" style="max-width: 950px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">Versionsverlauf</h3>
+                <button class="modal-close" onclick="closeModal('modal-history')">×</button>
+            </div>
+            <div class="modal-body" style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; flex-grow: 1; height: 0; overflow: hidden; padding: 16px;">
+                <!-- Left: List of Snapshots -->
+                <div style="display: flex; flex-direction: column; gap: 12px; border-right: 1px solid var(--border-color); padding-right: 16px; height: 100%; overflow-y: auto;">
+                    <button id="btn-create-snapshot-manual" class="btn" style="width: 100%; padding: 8px 12px; font-size: 13px;">📸 Snapshot erstellen</button>
+                    <h4 style="margin: 8px 0 4px 0; color: var(--text-secondary); font-size: 12px; text-transform: uppercase;">Gespeicherte Versionen</h4>
+                    <div id="history-snapshots-list" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Snapshots dynamically listed -->
+                    </div>
+                </div>
+                
+                <!-- Right: Split Diff Panel -->
+                <div style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0;" id="history-diff-title">Vergleich: Snapshot vs. Aktueller Text</h4>
+                        <button id="btn-restore-snapshot-selected" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; display: none;">Dieses Snapshot wiederherstellen</button>
+                    </div>
+                    
+                    <!-- Diff Column Headers -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-weight: bold; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+                        <div>Snapshot-Version</div>
+                        <div>Aktuelle Version</div>
+                    </div>
+                    
+                    <div id="history-diff-container" style="flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-base); padding: 8px; overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-style: italic;">
+                            Wähle eine Version aus der Liste aus, um den Vergleich anzuzeigen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-history')">Schließen</button>
             </div>
         </div>
     </div>

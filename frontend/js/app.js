@@ -30,7 +30,9 @@ const state = {
     chapterWordCountOnLoad: 0,
     relationships: { nodes: {}, links: [] },
     relationshipDragNode: null,
-    relationshipDragOffset: { x: 0, y: 0 }
+    relationshipDragOffset: { x: 0, y: 0 },
+    loadingChapter: false,
+    collapsedVolumes: {}
 };
 
 // Base API URL
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.1.1.0"; // default fallback
+        state.localVersion = "0.1.2.0"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -508,6 +510,7 @@ function setupEventListeners() {
             if (!state.currentProject) return;
             document.getElementById('stats-word-goal').value = state.currentProject.word_count_goal;
             document.getElementById('stats-daily-goal').value = state.currentProject.daily_word_count_goal;
+            document.getElementById('stats-deadline-date').value = state.currentProject.deadline_date || "";
             openModal('modal-project-stats');
         });
     }
@@ -593,7 +596,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.1.1.0";
+            const version = state.localVersion || "0.1.2.0";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -632,6 +635,77 @@ function setupEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') performGlobalSearch();
+        });
+    }
+
+    // Relationship layout custom triggers
+    const btnRelPhysics = document.getElementById('btn-relationships-physics');
+    if (btnRelPhysics) btnRelPhysics.addEventListener('click', applyPhysicsLayout);
+    const btnRelHierarchical = document.getElementById('btn-relationships-hierarchical');
+    if (btnRelHierarchical) btnRelHierarchical.addEventListener('click', applyHierarchicalLayout);
+
+    // Style Check tab & action triggers
+    const tabBtnStyle = document.getElementById('tab-btn-style');
+    if (tabBtnStyle) tabBtnStyle.addEventListener('click', () => switchSidePanelTab('style'));
+    const btnRunStyleCheck = document.getElementById('btn-run-style-check');
+    if (btnRunStyleCheck) btnRunStyleCheck.addEventListener('click', runStyleCheck);
+
+    // Chapter settings trigger
+    const btnChapterSettings = document.getElementById('btn-chapter-settings');
+    if (btnChapterSettings) btnChapterSettings.addEventListener('click', openChapterSettingsModal);
+    const btnSubmitChapterSettings = document.getElementById('btn-submit-chapter-settings');
+    if (btnSubmitChapterSettings) btnSubmitChapterSettings.addEventListener('click', saveChapterSettings);
+
+    // Versionsverlauf button triggers
+    const btnEditorHistory = document.getElementById('btn-editor-history');
+    if (btnEditorHistory) btnEditorHistory.addEventListener('click', openHistoryModal);
+    const btnCreateSnapManual = document.getElementById('btn-create-snapshot-manual');
+    if (btnCreateSnapManual) btnCreateSnapManual.addEventListener('click', createManualSnapshot);
+    const btnRestoreSnapSelected = document.getElementById('btn-restore-snapshot-selected');
+    if (btnRestoreSnapSelected) btnRestoreSnapSelected.addEventListener('click', restoreSelectedSnapshot);
+
+    // Volume creation trigger
+    const btnCreateVolume = document.getElementById('btn-create-volume');
+    if (btnCreateVolume) {
+        btnCreateVolume.addEventListener('click', () => {
+            showPrompt("Neuen Band erstellen", "Titel des neuen Bandes:", "", async (title) => {
+                if (title && title.trim()) {
+                    const volumes = state.currentProject.volumes || [];
+                    const volId = 'vol_' + Math.random().toString(36).substr(2, 9);
+                    volumes.push({ id: volId, title: title.trim() });
+                    await updateProjectMetadataDirectly({ volumes });
+                    loadProjectDetails(state.currentProject.id);
+                }
+            });
+        });
+    }
+
+    // Wiki auto scan trigger
+    const btnWikiScan = document.getElementById('btn-wiki-scan');
+    if (btnWikiScan) {
+        btnWikiScan.addEventListener('click', async () => {
+            if (!state.currentProject) return;
+            btnWikiScan.disabled = true;
+            const originalText = btnWikiScan.textContent;
+            btnWikiScan.textContent = "Scanne...";
+            showToast("Projekt wird nach Lore-Informationen gescannt...", "info");
+            try {
+                const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/auto-scan`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Scan fehlgeschlagen.");
+                }
+                const result = await response.json();
+                showToast(result.message, "success");
+                await loadWikiData();
+            } catch (e) {
+                showToast("Fehler beim Lore-Scan: " + e.message, "danger");
+            } finally {
+                btnWikiScan.disabled = false;
+                btnWikiScan.textContent = originalText;
+            }
         });
     }
 }
@@ -802,56 +876,221 @@ async function loadProjectDetails(projectId) {
             chaptersCopy.reverse();
         }
         
-        if (chaptersCopy.length === 0) {
+        const volumes = project.volumes || [];
+        const mapping = project.chapters_volume_mapping || {};
+        
+        // Group chapters
+        const grouped = { unassigned: [] };
+        volumes.forEach(vol => grouped[vol.id] = []);
+        chaptersCopy.forEach(c => {
+            const volId = mapping[c.id];
+            if (volId && grouped[volId]) {
+                grouped[volId].push(c);
+            } else {
+                grouped.unassigned.push(c);
+            }
+        });
+
+        // Helper to render a chapter item
+        const renderChapterItem = (c, displayIndex) => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.setAttribute('data-chapter-id', c.id);
+            if (c.has_recovery) {
+                item.style.borderColor = 'var(--color-warning)';
+            }
+            
+            let metaText = `${c.word_count} ${t('words_lbl', 'Wörter')} · ${t('last_modified', 'Letzte Änderung')}: ${new Date(c.updated_at).toLocaleString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US')}`;
+            if (state.activeLanguage !== 'original') {
+                metaText = `${t('edited_translation', 'Bearbeitete Übersetzung')} (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
+            }
+            
+            item.innerHTML = `
+                <div class="list-item-info">
+                    <div class="list-item-title">
+                        <strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong> ${escapeHtml(c.title)} 
+                        ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">${t('branch_badge', 'Branch')}: ${state.activeLanguage.toUpperCase()}</span>` : ''}
+                        ${c.has_recovery && state.activeLanguage === 'original' ? `<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ ${t('recovery_available', 'Wiederherstellung verfügbar')}</span>` : ''}
+                    </div>
+                    <div class="list-item-meta">${metaText}</div>
+                </div>
+                <div class="list-item-actions">
+                    <button class="card-action-btn btn-delete" title="In den Papierkorb verschieben">🗑️</button>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                navigateTo('editor', { projectId: project.id, chapterId: c.id });
+            });
+            
+            item.querySelector('.btn-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirm(t('delete_chapter_title', 'Kapitel löschen'), `${t('delete_chapter_body', 'Möchtest du das Kapitel wirklich in den Papierkorb verschieben?')} "${c.title}"`, () => {
+                    deleteChapter(project.id, c.id);
+                });
+            });
+            
+            return item;
+        };
+
+        if (chaptersCopy.length === 0 && volumes.length === 0) {
             list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 24px;">${t('no_chapters_placeholder', 'Keine Kapitel angelegt. Erstelle dein erstes Kapitel!')}</div>`;
         } else {
-            chaptersCopy.forEach((c, index) => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.setAttribute('data-chapter-id', c.id);
-                if (c.has_recovery) {
-                    item.style.borderColor = 'var(--color-warning)';
-                }
+            // Render volume folders
+            volumes.forEach(vol => {
+                const volContainer = document.createElement('div');
+                volContainer.className = 'volume-container';
+                volContainer.style.marginBottom = '12px';
+                volContainer.style.border = '1px solid var(--border-color)';
+                volContainer.style.borderRadius = '8px';
+                volContainer.style.backgroundColor = 'var(--bg-surface)';
+                volContainer.style.overflow = 'hidden';
                 
-                let metaText = `${c.word_count} ${t('words_lbl', 'Wörter')} · ${t('last_modified', 'Letzte Änderung')}: ${new Date(c.updated_at).toLocaleString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US')}`;
-                if (state.activeLanguage !== 'original') {
-                    metaText = `${t('edited_translation', 'Bearbeitete Übersetzung')} (${state.activeLanguage.toUpperCase()}) · ${metaText}`;
-                }
+                const isCollapsed = state.collapsedVolumes && state.collapsedVolumes[vol.id];
                 
-                // Determine layout sequence number
-                const displayIndex = state.chapterSortOrder === 'desc' ? chaptersCopy.length - index : index + 1;
+                const volHeader = document.createElement('div');
+                volHeader.className = 'volume-header';
+                volHeader.style.display = 'flex';
+                volHeader.style.justifyContent = 'space-between';
+                volHeader.style.alignItems = 'center';
+                volHeader.style.padding = '10px 14px';
+                volHeader.style.backgroundColor = 'var(--bg-base)';
+                volHeader.style.cursor = 'pointer';
+                volHeader.style.userSelect = 'none';
                 
-                item.innerHTML = `
-                    <div class="list-item-info">
-                        <div class="list-item-title">
-                            <strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong> ${escapeHtml(c.title)} 
-                            ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">${t('branch_badge', 'Branch')}: ${state.activeLanguage.toUpperCase()}</span>` : ''}
-                            ${c.has_recovery && state.activeLanguage === 'original' ? `<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ ${t('recovery_available', 'Wiederherstellung verfügbar')}</span>` : ''}
-                        </div>
-                        <div class="list-item-meta">${metaText}</div>
+                const totalWords = grouped[vol.id].reduce((sum, ch) => sum + ch.word_count, 0);
+                
+                volHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="volume-toggle-arrow" style="font-size: 10px; width: 12px; display: inline-block;">${isCollapsed ? '▶' : '▼'}</span>
+                        <strong>📁 ${escapeHtml(vol.title)}</strong>
+                        <span style="font-size: 11px; color: var(--text-secondary);">(${grouped[vol.id].length} Kap. · ${totalWords.toLocaleString()} W.)</span>
                     </div>
-                    <div class="list-item-actions">
-                        <button class="card-action-btn btn-delete" title="In den Papierkorb verschieben">🗑️</button>
+                    <div style="display: flex; gap: 8px;" onclick="event.stopPropagation();">
+                        <button class="btn btn-secondary btn-rename-vol" style="padding: 2px 6px; font-size: 11px;" title="Band umbenennen">✏️</button>
+                        <button class="btn btn-secondary btn-danger btn-delete-vol" style="padding: 2px 6px; font-size: 11px;" title="Band löschen">🗑️</button>
                     </div>
                 `;
                 
-                // Open Editor
-                item.addEventListener('click', () => {
-                    navigateTo('editor', { projectId: project.id, chapterId: c.id });
+                const volBody = document.createElement('div');
+                volBody.className = 'volume-body';
+                volBody.style.padding = '8px';
+                volBody.style.display = isCollapsed ? 'none' : 'flex';
+                volBody.style.flexDirection = 'column';
+                volBody.style.gap = '8px';
+                
+                volHeader.addEventListener('click', () => {
+                    state.collapsedVolumes = state.collapsedVolumes || {};
+                    state.collapsedVolumes[vol.id] = !state.collapsedVolumes[vol.id];
+                    volBody.style.display = state.collapsedVolumes[vol.id] ? 'none' : 'flex';
+                    volHeader.querySelector('.volume-toggle-arrow').textContent = state.collapsedVolumes[vol.id] ? '▶' : '▼';
                 });
                 
-                // Chapter Delete listener
-                item.querySelector('.btn-delete').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showConfirm(t('delete_chapter_title', 'Kapitel löschen'), `${t('delete_chapter_body', 'Möchtest du das Kapitel wirklich in den Papierkorb verschieben?')} "${c.title}"`, () => {
-                        deleteChapter(project.id, c.id);
+                volHeader.querySelector('.btn-rename-vol').addEventListener('click', () => {
+                    showPrompt("Band umbenennen", "Neuer Name des Bandes:", vol.title, async (newTitle) => {
+                        if (newTitle && newTitle.trim()) {
+                            vol.title = newTitle.trim();
+                            await updateProjectMetadataDirectly({ volumes });
+                            loadProjectDetails(project.id);
+                        }
                     });
                 });
                 
-                list.appendChild(item);
+                volHeader.querySelector('.btn-delete-vol').addEventListener('click', () => {
+                    showConfirm("Band löschen", `Möchtest du den Band "${vol.title}" wirklich löschen? Die Kapitel bleiben erhalten.`, async () => {
+                        const newVolumes = volumes.filter(v => v.id !== vol.id);
+                        const newMapping = { ...mapping };
+                        Object.keys(newMapping).forEach(chId => {
+                            if (newMapping[chId] === vol.id) {
+                                delete newMapping[chId];
+                            }
+                        });
+                        await updateProjectMetadataDirectly({ volumes: newVolumes, chapters_volume_mapping: newMapping });
+                        loadProjectDetails(project.id);
+                    });
+                });
+                
+                if (grouped[vol.id].length === 0) {
+                    volBody.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 12px;">Keine Kapitel in diesem Band.</div>`;
+                } else {
+                    grouped[vol.id].forEach((c, idx) => {
+                        const item = renderChapterItem(c, idx + 1);
+                        volBody.appendChild(item);
+                    });
+                }
+                
+                volContainer.appendChild(volHeader);
+                volContainer.appendChild(volBody);
+                list.appendChild(volContainer);
             });
+
+            // Render unassigned chapters group if volumes exist
+            if (volumes.length > 0) {
+                const volContainer = document.createElement('div');
+                volContainer.className = 'volume-container';
+                volContainer.style.marginBottom = '12px';
+                volContainer.style.border = '1px solid var(--border-color)';
+                volContainer.style.borderRadius = '8px';
+                volContainer.style.backgroundColor = 'var(--bg-surface)';
+                volContainer.style.overflow = 'hidden';
+                
+                const isCollapsed = state.collapsedVolumes && state.collapsedVolumes['unassigned'];
+                
+                const volHeader = document.createElement('div');
+                volHeader.className = 'volume-header';
+                volHeader.style.display = 'flex';
+                volHeader.style.justifyContent = 'space-between';
+                volHeader.style.alignItems = 'center';
+                volHeader.style.padding = '10px 14px';
+                volHeader.style.backgroundColor = 'var(--bg-base)';
+                volHeader.style.cursor = 'pointer';
+                volHeader.style.userSelect = 'none';
+                
+                const totalWords = grouped.unassigned.reduce((sum, ch) => sum + ch.word_count, 0);
+                
+                volHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="volume-toggle-arrow" style="font-size: 10px; width: 12px; display: inline-block;">${isCollapsed ? '▶' : '▼'}</span>
+                        <strong>📁 Ungruppierte Kapitel</strong>
+                        <span style="font-size: 11px; color: var(--text-secondary);">(${grouped.unassigned.length} Kap. · ${totalWords.toLocaleString()} W.)</span>
+                    </div>
+                `;
+                
+                const volBody = document.createElement('div');
+                volBody.className = 'volume-body';
+                volBody.style.padding = '8px';
+                volBody.style.display = isCollapsed ? 'none' : 'flex';
+                volBody.style.flexDirection = 'column';
+                volBody.style.gap = '8px';
+                
+                volHeader.addEventListener('click', () => {
+                    state.collapsedVolumes = state.collapsedVolumes || {};
+                    state.collapsedVolumes['unassigned'] = !state.collapsedVolumes['unassigned'];
+                    volBody.style.display = state.collapsedVolumes['unassigned'] ? 'none' : 'flex';
+                    volHeader.querySelector('.volume-toggle-arrow').textContent = state.collapsedVolumes['unassigned'] ? '▶' : '▼';
+                });
+                
+                if (grouped.unassigned.length === 0) {
+                    volBody.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 12px;">Keine ungruppierten Kapitel.</div>`;
+                } else {
+                    grouped.unassigned.forEach((c, idx) => {
+                        const item = renderChapterItem(c, idx + 1);
+                        volBody.appendChild(item);
+                    });
+                }
+                
+                volContainer.appendChild(volHeader);
+                volContainer.appendChild(volBody);
+                list.appendChild(volContainer);
+            } else {
+                // No volumes, render flat list
+                chaptersCopy.forEach((c, index) => {
+                    const displayIndex = state.chapterSortOrder === 'desc' ? chaptersCopy.length - index : index + 1;
+                    const item = renderChapterItem(c, displayIndex);
+                    list.appendChild(item);
+                });
+            }
             
-            // Wire Drag & Drop Reordering
             makeChaptersDraggable();
         }
     } catch (e) {
@@ -983,6 +1222,7 @@ async function openEditor(projectId, chapterId) {
             
             // Set up change listener
             state.editor.on('change', () => {
+                if (state.loadingChapter) return;
                 const content = state.editor.getMarkdown();
                 handleEditorInput(content);
                 
@@ -2215,7 +2455,9 @@ async function reloadEditorChapterContent(projectId, chapterId) {
         state.sessionWords = 0;
         
         if (state.editor) {
+            state.loadingChapter = true;
             state.editor.setMarkdown(data.content || '');
+            state.loadingChapter = false;
         }
         
         // Warning banner for original recovery file if it exists
@@ -2230,6 +2472,7 @@ async function reloadEditorChapterContent(projectId, chapterId) {
         setTimeout(() => {
             highlightKeywordsInPreview();
             updateDetectedKeywords();
+            updateEditorNavigation();
         }, 150);
         
     } catch (e) {
@@ -2576,12 +2819,13 @@ async function handleSaveProjectStats() {
     
     const word_count_goal = parseInt(document.getElementById('stats-word-goal').value) || 50000;
     const daily_word_count_goal = parseInt(document.getElementById('stats-daily-goal').value) || 500;
+    const deadline_date = document.getElementById('stats-deadline-date').value || "";
     
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word_count_goal, daily_word_count_goal })
+            body: JSON.stringify({ word_count_goal, daily_word_count_goal, deadline_date })
         });
         
         if (!response.ok) throw new Error("Failed to update project stats");
@@ -2736,7 +2980,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.1.1.0";
+    const currentVersion = state.localVersion || "0.1.2.0";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -2744,7 +2988,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.1.1.0";
+        const latestVersion = data.version || "0.1.2.0";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -2808,33 +3052,47 @@ function compareVersions(a, b) {
 function switchSidePanelTab(tabName) {
     const tabBtnLore = document.getElementById('tab-btn-lore');
     const tabBtnAi = document.getElementById('tab-btn-ai');
+    const tabBtnStyle = document.getElementById('tab-btn-style');
     const contentLore = document.getElementById('tab-content-lore');
     const contentAi = document.getElementById('tab-content-ai');
+    const contentStyle = document.getElementById('tab-content-style');
     
     if (!tabBtnLore || !tabBtnAi || !contentLore || !contentAi) return;
+
+    // Reset styles
+    [tabBtnLore, tabBtnAi, tabBtnStyle].forEach(btn => {
+        if (btn) {
+            btn.classList.remove('active');
+            btn.style.borderBottom = '2px solid transparent';
+            btn.style.color = 'var(--text-muted)';
+        }
+    });
+    [contentLore, contentAi, contentStyle].forEach(c => {
+        if (c) c.style.display = 'none';
+    });
 
     if (tabName === 'lore') {
         tabBtnLore.classList.add('active');
         tabBtnLore.style.borderBottom = '2px solid var(--color-primary)';
         tabBtnLore.style.color = 'var(--text-base)';
-        
-        tabBtnAi.classList.remove('active');
-        tabBtnAi.style.borderBottom = '2px solid transparent';
-        tabBtnAi.style.color = 'var(--text-muted)';
-        
         contentLore.style.display = 'flex';
-        contentAi.style.display = 'none';
     } else if (tabName === 'ai') {
         tabBtnAi.classList.add('active');
         tabBtnAi.style.borderBottom = '2px solid var(--color-primary)';
         tabBtnAi.style.color = 'var(--text-base)';
-        
-        tabBtnLore.classList.remove('active');
-        tabBtnLore.style.borderBottom = '2px solid transparent';
-        tabBtnLore.style.color = 'var(--text-muted)';
-        
         contentAi.style.display = 'flex';
-        contentLore.style.display = 'none';
+    } else if (tabName === 'style') {
+        if (tabBtnStyle) {
+            tabBtnStyle.classList.add('active');
+            tabBtnStyle.style.borderBottom = '2px solid var(--color-primary)';
+            tabBtnStyle.style.color = 'var(--text-base)';
+        }
+        if (contentStyle) contentStyle.style.display = 'flex';
+        // Auto check when switching to style tab if results are empty
+        const results = document.getElementById('style-check-results');
+        if (results && results.innerHTML.includes('Klicke auf "Prüfen"')) {
+            runStyleCheck();
+        }
     }
 }
 
@@ -3486,6 +3744,62 @@ function loadStatsData() {
     const dailyPercentage = Math.min(100, Math.round((dailyProgress / dailyGoal) * 100));
     document.getElementById('stats-daily-progress-lbl').textContent = `Tägliches Ziel: ${dailyGoal.toLocaleString()} (${dailyPercentage}%)`;
     
+    // NaNoWriMo Planer Card Calculations
+    const deadlineStr = state.currentProject.deadline_date;
+    const badge = document.getElementById('nanowrimo-active-badge');
+    const configHint = document.getElementById('nanowrimo-config-hint');
+    const statsContent = document.getElementById('nanowrimo-stats-content');
+    
+    if (deadlineStr) {
+        const deadline = new Date(deadlineStr);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        deadline.setHours(0,0,0,0);
+        
+        const diffTime = deadline.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = "Aktiv";
+            badge.style.backgroundColor = 'var(--color-success-light)';
+            badge.style.color = 'var(--color-success)';
+            configHint.style.display = 'none';
+            statsContent.style.display = 'grid';
+            
+            document.getElementById('nanowrimo-days-left').textContent = diffDays;
+            
+            const remainingWords = Math.max(0, goal - totalWords);
+            const requiredDaily = diffDays > 0 ? Math.ceil(remainingWords / diffDays) : remainingWords;
+            document.getElementById('nanowrimo-required-daily').textContent = requiredDaily.toLocaleString() + " Wörter";
+            
+            const progressPercent = Math.min(100, Math.round((totalWords / goal) * 100));
+            document.getElementById('nanowrimo-progress-percent').textContent = progressPercent + "%";
+            
+            document.getElementById('nanowrimo-progress-bar-lbl').textContent = `${totalWords.toLocaleString()} / ${goal.toLocaleString()} Wörter`;
+            document.getElementById('nanowrimo-progress-bar-fill').style.width = progressPercent + "%";
+        } else {
+            badge.style.display = 'inline-block';
+            badge.textContent = "Beendet";
+            badge.style.backgroundColor = 'var(--color-primary-light)';
+            badge.style.color = 'var(--color-primary)';
+            configHint.style.display = 'none';
+            statsContent.style.display = 'grid';
+            
+            document.getElementById('nanowrimo-days-left').textContent = "Abgelaufen";
+            document.getElementById('nanowrimo-required-daily').textContent = "-";
+            
+            const progressPercent = Math.min(100, Math.round((totalWords / goal) * 100));
+            document.getElementById('nanowrimo-progress-percent').textContent = progressPercent + "%";
+            document.getElementById('nanowrimo-progress-bar-lbl').textContent = `${totalWords.toLocaleString()} / ${goal.toLocaleString()} Wörter`;
+            document.getElementById('nanowrimo-progress-bar-fill').style.width = progressPercent + "%";
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+        if (configHint) configHint.style.display = 'block';
+        if (statsContent) statsContent.style.display = 'none';
+    }
+    
     // Draw Bar Chart
     renderStatsCharts();
 }
@@ -3916,3 +4230,656 @@ function refreshRelationshipsConnectionsList() {
 
 // Expose relationship helper window bindings
 window.deleteRelationshipLink = deleteRelationshipLink;
+
+// ==========================================
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.1.2.0
+// ==========================================
+
+let physicsInterval = null;
+
+function applyPhysicsLayout() {
+    if (!state.relationships || !state.relationships.nodes) return;
+    
+    if (physicsInterval) {
+        clearInterval(physicsInterval);
+        physicsInterval = null;
+    }
+    
+    const characters = state.loreList.filter(entry => entry.category === 'character');
+    if (characters.length === 0) return;
+    
+    const nodes = characters.map(c => {
+        const pos = state.relationships.nodes[c.id] || { x: 350, y: 250 };
+        return {
+            id: c.id,
+            x: pos.x,
+            y: pos.y,
+            vx: 0,
+            vy: 0
+        };
+    });
+    
+    const links = state.relationships.links.map(link => {
+        return {
+            source: link.source,
+            target: link.target
+        };
+    });
+    
+    const width = 700;
+    const height = 500;
+    const padding = 50;
+    
+    const kRepulsion = 8000;
+    const kSpring = 0.04;
+    const desiredD = 120;
+    const damping = 0.85;
+    
+    let ticks = 0;
+    
+    physicsInterval = setInterval(() => {
+        ticks++;
+        if (ticks > 150) {
+            clearInterval(physicsInterval);
+            physicsInterval = null;
+            saveRelationshipsLayout(true);
+            return;
+        }
+        
+        for (let i = 0; i < nodes.length; i++) {
+            const n1 = nodes[i];
+            for (let j = i + 1; j < nodes.length; j++) {
+                const n2 = nodes[j];
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const distSq = dx * dx + dy * dy + 1;
+                const dist = Math.sqrt(distSq);
+                
+                const force = kRepulsion / distSq;
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                
+                n1.vx -= fx;
+                n1.vy -= fy;
+                n2.vx += fx;
+                n2.vy += fy;
+            }
+        }
+        
+        links.forEach(link => {
+            const n1 = nodes.find(n => n.id === link.source);
+            const n2 = nodes.find(n => n.id === link.target);
+            if (n1 && n2) {
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                
+                const force = (dist - desiredD) * kSpring;
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                
+                n1.vx += fx;
+                n1.vy += fy;
+                n2.vx -= fx;
+                n2.vy -= fy;
+            }
+        });
+        
+        nodes.forEach(n => {
+            const dx = 350 - n.x;
+            const dy = 250 - n.y;
+            n.vx += dx * 0.005;
+            n.vy += dy * 0.005;
+        });
+        
+        nodes.forEach(n => {
+            n.x += n.vx;
+            n.y += n.vy;
+            
+            n.vx *= damping;
+            n.vy *= damping;
+            
+            n.x = Math.max(padding, Math.min(width - padding, n.x));
+            n.y = Math.max(padding, Math.min(height - padding, n.y));
+            
+            state.relationships.nodes[n.id] = { x: n.x, y: n.y };
+        });
+        
+        drawRelationships();
+    }, 20);
+}
+
+function applyHierarchicalLayout() {
+    if (!state.relationships || !state.relationships.nodes) return;
+    
+    if (physicsInterval) {
+        clearInterval(physicsInterval);
+        physicsInterval = null;
+    }
+    
+    const characters = state.loreList.filter(entry => entry.category === 'character');
+    if (characters.length === 0) return;
+    
+    const nodes = characters.map(c => c.id);
+    const links = state.relationships.links;
+    
+    const adj = {};
+    const inDegree = {};
+    nodes.forEach(id => {
+        adj[id] = [];
+        inDegree[id] = 0;
+    });
+    
+    links.forEach(link => {
+        if (adj[link.source] && adj[link.target] !== undefined) {
+            adj[link.source].push(link.target);
+            inDegree[link.target]++;
+        }
+    });
+    
+    const levels = {};
+    const queue = [];
+    const visited = new Set();
+    
+    const startNodes = nodes.filter(id => inDegree[id] === 0);
+    if (startNodes.length > 0) {
+        startNodes.forEach(id => {
+            levels[id] = 0;
+            queue.push(id);
+            visited.add(id);
+        });
+    } else {
+        const fallback = nodes[0];
+        levels[fallback] = 0;
+        queue.push(fallback);
+        visited.add(fallback);
+    }
+    
+    while (queue.length > 0) {
+        const curr = queue.shift();
+        const currLevel = levels[curr];
+        
+        adj[curr].forEach(neighbor => {
+            if (!visited.has(neighbor)) {
+                levels[neighbor] = currLevel + 1;
+                queue.push(neighbor);
+                visited.add(neighbor);
+            }
+        });
+    }
+    
+    nodes.forEach(id => {
+        if (!visited.has(id)) {
+            levels[id] = 0;
+            const subQueue = [id];
+            visited.add(id);
+            while (subQueue.length > 0) {
+                const curr = subQueue.shift();
+                const currLevel = levels[curr];
+                adj[curr].forEach(neighbor => {
+                    if (!visited.has(neighbor)) {
+                        levels[neighbor] = currLevel + 1;
+                        subQueue.push(neighbor);
+                        visited.add(neighbor);
+                    }
+                });
+            }
+        }
+    });
+    
+    const groups = {};
+    nodes.forEach(id => {
+        const lvl = levels[id] || 0;
+        if (!groups[lvl]) groups[lvl] = [];
+        groups[lvl].push(id);
+    });
+    
+    const levelsList = Object.keys(groups).map(Number).sort((a, b) => a - b);
+    const maxLvl = levelsList.length - 1;
+    
+    const canvasWidth = 700;
+    const canvasHeight = 500;
+    
+    levelsList.forEach((lvl, lvlIdx) => {
+        const lvlNodes = groups[lvl];
+        const y = lvlIdx * (canvasHeight / (maxLvl + 2)) + (canvasHeight / (maxLvl + 2));
+        
+        lvlNodes.forEach((nodeId, nodeIdx) => {
+            const x = (nodeIdx + 1) * (canvasWidth / (lvlNodes.length + 1));
+            state.relationships.nodes[nodeId] = { x, y };
+        });
+    });
+    
+    drawRelationships();
+    saveRelationshipsLayout(true);
+}
+
+const FILLER_WORDS = new Set([
+    'eigentlich', 'wohl', 'halt', 'gewissermaßen', 'nämlich', 'sozusagen', 
+    'eh', 'ja', 'doch', 'mal', 'schon', 'eben', 'gerade', 'einfach', 
+    'irgendwie', 'quasi', 'praktisch', 'überhaupt'
+]);
+
+function runStyleCheck() {
+    if (!state.editor) return;
+    
+    const text = state.editor.getMarkdown();
+    const resultsContainer = document.getElementById('style-check-results');
+    if (!resultsContainer) return;
+    
+    resultsContainer.innerHTML = '';
+    
+    const suggestions = [];
+    const duplicateRegex = /\b(\w+)\b[\s,.;:!?/-]+\b\1\b/gi;
+    let match;
+    while ((match = duplicateRegex.exec(text)) !== null) {
+        const fullMatch = match[0];
+        const firstWord = fullMatch.split(/[\s,.;:!?/-]+/)[0];
+        const startIndex = match.index;
+        
+        suggestions.push({
+            type: 'duplicate',
+            title: `Doppeltes Wort: "${firstWord}"`,
+            description: `Das Wort "${firstWord}" kommt doppelt hintereinander vor.`,
+            index: startIndex,
+            length: fullMatch.length,
+            badge: 'Wiederholung'
+        });
+    }
+    
+    const fillerRegex = /\b(\w+)\b/gi;
+    while ((match = fillerRegex.exec(text)) !== null) {
+        const word = match[1];
+        if (FILLER_WORDS.has(word.toLowerCase())) {
+            const startIndex = match.index;
+            suggestions.push({
+                type: 'filler',
+                title: `Füllwort: "${word}"`,
+                description: `Das Wort "${word}" schwächt den Satz eventuell ab. Überlege, es zu löschen oder zu ersetzen.`,
+                index: startIndex,
+                length: word.length,
+                badge: 'Füllwort'
+            });
+        }
+    }
+    
+    suggestions.sort((a, b) => a.index - b.index);
+    
+    if (suggestions.length === 0) {
+        resultsContainer.innerHTML = `
+            <div style="text-align: center; color: var(--color-success); font-size: 13px; padding: 20px; font-weight: 600;">
+                ✓ Keine Stilauffälligkeiten gefunden!
+            </div>
+        `;
+        return;
+    }
+    
+    suggestions.forEach(sug => {
+        const card = document.createElement('div');
+        card.style.padding = '12px';
+        card.style.border = '1px solid var(--border-color)';
+        card.style.borderRadius = '8px';
+        card.style.backgroundColor = 'var(--bg-base)';
+        card.style.cursor = 'pointer';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '4px';
+        card.style.transition = 'background-color 0.2s';
+        
+        card.addEventListener('mouseenter', () => {
+            card.style.backgroundColor = 'var(--bg-surface)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.backgroundColor = 'var(--bg-base)';
+        });
+        
+        card.addEventListener('click', () => {
+            highlightWordInEditor(sug.index, sug.length);
+        });
+        
+        const badgeColor = sug.type === 'duplicate' ? 'var(--color-primary)' : 'var(--text-muted)';
+        const badgeBg = sug.type === 'duplicate' ? 'var(--color-primary-light)' : 'rgba(241, 245, 249, 0.1)';
+        
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="font-size: 13px; color: var(--text-base);">${escapeHtml(sug.title)}</strong>
+                <span style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; color: ${badgeColor}; background-color: ${badgeBg};">${sug.badge}</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">${escapeHtml(sug.description)}</div>
+        `;
+        
+        resultsContainer.appendChild(card);
+    });
+}
+
+function highlightWordInEditor(startIndex, wordLength) {
+    if (!state.editor) return;
+    
+    const text = state.editor.getMarkdown();
+    const beforeText = text.substring(0, startIndex);
+    
+    const linesBefore = beforeText.split('\n');
+    const startLine = linesBefore.length;
+    const startCol = linesBefore[linesBefore.length - 1].length;
+    
+    const matchText = text.substring(startIndex, startIndex + wordLength);
+    const linesMatch = matchText.split('\n');
+    const endLine = startLine + linesMatch.length - 1;
+    const endCol = linesMatch.length > 1 ? linesMatch[linesMatch.length - 1].length : startCol + wordLength;
+    
+    state.editor.focus();
+    
+    if (typeof state.editor.setSelection === 'function') {
+        state.editor.setSelection([startLine, startCol], [endLine, endCol]);
+    } else if (state.editor.state && state.editor.state.editor) {
+        state.editor.state.editor.setSelection([startLine, startCol], [endLine, endCol]);
+    }
+}
+
+async function updateProjectMetadataDirectly(updates) {
+    if (!state.currentProject) return;
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+        if (response.ok) {
+            const data = await response.json();
+            state.currentProject = data;
+        }
+    } catch (e) {
+        console.error("Failed to update project metadata", e);
+    }
+}
+
+function openChapterSettingsModal() {
+    if (!state.currentProject || !state.currentChapter) return;
+    
+    const select = document.getElementById('chapter-settings-volume');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">-- Keinem Band zugeordnet --</option>';
+    
+    const volumes = state.currentProject.volumes || [];
+    volumes.forEach(vol => {
+        const opt = document.createElement('option');
+        opt.value = vol.id;
+        opt.textContent = vol.title;
+        select.appendChild(opt);
+    });
+    
+    const mapping = state.currentProject.chapters_volume_mapping || {};
+    select.value = mapping[state.currentChapter.id] || "";
+    
+    openModal('modal-chapter-settings');
+}
+
+async function saveChapterSettings() {
+    if (!state.currentProject || !state.currentChapter) return;
+    
+    const select = document.getElementById('chapter-settings-volume');
+    if (!select) return;
+    
+    const mapping = state.currentProject.chapters_volume_mapping || {};
+    if (select.value) {
+        mapping[state.currentChapter.id] = select.value;
+    } else {
+        delete mapping[state.currentChapter.id];
+    }
+    
+    await updateProjectMetadataDirectly({ chapters_volume_mapping: mapping });
+    closeModal('modal-chapter-settings');
+    showToast("Kapitel-Einstellungen gespeichert!", "success");
+    loadProjectDetails(state.currentProject.id);
+}
+
+function updateEditorNavigation() {
+    if (!state.currentProject || !state.currentChapter) return;
+    
+    const chapters = state.currentProject.chapters || [];
+    const index = chapters.findIndex(c => c.id === state.currentChapter.id);
+    
+    const prevBtn = document.getElementById('btn-editor-prev-chapter');
+    const nextBtn = document.getElementById('btn-editor-next-chapter');
+    const titleSpan = document.getElementById('editor-nav-current-chapter-title');
+    
+    if (titleSpan) titleSpan.textContent = state.currentChapter.title || state.currentChapter.id;
+    
+    if (prevBtn) {
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        if (index > 0) {
+            newPrevBtn.disabled = false;
+            newPrevBtn.style.opacity = '1';
+            newPrevBtn.style.cursor = 'pointer';
+            newPrevBtn.addEventListener('click', () => navigateToChapter(chapters[index - 1].id));
+        } else {
+            newPrevBtn.disabled = true;
+            newPrevBtn.style.opacity = '0.5';
+            newPrevBtn.style.cursor = 'not-allowed';
+        }
+    }
+    
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        if (index >= 0 && index < chapters.length - 1) {
+            newNextBtn.disabled = false;
+            newNextBtn.style.opacity = '1';
+            newNextBtn.style.cursor = 'pointer';
+            newNextBtn.addEventListener('click', () => navigateToChapter(chapters[index + 1].id));
+        } else {
+            newNextBtn.disabled = true;
+            newNextBtn.style.opacity = '0.5';
+            newNextBtn.style.cursor = 'not-allowed';
+        }
+    }
+}
+
+async function navigateToChapter(chapterId) {
+    if (!state.currentProject) return;
+    
+    if (typeof handleExplicitSave === 'function') {
+        await handleExplicitSave();
+    }
+    
+    navigateTo('editor', { projectId: state.currentProject.id, chapterId });
+}
+
+// Snapshot & History Panel logic
+let selectedSnapshotId = null;
+let selectedSnapshotContent = null;
+
+async function openHistoryModal() {
+    if (!state.currentProject || !state.currentChapter) return;
+    openModal('modal-history');
+    selectedSnapshotId = null;
+    selectedSnapshotContent = null;
+    
+    const restoreBtn = document.getElementById('btn-restore-snapshot-selected');
+    if (restoreBtn) restoreBtn.style.display = 'none';
+    
+    const diffContainer = document.getElementById('history-diff-container');
+    if (diffContainer) {
+        diffContainer.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-style: italic; font-size: 13px;">
+                Wähle eine Version aus der Liste aus, um den Vergleich anzuzeigen.
+            </div>
+        `;
+    }
+    await loadSnapshotsList();
+}
+
+async function loadSnapshotsList() {
+    const list = document.getElementById('history-snapshots-list');
+    if (!list) return;
+    list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 12px; font-size: 12px;">Lade Versionen...</div>`;
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/snapshots`);
+        if (!response.ok) throw new Error("Could not load snapshots list");
+        
+        const snapshots = await response.json();
+        list.innerHTML = '';
+        
+        if (snapshots.length === 0) {
+            list.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 12px; font-size: 12px; font-style: italic;">Keine Sicherungspunkte vorhanden.</div>`;
+            return;
+        }
+        
+        snapshots.forEach(snap => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.style.cursor = 'pointer';
+            item.style.padding = '8px 12px';
+            item.style.borderRadius = '6px';
+            item.style.border = '1px solid var(--border-color)';
+            item.style.backgroundColor = 'var(--bg-base)';
+            item.style.marginBottom = '6px';
+            
+            let displayDate = snap.timestamp;
+            try {
+                const dt = new Date(snap.timestamp);
+                displayDate = dt.toLocaleString('de-DE');
+            } catch(e) {}
+            
+            item.innerHTML = `
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-base);">${displayDate}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${snap.word_count.toLocaleString()} Wörter</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                list.querySelectorAll('.list-item').forEach(el => {
+                    el.style.borderColor = 'var(--border-color)';
+                    el.style.backgroundColor = 'var(--bg-base)';
+                });
+                item.style.borderColor = 'var(--color-primary)';
+                item.style.backgroundColor = 'var(--bg-surface)';
+                
+                selectedSnapshotId = snap.id;
+                selectedSnapshotContent = snap.content;
+                
+                const restoreBtn = document.getElementById('btn-restore-snapshot-selected');
+                if (restoreBtn) restoreBtn.style.display = 'inline-block';
+                
+                const currentContent = state.editor ? state.editor.getMarkdown() : '';
+                renderSideBySideDiff(snap.content, currentContent);
+            });
+            
+            list.appendChild(item);
+        });
+    } catch(e) {
+        list.innerHTML = `<div style="text-align: center; color: var(--text-danger); padding: 12px; font-size: 12px;">Fehler: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+async function createManualSnapshot() {
+    if (!state.currentProject || !state.currentChapter) return;
+    
+    await handleExplicitSave();
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/snapshots`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) throw new Error("Could not create snapshot");
+        
+        showToast("Snapshot erfolgreich erstellt!", "success");
+        await loadSnapshotsList();
+    } catch(e) {
+        showToast("Fehler beim Erstellen des Snapshots: " + e.message, "danger");
+    }
+}
+
+async function restoreSelectedSnapshot() {
+    if (!state.currentProject || !state.currentChapter || !selectedSnapshotId) return;
+    
+    showConfirm(
+        "Version wiederherstellen",
+        "Möchtest du das Kapitel wirklich auf den ausgewählten Sicherungspunkt zurücksetzen? Der aktuelle Text wird überschrieben.",
+        async () => {
+            try {
+                const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/snapshots/${selectedSnapshotId}/restore`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error("Could not restore snapshot");
+                
+                await reloadEditorChapterContent(state.currentProject.id, state.currentChapter.id);
+                closeModal('modal-history');
+                showToast("Version erfolgreich wiederhergestellt!", "success");
+            } catch(e) {
+                showToast("Fehler beim Wiederherstellen: " + e.message, "danger");
+            }
+        }
+    );
+}
+
+function renderSideBySideDiff(snapshotText, currentText) {
+    const linesA = snapshotText.split('\n');
+    const linesB = currentText.split('\n');
+    const diff = computeDiff(linesA, linesB);
+    
+    const container = document.getElementById('history-diff-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = '1fr 1fr';
+    grid.style.gap = '10px';
+    grid.style.height = '100%';
+    grid.style.overflowY = 'auto';
+    grid.style.fontFamily = 'monospace';
+    grid.style.fontSize = '12px';
+    grid.style.lineHeight = '1.5';
+    grid.style.whiteSpace = 'pre-wrap';
+    grid.style.wordBreak = 'break-all';
+    grid.style.alignContent = 'start';
+    
+    diff.forEach((item) => {
+        const leftEl = document.createElement('div');
+        const rightEl = document.createElement('div');
+        
+        leftEl.style.padding = '2px 8px';
+        rightEl.style.padding = '2px 8px';
+        leftEl.style.minHeight = '18px';
+        rightEl.style.minHeight = '18px';
+        
+        if (item.type === 'removed') {
+            leftEl.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+            leftEl.style.color = '#ef4444';
+            leftEl.textContent = '- ' + item.text;
+            
+            rightEl.style.backgroundColor = 'rgba(241, 245, 249, 0.02)';
+            rightEl.textContent = '';
+        } else if (item.type === 'added') {
+            leftEl.style.backgroundColor = 'rgba(241, 245, 249, 0.02)';
+            leftEl.textContent = '';
+            
+            rightEl.style.backgroundColor = 'rgba(34, 197, 94, 0.15)';
+            rightEl.style.color = '#22c55e';
+            rightEl.textContent = '+ ' + item.text;
+        } else {
+            leftEl.textContent = '  ' + item.text;
+            rightEl.textContent = '  ' + item.text;
+        }
+        
+        grid.appendChild(leftEl);
+        grid.appendChild(rightEl);
+    });
+    
+    container.appendChild(grid);
+}
+
+// Expose functions globally
+window.applyPhysicsLayout = applyPhysicsLayout;
+window.applyHierarchicalLayout = applyHierarchicalLayout;
+window.openHistoryModal = openHistoryModal;
+window.createManualSnapshot = createManualSnapshot;
+window.restoreSelectedSnapshot = restoreSelectedSnapshot;
+window.openChapterSettingsModal = openChapterSettingsModal;
+window.saveChapterSettings = saveChapterSettings;
+window.runStyleCheck = runStyleCheck;

@@ -94,3 +94,100 @@ def permanent_delete_lore(project_id: str, lore_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Lore entry not found in trash")
     return {"message": "Lore entry permanently deleted"}
+
+import json
+import re
+
+@router.post("/auto-scan")
+def auto_scan_lore(project_id: str):
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    from backend.services.ai import AIService
+    settings = AIService.load_settings()
+    if settings.get("ai_provider", "none") == "none":
+        raise HTTPException(
+            status_code=400, 
+            detail="Kein aktiver KI-Anbieter konfiguriert. Bitte richte einen Anbieter in den Einstellungen ein."
+        )
+        
+    scanned_chapters = meta.get("scanned_chapters", [])
+    chapters = StorageService.list_chapters(project_id)
+    to_scan = [ch for ch in chapters if ch["id"] not in scanned_chapters]
+    
+    if not to_scan:
+        return {"message": "Keine neuen Kapitel zum Scannen vorhanden.", "scanned_chapters_count": 0, "created_entries": []}
+        
+    created_entries = []
+    
+    for ch in to_scan:
+        content_data = StorageService.get_chapter_content(project_id, ch["id"])
+        text = content_data.get("content", "").strip()
+        if not text:
+            scanned_chapters.append(ch["id"])
+            continue
+            
+        prompt = (
+            "Du bist ein literarischer Analyst. Analysiere den folgenden Kapiteltext einer Geschichte. "
+            "Extrahiere alle wichtigen Charaktere (category: character), Orte (category: location) "
+            "und Gegenstände (category: item), die im Text vorkommen.\n\n"
+            "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
+            "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
+            "[\n"
+            "  {\n"
+            "    \"name\": \"Name der Entität\",\n"
+            "    \"category\": \"character\",\n"
+            "    \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n"
+            "    \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n"
+            "    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"]\n"
+            "  }\n"
+            "]\n\n"
+            f"Kapiteltext:\n{text}"
+        )
+        
+        try:
+            raw_res = AIService.generate_completion(prompt)
+            cleaned = raw_res.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
+                cleaned = re.sub(r"\n```$", "", cleaned)
+                cleaned = cleaned.strip()
+                
+            entities = json.loads(cleaned)
+            
+            # Load existing lore to prevent duplicates
+            existing_lore = {e["name"].lower(): e for e in StorageService.list_lore(project_id)}
+            
+            for ent in entities:
+                name = ent.get("name", "").strip()
+                category = ent.get("category", "lore").strip()
+                short_desc = ent.get("short_description", "").strip()
+                long_desc = ent.get("description", "").strip()
+                keywords = ent.get("keywords", [])
+                
+                if not name or category not in ["character", "location", "item", "lore"]:
+                    continue
+                    
+                if name.lower() not in existing_lore:
+                    created = StorageService.create_lore(
+                        project_id=project_id,
+                        name=name,
+                        category=category,
+                        short_description=short_desc,
+                        description=long_desc,
+                        keywords=keywords
+                    )
+                    created_entries.append(created)
+                    
+            scanned_chapters.append(ch["id"])
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Fehler beim KI-Scan für Kapitel {ch['title']}: {str(e)}")
+            
+    StorageService.update_project_metadata(project_id, {"scanned_chapters": scanned_chapters})
+    
+    return {
+        "message": f"{len(to_scan)} Kapitel erfolgreich gescannt. {len(created_entries)} neue Einträge erstellt.",
+        "scanned_chapters_count": len(to_scan),
+        "created_entries": created_entries
+    }

@@ -222,6 +222,10 @@ class StorageService:
         chapters_dir = cls.get_chapters_dir(project_id)
         chapters = []
         
+        # Load scanned chapters from project metadata
+        project_meta = cls.get_project_metadata(project_id) or {}
+        scanned_chapters = project_meta.get("scanned_chapters", [])
+        
         # Load chapter list
         for file in chapters_dir.iterdir():
             if file.is_file() and file.suffix == '.md' and not file.name.startswith('.'):
@@ -250,7 +254,8 @@ class StorageService:
                     "word_count": word_count,
                     "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
                     "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                    "has_recovery": has_recovery
+                    "has_recovery": has_recovery,
+                    "scanned_for_lore": chapter_id in scanned_chapters
                 })
                 
         # Sort based on chapters_order in project.json if available

@@ -196,6 +196,80 @@ class ExportService:
         doc.save(str(file_path))
 
     @classmethod
+    def _html_to_flowables(cls, html_content: str, styles) -> List[Any]:
+        from html.parser import HTMLParser
+        from reportlab.platypus import Paragraph, Spacer
+        from reportlab.lib.styles import ParagraphStyle
+        
+        class PDFHTMLParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.flowables = []
+                self.current_tag = None
+                self.current_text = ""
+                self.list_stack = []
+                
+            def handle_starttag(self, tag, attrs):
+                if tag in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote']:
+                    self.current_tag = tag
+                    self.current_text = ""
+                elif tag in ['ul', 'ol']:
+                    self.list_stack.append(tag)
+                elif tag in ['strong', 'em', 'b', 'i', 'code', 'pre', 'a', 'span']:
+                    mapped_tag = tag
+                    if tag == 'strong': mapped_tag = 'b'
+                    elif tag == 'em': mapped_tag = 'i'
+                    attr_str = "".join([f' {k}="{v}"' for k, v in attrs])
+                    self.current_text += f"<{mapped_tag}{attr_str}>"
+                    
+            def handle_endtag(self, tag):
+                if tag in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote']:
+                    style_name = 'BookBody'
+                    if tag == 'h1': style_name = 'Heading1'
+                    elif tag == 'h2': style_name = 'Heading2'
+                    elif tag == 'h3': style_name = 'Heading3'
+                    elif tag == 'h4' or tag == 'h5' or tag == 'h6': style_name = 'Heading4'
+                    elif tag == 'li': style_name = 'Bullet'
+                    
+                    style = styles.get(style_name, styles['Normal'])
+                    if tag == 'blockquote':
+                        bq_style = ParagraphStyle(
+                            'BlockQuote',
+                            parent=styles['Normal'],
+                            leftIndent=20,
+                            fontName='Helvetica-Oblique',
+                            spaceAfter=10
+                        )
+                        style = bq_style
+                        
+                    p_text = self.current_text.strip()
+                    if p_text:
+                        self.flowables.append(Paragraph(p_text, style))
+                        if tag.startswith('h'):
+                            self.flowables.append(Spacer(1, 8))
+                        else:
+                            self.flowables.append(Spacer(1, 10))
+                    self.current_tag = None
+                    self.current_text = ""
+                elif tag in ['ul', 'ol']:
+                    if self.list_stack:
+                        self.list_stack.pop()
+                elif tag in ['strong', 'em', 'b', 'i', 'code', 'pre', 'a', 'span']:
+                    mapped_tag = tag
+                    if tag == 'strong': mapped_tag = 'b'
+                    elif tag == 'em': mapped_tag = 'i'
+                    self.current_text += f"</{mapped_tag}>"
+                    
+            def handle_data(self, data):
+                if self.current_tag is not None:
+                    escaped_data = data.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    self.current_text += escaped_data
+                    
+        parser = PDFHTMLParser()
+        parser.feed(html_content)
+        return parser.flowables
+
+    @classmethod
     def _export_pdf(cls, file_path: Path, title: str, desc: str, chapters: List[Dict[str, Any]]):
         styles = getSampleStyleSheet()
         
@@ -247,24 +321,11 @@ class ExportService:
         
         for ch in chapters:
             story.append(Paragraph(ch['title'], h1_style))
-            lines = ch['content'].split('\n')
-            for line in lines:
-                if line.strip():
-                    if line.strip().startswith('#'):
-                        level = min(5, len(line) - len(line.lstrip('#')))
-                        sub_style = ParagraphStyle(
-                            f'SubHead_{level}',
-                            parent=styles['Heading2'],
-                            fontName='Helvetica-Bold',
-                            fontSize=14 if level == 2 else 12,
-                            leading=18,
-                            spaceBefore=12,
-                            spaceAfter=6,
-                            keepWithNext=True
-                        )
-                        story.append(Paragraph(line.strip().lstrip('#').strip(), sub_style))
-                    else:
-                        story.append(Paragraph(line, body_style))
+            # Convert Markdown chapter content to HTML using python-markdown
+            ch_html = markdown.markdown(ch['content'])
+            # Parse HTML into ReportLab flowables
+            ch_flowables = cls._html_to_flowables(ch_html, styles)
+            story.extend(ch_flowables)
             story.append(PageBreak())
             
         doc = SimpleDocTemplate(str(file_path), pagesize=letter)
