@@ -18,6 +18,8 @@ if __name__ == "__main__":
     print("Starte EmberNovels...")
     # Open browser after 1.5 seconds when uvicorn is running
     Timer(1.5, open_browser).start()
+    from backend.main import app
     
     # Run uvicorn server
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run(app, host="127.0.0.1", port=8000, reload=False)
+
