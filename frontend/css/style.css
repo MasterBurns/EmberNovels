@@ -1220,3 +1220,8 @@ button, input, textarea, select {
 [data-theme="light"] #relationships-canvas {
     background-image: radial-gradient(#e2e8f0 1px, transparent 0);
 }
+
+.volume-container.drag-over-volume {
+    border-color: var(--color-primary) !important;
+    background-color: var(--color-primary-light) !important;
+}

@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.1.2.2"; // default fallback
+        state.localVersion = "0.2.0.0"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -512,6 +512,8 @@ function setupEventListeners() {
     if (btnEditStats) {
         btnEditStats.addEventListener('click', () => {
             if (!state.currentProject) return;
+            document.getElementById('stats-project-title').value = state.currentProject.title || "";
+            document.getElementById('stats-project-author').value = state.currentProject.author || "";
             document.getElementById('stats-word-goal').value = state.currentProject.word_count_goal;
             document.getElementById('stats-daily-goal').value = state.currentProject.daily_word_count_goal;
             document.getElementById('stats-deadline-date').value = state.currentProject.deadline_date || "";
@@ -601,7 +603,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.1.2.2";
+            const version = state.localVersion || "0.2.0.0";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -834,6 +836,16 @@ async function loadProjectDetails(projectId) {
         if (!response.ok) throw new Error("Project details not found");
         const project = await response.json();
         state.currentProject = project;
+
+        // Fetch and preload project lore entries for relationship graph
+        try {
+            const loreRes = await fetch(`${API_URL}/projects/${projectId}/lore`);
+            if (loreRes.ok) {
+                state.loreList = await loreRes.json();
+            }
+        } catch (e) {
+            console.error("Could not preload lore entries for state", e);
+        }
         
         // Populate Project synopsis
         const synopsisEl = document.getElementById('project-details-description');
@@ -852,6 +864,11 @@ async function loadProjectDetails(projectId) {
         document.getElementById('stat-word-goal').textContent = project.word_count_goal.toLocaleString();
         document.getElementById('stat-daily-goal').textContent = `${project.daily_word_count_goal} ${t('words_lbl', 'Wörter')}`;
         
+        const authorEl = document.getElementById('stat-author');
+        if (authorEl) {
+            authorEl.textContent = project.author || '-';
+        }
+
         const dateStr = new Date(project.created_at).toLocaleDateString(state.uiLanguage === 'de' ? 'de-DE' : 'en-US');
         document.getElementById('stat-created-at').textContent = dateStr;
         
@@ -862,14 +879,16 @@ async function loadProjectDetails(projectId) {
             
             const origLang = project.original_language || "de";
             const langMap = {
-                "de": { flag: "🇩🇪", label: "Deutsch" },
-                "en": { flag: "🇬🇧", label: "Englisch" },
-                "fr": { flag: "🇫🇷", label: "Französisch" },
-                "es": { flag: "🇪🇸", label: "Spanisch" },
-                "it": { flag: "🇮🇹", label: "Italienisch" }
+                "de": { flag: "🇩🇪", label: t('lang_de', "Deutsch") },
+                "en": { flag: "🇬🇧", label: t('lang_en', "Englisch") },
+                "fr": { flag: "🇫🇷", label: t('lang_fr', "Französisch") },
+                "es": { flag: "🇪🇸", label: t('lang_es', "Spanisch") },
+                "it": { flag: "🇮🇹", label: t('lang_it', "Italienisch") },
+                "ja": { flag: "🇯🇵", label: t('lang_ja', "Japanisch") },
+                "zh": { flag: "🇨🇳", label: t('lang_zh', "Chinesisch") }
             };
             const mapping = langMap[origLang] || { flag: "🌐", label: origLang.toUpperCase() };
-            branchSelect.innerHTML = `<option value="original">${mapping.flag} Original (${t('branch_original_badge', mapping.label)})</option>`;
+            branchSelect.innerHTML = `<option value="original">${mapping.flag} ${t('branch_original_badge', 'Original')} (${mapping.label})</option>`;
             
             try {
                 const langRes = await fetch(`${API_URL}/projects/${projectId}/languages`);
@@ -928,6 +947,19 @@ async function loadProjectDetails(projectId) {
             const item = document.createElement('div');
             item.className = 'list-item';
             item.setAttribute('data-chapter-id', c.id);
+            if (state.activeLanguage === 'original') {
+                item.setAttribute('draggable', 'true');
+                item.style.cursor = 'grab';
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', c.id);
+                    state.draggedChapterId = c.id;
+                    item.classList.add('dragging');
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    state.draggedChapterId = null;
+                });
+            }
             if (c.has_recovery) {
                 item.style.borderColor = 'var(--color-warning)';
             }
@@ -972,11 +1004,40 @@ async function loadProjectDetails(projectId) {
             volumes.forEach(vol => {
                 const volContainer = document.createElement('div');
                 volContainer.className = 'volume-container';
+                volContainer.setAttribute('data-volume-id', vol.id);
                 volContainer.style.marginBottom = '12px';
                 volContainer.style.border = '1px solid var(--border-color)';
                 volContainer.style.borderRadius = '8px';
                 volContainer.style.backgroundColor = 'var(--bg-surface)';
                 volContainer.style.overflow = 'hidden';
+                
+                if (state.activeLanguage === 'original') {
+                    volContainer.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        volContainer.classList.add('drag-over-volume');
+                    });
+                    volContainer.addEventListener('dragenter', (e) => {
+                        e.preventDefault();
+                    });
+                    volContainer.addEventListener('dragleave', () => {
+                        volContainer.classList.remove('drag-over-volume');
+                    });
+                    volContainer.addEventListener('drop', async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        volContainer.classList.remove('drag-over-volume');
+                        
+                        const chapterId = e.dataTransfer.getData('text/plain') || state.draggedChapterId;
+                        if (!chapterId) return;
+                        
+                        const targetVolId = vol.id;
+                        const newMapping = { ...mapping };
+                        newMapping[chapterId] = targetVolId;
+                        
+                        await updateProjectMetadataDirectly({ chapters_volume_mapping: newMapping });
+                        loadProjectDetails(project.id);
+                    });
+                }
                 
                 const isCollapsed = state.collapsedVolumes && state.collapsedVolumes[vol.id];
                 
@@ -1060,11 +1121,39 @@ async function loadProjectDetails(projectId) {
             if (volumes.length > 0) {
                 const volContainer = document.createElement('div');
                 volContainer.className = 'volume-container';
+                volContainer.setAttribute('data-volume-id', 'unassigned');
                 volContainer.style.marginBottom = '12px';
                 volContainer.style.border = '1px solid var(--border-color)';
                 volContainer.style.borderRadius = '8px';
                 volContainer.style.backgroundColor = 'var(--bg-surface)';
                 volContainer.style.overflow = 'hidden';
+                
+                if (state.activeLanguage === 'original') {
+                    volContainer.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        volContainer.classList.add('drag-over-volume');
+                    });
+                    volContainer.addEventListener('dragenter', (e) => {
+                        e.preventDefault();
+                    });
+                    volContainer.addEventListener('dragleave', () => {
+                        volContainer.classList.remove('drag-over-volume');
+                    });
+                    volContainer.addEventListener('drop', async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        volContainer.classList.remove('drag-over-volume');
+                        
+                        const chapterId = e.dataTransfer.getData('text/plain') || state.draggedChapterId;
+                        if (!chapterId) return;
+                        
+                        const newMapping = { ...mapping };
+                        delete newMapping[chapterId];
+                        
+                        await updateProjectMetadataDirectly({ chapters_volume_mapping: newMapping });
+                        loadProjectDetails(project.id);
+                    });
+                }
                 
                 const isCollapsed = state.collapsedVolumes && state.collapsedVolumes['unassigned'];
                 
@@ -1177,17 +1266,19 @@ async function openEditor(projectId, chapterId) {
     const langSelect = document.getElementById('editor-language-select');
     
     // Get actual project original language flag/name if possible
-    let originalLangText = "Original (Deutsch)";
+    let originalLangText = `${t('branch_original_badge', 'Original')} (Deutsch)`;
     if (state.currentProject && state.currentProject.original_language) {
         const langMap = {
-            'de': 'Deutsch',
-            'en': 'Englisch',
-            'fr': 'Französisch',
-            'es': 'Spanisch',
-            'it': 'Italienisch'
+            'de': t('lang_de', 'Deutsch'),
+            'en': t('lang_en', 'Englisch'),
+            'fr': t('lang_fr', 'Französisch'),
+            'es': t('lang_es', 'Spanisch'),
+            'it': t('lang_it', 'Italienisch'),
+            'ja': t('lang_ja', 'Japanisch'),
+            'zh': t('lang_zh', 'Chinesisch')
         };
         const mapped = langMap[state.currentProject.original_language];
-        if (mapped) originalLangText = `Original (${mapped})`;
+        if (mapped) originalLangText = `${t('branch_original_badge', 'Original')} (${mapped})`;
     }
     langSelect.innerHTML = `<option value="original">${originalLangText}</option>`;
     
@@ -2894,16 +2985,23 @@ async function handleImportWizardSubmit() {
 async function handleSaveProjectStats() {
     if (!state.currentProject) return;
     
+    const title = document.getElementById('stats-project-title').value.trim();
+    const author = document.getElementById('stats-project-author').value.trim();
     const word_count_goal = parseInt(document.getElementById('stats-word-goal').value) || 50000;
     const daily_word_count_goal = parseInt(document.getElementById('stats-daily-goal').value) || 500;
     const deadline_date = document.getElementById('stats-deadline-date').value || "";
     const original_language = document.getElementById('stats-original-language').value || "de";
     
+    if (!title) {
+        showToast("Projekt-Titel darf nicht leer sein.", "danger");
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word_count_goal, daily_word_count_goal, deadline_date, original_language })
+            body: JSON.stringify({ title, author, word_count_goal, daily_word_count_goal, deadline_date, original_language })
         });
         
         if (!response.ok) throw new Error("Failed to update project stats");
@@ -2931,6 +3029,8 @@ function makeChaptersDraggable() {
         
         item.addEventListener('dragstart', (e) => {
             dragSrcEl = item;
+            e.dataTransfer.setData('text/plain', item.getAttribute('data-chapter-id'));
+            state.draggedChapterId = item.getAttribute('data-chapter-id');
             e.dataTransfer.effectAllowed = 'move';
             item.classList.add('dragging');
         });
@@ -2952,40 +3052,51 @@ function makeChaptersDraggable() {
         
         item.addEventListener('drop', async (e) => {
             e.stopPropagation();
-            if (dragSrcEl !== item) {
-                const allItems = Array.from(list.children);
-                const dragIndex = allItems.indexOf(dragSrcEl);
-                const dropIndex = allItems.indexOf(item);
+            if (dragSrcEl && dragSrcEl !== item) {
+                const dragParent = dragSrcEl.parentNode;
+                const dropParent = item.parentNode;
                 
-                if (dragIndex < dropIndex) {
-                    list.insertBefore(dragSrcEl, item.nextSibling);
-                } else {
-                    list.insertBefore(dragSrcEl, item);
-                }
-                
-                const newOrder = Array.from(list.children).map(child => {
-                    return child.getAttribute('data-chapter-id');
-                });
-                
-                try {
-                    const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/reorder`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chapters_order: newOrder })
+                if (dragParent === dropParent) {
+                    const allItems = Array.from(dragParent.children);
+                    const dragIndex = allItems.indexOf(dragSrcEl);
+                    const dropIndex = allItems.indexOf(item);
+                    
+                    if (dragIndex < dropIndex) {
+                        dragParent.insertBefore(dragSrcEl, item.nextSibling);
+                    } else {
+                        dragParent.insertBefore(dragSrcEl, item);
+                    }
+                    
+                    const newOrder = Array.from(list.querySelectorAll('.list-item')).map(child => {
+                        return child.getAttribute('data-chapter-id');
                     });
                     
-                    if (response.ok) {
-                        showToast(t('reorder_success_toast', "Reihenfolge aktualisiert!"), "success");
-                        // Instantly update numbering labels in list items
-                        Array.from(list.children).forEach((chEl, idx) => {
-                            const titleEl = chEl.querySelector('.list-item-title strong');
-                            if (titleEl) {
-                                titleEl.textContent = `${idx + 1}.`;
-                            }
+                    try {
+                        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/reorder`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ chapters_order: newOrder })
                         });
+                        
+                        if (response.ok) {
+                            showToast(t('reorder_success_toast', "Reihenfolge aktualisiert!"), "success");
+                            list.querySelectorAll('.volume-body, #chapters-list').forEach(body => {
+                                if (body.id === 'chapters-list' && list.querySelector('.volume-container')) {
+                                    return; // skip outer container list if volumes are present
+                                }
+                                let localIdx = 1;
+                                body.querySelectorAll('.list-item').forEach(chEl => {
+                                    const titleEl = chEl.querySelector('.list-item-title strong');
+                                    if (titleEl) {
+                                        titleEl.textContent = `${localIdx}.`;
+                                        localIdx++;
+                                    }
+                                });
+                            });
+                        }
+                    } catch(err) {
+                        showToast(t('error_reorder', "Fehler beim Umsortieren: ") + err.message, "danger");
                     }
-                } catch(err) {
-                    showToast(t('error_reorder', "Fehler beim Umsortieren: ") + err.message, "danger");
                 }
             }
             return false;
@@ -2996,6 +3107,7 @@ function makeChaptersDraggable() {
                 it.classList.remove('drag-over');
                 it.classList.remove('dragging');
             });
+            state.draggedChapterId = null;
         });
     });
 }
@@ -3058,7 +3170,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.1.2.2";
+    const currentVersion = state.localVersion || "0.2.0.0";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -3066,7 +3178,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.1.2.2";
+        const latestVersion = data.version || "0.2.0.0";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -4624,7 +4736,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.1.2.2
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.0.0
 // ==========================================
 
 let physicsInterval = null;
