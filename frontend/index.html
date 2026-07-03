@@ -266,6 +266,7 @@
                                     <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
                                     <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
                                     <button id="btn-editor-history" class="toolbar-btn">🕒 Versionsverlauf</button>
+                                    <button id="btn-editor-copy-webnovel" class="toolbar-btn" title="Kopiert den Text im HTML Format für Webnovel">📋 Kopieren (Webnovel)</button>
                                     <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
                                 <div class="toolbar-group" style="gap: 6px;">
@@ -785,8 +786,26 @@
                                     *Tipp: Wähle deinen Cloud-Synchronisationsordner (z.B. OneDrive, Google Drive, iCloud, Baidu Wangpan oder TeraBox), um Backups automatisch in der Cloud zu sichern.*
                                 </span>
                             </div>
-                            <div style="display: flex; gap: 12px;">
+                            <div class="form-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                                <h4 style="font-size: 14px; margin-bottom: 8px;">☁️ Native Cloud-Backups (WebDAV)</h4>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Sichere deine Projekte als vollständige .zip Datei direkt in deiner Nextcloud, Owncloud oder auf Servern, die WebDAV unterstützen.</p>
+                                <label class="form-label" for="setting-webdav-url">WebDAV Server-URL (z.B. https://cloud.deine-domain.de/remote.php/webdav/)</label>
+                                <input type="text" id="setting-webdav-url" class="form-input" placeholder="https://...">
+                                
+                                <div style="display: flex; gap: 12px; margin-top: 12px;">
+                                    <div style="flex: 1;">
+                                        <label class="form-label" for="setting-webdav-user">Benutzername</label>
+                                        <input type="text" id="setting-webdav-user" class="form-input" placeholder="Benutzer">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label class="form-label" for="setting-webdav-password">Passwort / App-Token</label>
+                                        <input type="password" id="setting-webdav-password" class="form-input" placeholder="Passwort">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
                                 <button id="btn-trigger-manual-backup" class="btn btn-secondary" style="font-size: 13px; padding: 8px 16px;" data-i18n="settings_btn_manual_backup">Jetzt manuelles Backup erstellen</button>
+                                <button id="btn-trigger-cloud-backup" class="btn" style="font-size: 13px; padding: 8px 16px; background-color: #0366d6;">Jetzt in Cloud sichern (WebDAV)</button>
                             </div>
                         </div>
 
@@ -960,6 +979,7 @@
                         <option value="docx">📄 Word-Dokument (.docx)</option>
                         <option value="pdf">📕 PDF-Dokument (.pdf)</option>
                         <option value="epub">📖 eBook-Datei (.epub)</option>
+                        <option value="zip">📦 ZIP-Archiv (.zip)</option>
                     </select>
                 </div>
                 <div class="form-group">

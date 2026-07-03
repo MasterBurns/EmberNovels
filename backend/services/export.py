@@ -1,6 +1,7 @@
 import re
 import tempfile
 import markdown
+import os
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 from datetime import datetime
@@ -100,10 +101,30 @@ class ExportService:
             file_path = temp_dir / filename
             cls._export_epub(file_path, project_id, project_title, project_desc, chapters)
             
+        elif file_format == 'zip':
+            filename = f"{safe_title}_Backup.zip"
+            file_path = temp_dir / filename
+            cls._export_zip(file_path, project_id)
+            
         else:
             raise ValueError(f"Ungültiges Format: {file_format}")
             
         return file_path, filename
+
+    @classmethod
+    def _export_zip(cls, file_path: Path, project_id: str):
+        import zipfile
+        project_dir = StorageService.get_projects_dir() / project_id
+        if not project_dir.exists():
+            raise ValueError("Projektverzeichnis nicht gefunden.")
+            
+        with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(project_dir):
+                for file in files:
+                    file_p = Path(root) / file
+                    # Calculate arcname relative to the projects_dir so it unzips neatly as `project_id/...`
+                    arcname = file_p.relative_to(StorageService.get_projects_dir())
+                    zipf.write(file_p, arcname)
 
     @classmethod
     def _export_txt(cls, file_path: Path, title: str, desc: str, chapters: List[Dict[str, Any]]):

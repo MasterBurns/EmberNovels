@@ -19,6 +19,9 @@ class AISettingsUpdate(BaseModel):
     auto_translate_on_save: Optional[bool] = None
     backup_enabled: Optional[bool] = None
     backup_dir: Optional[str] = None
+    webdav_url: Optional[str] = None
+    webdav_user: Optional[str] = None
+    webdav_password: Optional[str] = None
 
 
 class AICorrectionRequest(BaseModel):

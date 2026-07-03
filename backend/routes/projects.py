@@ -122,3 +122,14 @@ def save_relationships(project_id: str, data: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail="Failed to save relationships")
     return {"message": "Relationships saved successfully"}
 
+@router.post("/{project_id}/cloud-backup")
+def trigger_cloud_backup(project_id: str):
+    from backend.services.cloud import CloudService
+    try:
+        success = CloudService.backup_project_to_webdav(project_id)
+        if success:
+            return {"message": "Cloud-Backup successfully uploaded."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    raise HTTPException(status_code=500, detail="Unknown error during cloud backup.")

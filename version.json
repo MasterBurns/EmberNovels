@@ -1,7 +1,7 @@
 {
-    "version": "0.2.1.4",
+    "version": "0.2.2.0",
     "release_notes": {
-        "de": "Version 0.2.1.4.\n- Behebung des Unix-Server-Reboot-Fehlers durch Einführung einer 2-Sekunden-Verzögerung vor dem exec-Start, um Socket-Belegungskonflikte zu verhindern.\n- Integration eines automatischen Modell-Abrufers für KI-Anbieter (Ollama, Gemini, OpenAI, Anthropic) mit datalist-Auswahl im Einstellungsmenü.",
-        "en": "Version 0.2.1.4.\n- Fixed Unix server restart issue by delaying binary launch by 2 seconds to release busy ports.\n- Integrated automatic AI model fetcher (Ollama, Gemini, OpenAI, Anthropic) with datalist dropdown selectors in settings."
+        "de": "Version 0.2.2.0 - Cloud & Export Update.\n- 📦 Neues Export-Format: Komplettes Projekt-Backup als .zip Archiv.\n- ☁️ Native WebDAV Cloud-Backups: Sichere dein Projekt direkt in Nextcloud/Owncloud.\n- 📋 Webnovel Copy-Button: Kopiere Kapitel direkt im optimalen Format für Webnovel & Co.",
+        "en": "Version 0.2.2.0 - Cloud & Export Update.\n- 📦 New Export Format: Complete project backup as .zip archive.\n- ☁️ Native WebDAV Cloud Backups: Backup your project directly to Nextcloud/Owncloud.\n- 📋 Webnovel Copy Button: Copy chapters directly in the optimal format for Webnovel & co."
     }
 }

@@ -173,8 +173,9 @@ function navigateTo(view, params = {}) {
             headerAction.textContent = t('btn_add_chapter', '+ Kapitel hinzufügen');
             headerAction.onclick = () => openModal('modal-chapter');
             if (params.projectId) {
-                loadProjectDetails(params.projectId);
-                loadProjectLanguages(params.projectId);
+                loadProjectDetails(params.projectId).then(() => {
+                    loadProjectLanguages(params.projectId);
+                });
             }
             break;
             
@@ -690,6 +691,9 @@ function setupEventListeners() {
     // Backup triggers
     const btnManualBackup = document.getElementById('btn-trigger-manual-backup');
     if (btnManualBackup) btnManualBackup.addEventListener('click', triggerManualBackup);
+    
+    const btnCloudBackup = document.getElementById('btn-trigger-cloud-backup');
+    if (btnCloudBackup) btnCloudBackup.addEventListener('click', handleCloudBackup);
 
     // Timeline triggers
     const btnCreateTimeline = document.getElementById('btn-create-timeline-event');
@@ -730,6 +734,10 @@ function setupEventListeners() {
     // Versionsverlauf button triggers
     const btnEditorHistory = document.getElementById('btn-editor-history');
     if (btnEditorHistory) btnEditorHistory.addEventListener('click', openHistoryModal);
+    
+    const btnCopyWebnovel = document.getElementById('btn-editor-copy-webnovel');
+    if (btnCopyWebnovel) btnCopyWebnovel.addEventListener('click', handleCopyForWebnovel);
+
     const btnCreateSnapManual = document.getElementById('btn-create-snapshot-manual');
     if (btnCreateSnapManual) btnCreateSnapManual.addEventListener('click', createManualSnapshot);
     const btnRestoreSnapSelected = document.getElementById('btn-restore-snapshot-selected');
@@ -2448,6 +2456,9 @@ async function loadAISettingsInForm() {
         // Backup settings
         document.getElementById('setting-backup-enabled').checked = settings.backup_enabled || false;
         document.getElementById('setting-backup-dir').value = settings.backup_dir || '';
+        document.getElementById('setting-webdav-url').value = settings.webdav_url || '';
+        document.getElementById('setting-webdav-user').value = settings.webdav_user || '';
+        document.getElementById('setting-webdav-password').value = settings.webdav_password || '';
         state.backupEnabled = settings.backup_enabled || false;
         state.backupDir = settings.backup_dir || '';
         
@@ -2488,7 +2499,10 @@ async function handleSaveSettings() {
         anthropic_model: document.getElementById('setting-anthropic-model').value,
         auto_translate_on_save: document.getElementById('setting-auto-translate').checked,
         backup_enabled: document.getElementById('setting-backup-enabled').checked,
-        backup_dir: document.getElementById('setting-backup-dir').value
+        backup_dir: document.getElementById('setting-backup-dir').value,
+        webdav_url: document.getElementById('setting-webdav-url').value,
+        webdav_user: document.getElementById('setting-webdav-user').value,
+        webdav_password: document.getElementById('setting-webdav-password').value
     };
     
     state.backupEnabled = payload.backup_enabled;
@@ -2507,6 +2521,33 @@ async function handleSaveSettings() {
         
     } catch (e) {
         showToast(t('error_save_settings', 'KI-Einstellungen konnten nicht gespeichert werden: ') + e.message, 'danger');
+    }
+}
+
+async function handleCloudBackup() {
+    if (!state.currentProject) {
+        showToast("Bitte öffne zuerst ein Projekt, um es in der Cloud zu sichern.", "danger");
+        return;
+    }
+    
+    // Wir speichern vorher die Settings, damit die aktuellen WebDAV-Daten ankommen
+    await saveAISettings();
+    
+    showToast("Cloud-Backup wird gestartet... Bitte warten.", "success");
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/cloud-backup`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || "Cloud-Backup fehlgeschlagen");
+        }
+        
+        showToast("Cloud-Backup erfolgreich hochgeladen!", "success");
+    } catch(err) {
+        showToast(err.message, "danger");
     }
 }
 
@@ -2789,12 +2830,21 @@ async function handleAIAssistant(task) {
         }
         
         if (task === 'correct') {
+            // AUTOMATIC SAFETY BACKUP: Create snapshot before AI overwrites text
+            try {
+                await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/snapshots`, {
+                    method: 'POST'
+                });
+            } catch(e) {
+                console.warn("Could not create automatic backup snapshot before AI correction", e);
+            }
+            
             if (isSelection) {
                 state.editor.replaceSelection(result);
             } else {
                 state.editor.setMarkdown(result);
             }
-            showToast(t('text_proofread_toast', 'Text erfolgreich lektoriert!'), "success");
+            showToast(t('text_proofread_toast', 'Text erfolgreich lektoriert! Backup wurde erstellt.'), "success");
         } else if (task === 'continue') {
             state.editor.insertText("\n" + result);
             showToast(t('text_continued_toast', 'Text erfolgreich fortgeführt!'), "success");
