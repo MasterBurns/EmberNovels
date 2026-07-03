@@ -1,23 +1,33 @@
 // EmberNovels SPA App Logic
 
-// Global state
-let state = {
-    currentView: 'projects', // projects, project-details, editor, trash, settings
+// Application State
+const state = {
+    currentView: 'projects',
     projects: [],
-    trashedProjects: [],
     currentProject: null,
     currentChapter: null,
-    autosaveTimer: null,
-    autosaveInterval: 3000, // 3 seconds default
-    isDirty: false,
-    lastSavedContent: "",
+    activeLanguage: 'original',
+    uiLanguage: 'de',
+    translations: {},
     editor: null,
+    autosaveInterval: 3000,
+    autosaveTimer: null,
+    isDirty: false,
+    lastSavedContent: '',
     loreList: [],
     editingLoreId: null,
+    highlightTimeout: null,
     detectedKeywordsTimeout: null,
-    activeLanguage: 'original',
-    aiSettings: {},
-    chapterSortOrder: 'asc'
+    activeBranch: 'original',
+    chapterSortOrder: 'asc',
+    leftSidebarPinned: true,
+    rightSidebarPinned: true,
+    zenModeActive: false,
+    backupEnabled: false,
+    backupDir: '',
+    timelineEvents: [],
+    sessionWords: 0,
+    chapterWordCountOnLoad: 0
 };
 
 // Base API URL
@@ -186,6 +196,33 @@ function navigateTo(view, params = {}) {
             headerTitle.textContent = t('nav_settings', 'Einstellungen');
             headerAction.style.display = 'none';
             loadAISettingsInForm();
+            break;
+            
+        case 'timeline':
+            document.getElementById('nav-timeline').classList.add('active');
+            btnBackDetails.style.display = 'inline-flex';
+            btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
+            headerAction.style.display = 'none';
+            headerTitle.textContent = `${t('nav_timeline', 'Zeitleiste')}: ${state.currentProject.title}`;
+            loadTimelineData();
+            break;
+            
+        case 'stats':
+            document.getElementById('nav-stats').classList.add('active');
+            btnBackDetails.style.display = 'inline-flex';
+            btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
+            headerAction.style.display = 'none';
+            headerTitle.textContent = `${t('nav_stats', 'Schreibstatistiken')}: ${state.currentProject.title}`;
+            loadStatsData();
+            break;
+
+        case 'search':
+            document.getElementById('nav-search').classList.add('active');
+            btnBackDetails.style.display = 'inline-flex';
+            btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
+            headerAction.style.display = 'none';
+            headerTitle.textContent = `${t('nav_search', 'Globale Suche')}: ${state.currentProject.title}`;
+            loadSearchData();
             break;
     }
 }
@@ -376,7 +413,18 @@ function setupEventListeners() {
     
     // AI assistance triggers
     document.getElementById('btn-ai-correct').addEventListener('click', () => handleAIAssistant('correct'));
-    document.getElementById('btn-ai-continue').addEventListener('click', () => handleAIAssistant('continue'));
+    document.getElementById('btn-ai-continue').addEventListener('click', () => {
+        if (!state.currentProject || !state.currentChapter) return;
+        // Open side panel
+        const workspace = document.querySelector('.editor-workspace');
+        const sidePanel = document.getElementById('editor-lore-panel');
+        if (sidePanel) {
+            sidePanel.style.display = 'flex';
+            workspace.classList.add('editor-layout-split');
+        }
+        // Switch to AI tab
+        switchSidePanelTab('ai');
+    });
     
     // Manual Translate Trigger
     document.getElementById('btn-editor-translate-now').addEventListener('click', handleManualTranslate);
@@ -445,7 +493,105 @@ function setupEventListeners() {
     if (btnCheckUpdate) {
         btnCheckUpdate.addEventListener('click', checkAppUpdates);
     }
+
+    // Tab buttons inside the editor split panel
+    const tabBtnLore = document.getElementById('tab-btn-lore');
+    if (tabBtnLore) tabBtnLore.addEventListener('click', () => switchSidePanelTab('lore'));
+    const tabBtnAi = document.getElementById('tab-btn-ai');
+    if (tabBtnAi) tabBtnAi.addEventListener('click', () => switchSidePanelTab('ai'));
+
+    // AI Chat submit & clear triggers
+    const btnAiChatSubmit = document.getElementById('btn-ai-chat-submit');
+    if (btnAiChatSubmit) btnAiChatSubmit.addEventListener('click', handleAIChatSubmit);
+    const btnAiChatClear = document.getElementById('btn-ai-chat-clear');
+    if (btnAiChatClear) btnAiChatClear.addEventListener('click', handleAIChatClear);
+
+    // Project Synopsis save button trigger
+    const btnSaveSynopsis = document.getElementById('btn-save-project-description');
+    if (btnSaveSynopsis) btnSaveSynopsis.addEventListener('click', handleSaveProjectDescription);
+
+    // Hover popup trigger initialization
+    setupLoreTooltip();
+
+    // Nav menu items
+    const navTimeline = document.getElementById('nav-timeline');
+    if (navTimeline) {
+        navTimeline.addEventListener('click', () => {
+            if (state.currentProject) navigateTo('timeline');
+            else {
+                showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus.'), 'warning');
+                navigateTo('projects');
+            }
+        });
+    }
+    const navStats = document.getElementById('nav-stats');
+    if (navStats) {
+        navStats.addEventListener('click', () => {
+            if (state.currentProject) navigateTo('stats');
+            else {
+                showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus.'), 'warning');
+                navigateTo('projects');
+            }
+        });
+    }
+    const navSearch = document.getElementById('nav-search');
+    if (navSearch) {
+        navSearch.addEventListener('click', () => {
+            if (state.currentProject) navigateTo('search');
+            else {
+                showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus.'), 'warning');
+                navigateTo('projects');
+            }
+        });
+    }
+
+    // Bug Report Button
+    const btnReportBug = document.getElementById('btn-report-bug');
+    if (btnReportBug) {
+        btnReportBug.addEventListener('click', () => {
+            const version = "0.2.0.0";
+            const userAgent = navigator.userAgent;
+            const title = encodeURIComponent("[Bug] EmberNovels v" + version);
+            const body = encodeURIComponent(
+                "## Bug Beschreibung\n\n\n## Schritte zur Reproduktion\n1. \n2. \n3. \n\n## System-Informationen\n- App-Version: " + version + "\n- Browser UserAgent: " + userAgent + "\n"
+            );
+            window.open("https://github.com/MasterBurns/EmberNovels/issues/new?title=" + title + "&body=" + body, "_blank");
+        });
+    }
+
+    // Sidebar pin and Zen buttons
+    const btnPinLeft = document.getElementById('btn-pin-left-sidebar');
+    if (btnPinLeft) btnPinLeft.addEventListener('click', toggleLeftSidebarPin);
+    
+    const btnPinRight = document.getElementById('btn-pin-right-sidebar');
+    if (btnPinRight) btnPinRight.addEventListener('click', toggleRightSidebarPin);
+    
+    const btnZen = document.getElementById('btn-editor-zen');
+    if (btnZen) btnZen.addEventListener('click', toggleZenMode);
+
+    // Backup triggers
+    const btnManualBackup = document.getElementById('btn-trigger-manual-backup');
+    if (btnManualBackup) btnManualBackup.addEventListener('click', triggerManualBackup);
+
+    // Timeline triggers
+    const btnCreateTimeline = document.getElementById('btn-create-timeline-event');
+    if (btnCreateTimeline) btnCreateTimeline.addEventListener('click', () => openTimelineEventForm());
+    const btnSaveTimeline = document.getElementById('btn-save-timeline-event');
+    if (btnSaveTimeline) btnSaveTimeline.addEventListener('click', saveTimelineEvent);
+    const btnCancelTimeline = document.getElementById('btn-cancel-timeline-event');
+    if (btnCancelTimeline) btnCancelTimeline.addEventListener('click', closeTimelineEventForm);
+
+    // Search triggers
+    const btnTriggerSearch = document.getElementById('btn-trigger-global-search');
+    if (btnTriggerSearch) btnTriggerSearch.addEventListener('click', performGlobalSearch);
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') performGlobalSearch();
+        });
+    }
 }
+
 
 // 1. PROJECTS LOGIC
 async function loadProjects() {
@@ -548,6 +694,12 @@ async function loadProjectDetails(projectId) {
         if (!response.ok) throw new Error("Project details not found");
         const project = await response.json();
         state.currentProject = project;
+        
+        // Populate Project synopsis
+        const synopsisEl = document.getElementById('project-details-description');
+        if (synopsisEl) {
+            synopsisEl.value = project.description || '';
+        }
         
         // Update header
         document.getElementById('header-title').textContent = project.title;
@@ -833,6 +985,13 @@ function handleEditorInput(content) {
     saveStatus.textContent = t('unsaved_changes_typing', 'Ungespeicherte Änderungen (Tippe...)');
     
     updateWordCount(content);
+
+    // Track daily/session writing progress
+    if (state.chapterWordCountOnLoad !== undefined) {
+        const currentWords = content.trim() ? content.trim().split(/\s+/).length : 0;
+        const diff = currentWords - state.chapterWordCountOnLoad;
+        state.sessionWords = Math.max(0, diff);
+    }
 }
 
 // Tick-based shadow saving to backend (.tmp file)
@@ -891,6 +1050,9 @@ async function handleExplicitSave() {
         
         saveStatus.textContent = t('saved_status', 'Gesichert');
         showToast(t('changes_saved_backup_created', 'Änderungen dauerhaft gespeichert (.history Backup erstellt)'), 'success');
+        
+        // Trigger auto-backup if enabled
+        performAutoBackup();
     } catch (e) {
         showToast(t('error_saving', 'Fehler beim Speichern: ') + e.message, 'danger');
         saveStatus.textContent = t('error_saving_status', 'Fehler beim Speichern');
@@ -1803,6 +1965,12 @@ async function loadAISettingsInForm() {
         // Auto translate check
         document.getElementById('setting-auto-translate').checked = settings.auto_translate_on_save !== false;
         
+        // Backup settings
+        document.getElementById('setting-backup-enabled').checked = settings.backup_enabled || false;
+        document.getElementById('setting-backup-dir').value = settings.backup_dir || '';
+        state.backupEnabled = settings.backup_enabled || false;
+        state.backupDir = settings.backup_dir || '';
+        
         // Trigger visibility
         providerSelect.dispatchEvent(new Event('change'));
         
@@ -1838,8 +2006,13 @@ async function handleSaveSettings() {
         openai_model: document.getElementById('setting-openai-model').value,
         anthropic_api_key: document.getElementById('setting-anthropic-key').value,
         anthropic_model: document.getElementById('setting-anthropic-model').value,
-        auto_translate_on_save: document.getElementById('setting-auto-translate').checked
+        auto_translate_on_save: document.getElementById('setting-auto-translate').checked,
+        backup_enabled: document.getElementById('setting-backup-enabled').checked,
+        backup_dir: document.getElementById('setting-backup-dir').value
     };
+    
+    state.backupEnabled = payload.backup_enabled;
+    state.backupDir = payload.backup_dir;
     
     try {
         const response = await fetch(`${API_URL}/ai/settings`, {
@@ -1991,6 +2164,11 @@ async function reloadEditorChapterContent(projectId, chapterId) {
         state.currentChapter = data;
         state.lastSavedContent = data.content || '';
         state.isDirty = false;
+
+        // Track initial word count for session progress
+        const text = data.content || '';
+        state.chapterWordCountOnLoad = text.trim() ? text.trim().split(/\s+/).length : 0;
+        state.sessionWords = 0;
         
         if (state.editor) {
             state.editor.setMarkdown(data.content || '');
@@ -2514,7 +2692,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = "0.1.0.2";
+    const currentVersion = "0.2.0.0";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -2522,12 +2700,22 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.1.0";
+        const latestVersion = data.version || "0.2.0.0";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
             msg.innerHTML = `<span style="color: var(--color-warning);">⚠️ ${t('update_available_prefix', 'Update verfügbar! Version')} ${latestVersion} ${t('update_available_suffix', 'ist jetzt online.')}</span>`;
-            notes.textContent = data.release_notes || t('no_release_notes', 'Keine Update-Notizen vorhanden.');
+            
+            let notesText = '';
+            if (data.release_notes) {
+                if (typeof data.release_notes === 'object') {
+                    notesText = data.release_notes[state.uiLanguage] || data.release_notes['en'] || data.release_notes['de'] || '';
+                } else {
+                    notesText = data.release_notes;
+                }
+            }
+            notes.textContent = notesText || t('no_release_notes', 'Keine Update-Notizen vorhanden.');
+
             
             // Re-bind trigger click
             const newTriggerBtn = triggerBtn.cloneNode(true);
@@ -2567,3 +2755,722 @@ function compareVersions(a, b) {
     }
     return 0;
 }
+
+// ==========================================
+// D. NEW AI CHAT & LORE TOOLTIP HELPERS
+// ==========================================
+
+// Side Panel Tab Switching
+function switchSidePanelTab(tabName) {
+    const tabBtnLore = document.getElementById('tab-btn-lore');
+    const tabBtnAi = document.getElementById('tab-btn-ai');
+    const contentLore = document.getElementById('tab-content-lore');
+    const contentAi = document.getElementById('tab-content-ai');
+    
+    if (!tabBtnLore || !tabBtnAi || !contentLore || !contentAi) return;
+
+    if (tabName === 'lore') {
+        tabBtnLore.classList.add('active');
+        tabBtnLore.style.borderBottom = '2px solid var(--color-primary)';
+        tabBtnLore.style.color = 'var(--text-base)';
+        
+        tabBtnAi.classList.remove('active');
+        tabBtnAi.style.borderBottom = '2px solid transparent';
+        tabBtnAi.style.color = 'var(--text-muted)';
+        
+        contentLore.style.display = 'flex';
+        contentAi.style.display = 'none';
+    } else if (tabName === 'ai') {
+        tabBtnAi.classList.add('active');
+        tabBtnAi.style.borderBottom = '2px solid var(--color-primary)';
+        tabBtnAi.style.color = 'var(--text-base)';
+        
+        tabBtnLore.classList.remove('active');
+        tabBtnLore.style.borderBottom = '2px solid transparent';
+        tabBtnLore.style.color = 'var(--text-muted)';
+        
+        contentAi.style.display = 'flex';
+        contentLore.style.display = 'none';
+    }
+}
+
+// Save Project Synopsis (Description)
+async function handleSaveProjectDescription() {
+    if (!state.currentProject) return;
+    const synopsis = document.getElementById('project-details-description').value;
+    
+    const saveBtn = document.getElementById('btn-save-project-description');
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving_lbl', 'Speichert...');
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: synopsis })
+        });
+        
+        if (!response.ok) throw new Error("Failed to save project synopsis");
+        
+        state.currentProject.description = synopsis;
+        showToast(t('synopsis_saved_toast', 'Projekt-Zusammenfassung erfolgreich gespeichert!'), 'success');
+    } catch (e) {
+        showToast(t('error_save_synopsis', 'Fehler beim Speichern: ') + e.message, 'danger');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = t('btn_save_synopsis', 'Zusammenfassung speichern');
+    }
+}
+
+// AI Chat Clear
+function handleAIChatClear() {
+    const history = document.getElementById('ai-chat-history');
+    if (history) {
+        history.innerHTML = `
+            <div class="ai-chat-message system" style="color: var(--text-muted); text-align: center; padding: 12px;">
+                ${t('ai_chat_welcome', 'Gib unten eine Anweisung ein. Die KI wird den aktivierten Kontext nutzen, um den Text fortzuführen.')}
+            </div>
+        `;
+    }
+}
+
+// AI Chat Submit
+async function handleAIChatSubmit() {
+    if (!state.editor || !state.currentProject || !state.currentChapter) return;
+    
+    const promptInput = document.getElementById('ai-chat-input');
+    const prompt = promptInput.value.trim();
+    if (!prompt) {
+        showToast(t('toast_enter_prompt_first', 'Bitte gib zuerst eine Anweisung ein.'), 'warning');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('btn-ai-chat-submit');
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = t('ai_loading', 'Generiere...');
+    
+    // Add user message to history
+    const history = document.getElementById('ai-chat-history');
+    
+    // Remove welcome system message if present
+    const welcomeMsg = history.querySelector('.ai-chat-message.system');
+    if (welcomeMsg) {
+        welcomeMsg.remove();
+    }
+    
+    const userMsgEl = document.createElement('div');
+    userMsgEl.className = 'ai-chat-message user';
+    userMsgEl.textContent = prompt;
+    history.appendChild(userMsgEl);
+    history.scrollTop = history.scrollHeight;
+    
+    // Gather contexts
+    const includeLore = document.getElementById('ai-opt-include-lore').checked;
+    const includeChapters = document.getElementById('ai-opt-include-chapters').checked;
+    const includeSynopsis = document.getElementById('ai-opt-include-synopsis').checked;
+    
+    // Text before cursor
+    const text_before = state.editor.getMarkdown().trim();
+    
+    const payload = {
+        project_id: state.currentProject.id,
+        chapter_id: state.currentChapter.id,
+        text_before: text_before,
+        prompt: prompt,
+        include_lore: includeLore,
+        include_chapters: includeChapters,
+        include_synopsis: includeSynopsis
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/ai/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'API request failed');
+        }
+        
+        const data = await response.json();
+        const result = data.result;
+        
+        if (!result) {
+            throw new Error(t('toast_no_ai_response', 'Keine Antwort erhalten.'));
+        }
+        
+        // Render AI message in history
+        const aiMsgEl = document.createElement('div');
+        aiMsgEl.className = 'ai-chat-message ai';
+        
+        // Escape content but preserve line breaks
+        const formattedResult = escapeHtml(result).replace(/\n/g, '<br>');
+        
+        aiMsgEl.innerHTML = `
+            <div style="font-size: 13px; line-height: 1.5; margin-bottom: 8px;">${formattedResult}</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ai-chat-insert" style="padding: 4px 8px; font-size: 11px;">📥 Einfügen</button>
+                <button class="btn btn-secondary btn-ai-chat-copy" style="padding: 4px 8px; font-size: 11px;">📋 Kopieren</button>
+            </div>
+        `;
+        
+        // Bind insert button click
+        aiMsgEl.querySelector('.btn-ai-chat-insert').addEventListener('click', () => {
+            state.editor.insertText("\n\n" + result);
+            showToast(t('text_inserted_toast', 'Text erfolgreich eingefügt!'), 'success');
+            state.isDirty = true;
+        });
+        
+        // Bind copy button click
+        aiMsgEl.querySelector('.btn-ai-chat-copy').addEventListener('click', () => {
+            navigator.clipboard.writeText(result);
+            showToast(t('copied_to_clipboard', 'Kopiert!'), 'success');
+        });
+        
+        history.appendChild(aiMsgEl);
+        promptInput.value = '';
+        
+    } catch (e) {
+        showToast(e.message, 'danger');
+        const errEl = document.createElement('div');
+        errEl.className = 'ai-chat-message system';
+        errEl.style.color = 'var(--color-danger)';
+        errEl.textContent = `Fehler: ${e.message}`;
+        history.appendChild(errEl);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        history.scrollTop = history.scrollHeight;
+    }
+}
+
+// Setup Hover Tooltip for Smart Keywords
+function setupLoreTooltip() {
+    let tooltipEl = document.getElementById('lore-hover-tooltip');
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'lore-hover-tooltip';
+        tooltipEl.className = 'lore-tooltip';
+        tooltipEl.style.position = 'fixed';
+        tooltipEl.style.display = 'none';
+        tooltipEl.style.zIndex = '9999';
+        tooltipEl.style.pointerEvents = 'none';
+        document.body.appendChild(tooltipEl);
+    }
+
+    // Event delegation
+    document.addEventListener('mouseover', (e) => {
+        const keyword = e.target.closest('.smart-keyword');
+        if (keyword) {
+            const loreId = keyword.getAttribute('data-lore-id');
+            if (!state.loreList) return;
+            const entry = state.loreList.find(item => item.id === loreId);
+            if (entry) {
+                // Populate tooltip
+                tooltipEl.innerHTML = `
+                    <div class="lore-tooltip-title">${escapeHtml(entry.name)}</div>
+                    <div class="lore-tooltip-badge">${translateCategory(entry.category)}</div>
+                    <div class="lore-tooltip-content">${escapeHtml(entry.short_description || t('no_description_available', 'Keine Kurzbeschreibung vorhanden.'))}</div>
+                `;
+                tooltipEl.style.display = 'block';
+
+                // Position tooltip
+                const rect = keyword.getBoundingClientRect();
+                
+                // Align to top center of the keyword
+                let left = rect.left + (rect.width / 2) - (tooltipEl.offsetWidth / 2);
+                let top = rect.top - tooltipEl.offsetHeight - 8;
+
+                // Bounds check
+                if (left < 10) left = 10;
+                if (left + tooltipEl.offsetWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - tooltipEl.offsetWidth - 10;
+                }
+                if (top < 10) {
+                    // Place below if not enough space on top
+                    top = rect.bottom + 8;
+                }
+
+                tooltipEl.style.left = `${left}px`;
+                tooltipEl.style.top = `${top}px`;
+                tooltipEl.style.opacity = '1';
+            }
+        }
+    });
+
+    });
+}
+
+// ==========================================
+// E. TIMELINE, STATS, SEARCH & ZEN MODE HELPERS
+// ==========================================
+
+// Zen Mode Toggle
+function toggleZenMode() {
+    state.zenModeActive = !state.zenModeActive;
+    const zenBtn = document.getElementById('btn-editor-zen');
+    if (!zenBtn) return;
+    
+    if (state.zenModeActive) {
+        zenBtn.classList.add('active');
+        zenBtn.style.color = 'var(--color-primary)';
+        
+        // Collapse left sidebar if not pinned
+        if (!state.leftSidebarPinned) {
+            document.querySelector('.app-container').classList.add('sidebar-collapsed');
+        }
+        
+        // Collapse right sidebar if not pinned
+        if (!state.rightSidebarPinned) {
+            const workspace = document.querySelector('.editor-workspace');
+            const sidePanel = document.getElementById('editor-lore-panel');
+            if (sidePanel) {
+                sidePanel.style.display = 'none';
+                workspace.classList.remove('editor-layout-split');
+            }
+        }
+    } else {
+        zenBtn.classList.remove('active');
+        zenBtn.style.color = '';
+        
+        // Restore left sidebar
+        document.querySelector('.app-container').classList.remove('sidebar-collapsed');
+        
+        // Restore right sidebar
+        const workspace = document.querySelector('.editor-workspace');
+        const sidePanel = document.getElementById('editor-lore-panel');
+        if (sidePanel && state.currentChapter) {
+            sidePanel.style.display = 'flex';
+            workspace.classList.add('editor-layout-split');
+        }
+    }
+}
+
+function toggleLeftSidebarPin() {
+    state.leftSidebarPinned = !state.leftSidebarPinned;
+    const pinBtn = document.getElementById('btn-pin-left-sidebar');
+    if (!pinBtn) return;
+    
+    if (state.leftSidebarPinned) {
+        pinBtn.classList.add('active');
+        pinBtn.textContent = '📌';
+        document.querySelector('.app-container').classList.remove('sidebar-collapsed');
+    } else {
+        pinBtn.classList.remove('active');
+        pinBtn.textContent = '📍';
+        if (state.zenModeActive) {
+            document.querySelector('.app-container').classList.add('sidebar-collapsed');
+        }
+    }
+}
+
+function toggleRightSidebarPin() {
+    state.rightSidebarPinned = !state.rightSidebarPinned;
+    const pinBtn = document.getElementById('btn-pin-right-sidebar');
+    if (!pinBtn) return;
+    
+    if (state.rightSidebarPinned) {
+        pinBtn.classList.add('active');
+        pinBtn.textContent = '📌';
+        const workspace = document.querySelector('.editor-workspace');
+        const sidePanel = document.getElementById('editor-lore-panel');
+        if (sidePanel && sidePanel.style.display !== 'none') {
+            workspace.classList.add('editor-layout-split');
+        }
+    } else {
+        pinBtn.classList.remove('active');
+        pinBtn.textContent = '📍';
+        if (state.zenModeActive) {
+            const workspace = document.querySelector('.editor-workspace');
+            const sidePanel = document.getElementById('editor-lore-panel');
+            if (sidePanel) {
+                sidePanel.style.display = 'none';
+                workspace.classList.remove('editor-layout-split');
+            }
+        }
+    }
+}
+
+// Backup Functions
+async function triggerManualBackup() {
+    const backupDir = document.getElementById('setting-backup-dir').value.trim();
+    if (!backupDir) {
+        showToast(t('toast_enter_backup_dir', 'Bitte gib ein Backup-Verzeichnis an.'), 'warning');
+        return;
+    }
+    
+    const btn = document.getElementById('btn-trigger-manual-backup');
+    btn.disabled = true;
+    btn.textContent = t('backing_up_lbl', 'Sichere...');
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/backup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ backup_dir: backupDir })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Backup failed');
+        }
+        
+        const data = await response.json();
+        showToast(t('backup_success_toast', 'Sicherung erfolgreich erstellt: ') + data.filename, 'success');
+    } catch (e) {
+        showToast(t('error_backup_failed', 'Sicherung fehlgeschlagen: ') + e.message, 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = t('settings_btn_manual_backup', 'Jetzt manuelles Backup erstellen');
+    }
+}
+
+async function performAutoBackup() {
+    if (!state.backupEnabled || !state.backupDir) return;
+    try {
+        const response = await fetch(`${API_URL}/projects/backup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ backup_dir: state.backupDir })
+        });
+        if (response.ok) {
+            console.log("Auto-backup successfully triggered in background.");
+        }
+    } catch (e) {
+        console.error("Auto-backup failed", e);
+    }
+}
+
+// Timeline Management
+async function loadTimelineData() {
+    if (!state.currentProject) return;
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/timeline`);
+        if (!response.ok) throw new Error("Could not load timeline");
+        state.timelineEvents = await response.json();
+        renderTimeline();
+    } catch (e) {
+        showToast("Fehler beim Laden der Zeitleiste: " + e.message, 'danger');
+    }
+}
+
+function openTimelineEventForm(eventId = null) {
+    const form = document.getElementById('timeline-form-container');
+    form.style.display = 'flex';
+    
+    // Populate lore select dropdown
+    const select = document.getElementById('timeline-event-lore');
+    select.innerHTML = `<option value="">-- Keine Verknüpfung --</option>`;
+    state.loreList.forEach(entry => {
+        const opt = document.createElement('option');
+        opt.value = entry.id;
+        opt.textContent = `${entry.name} (${translateCategory(entry.category)})`;
+        select.appendChild(opt);
+    });
+
+    if (eventId) {
+        const ev = state.timelineEvents.find(e => e.id === eventId);
+        if (ev) {
+            document.getElementById('timeline-event-id').value = ev.id;
+            document.getElementById('timeline-event-title').value = ev.title;
+            document.getElementById('timeline-event-date').value = ev.date;
+            document.getElementById('timeline-event-desc').value = ev.desc || '';
+            document.getElementById('timeline-event-lore').value = ev.lore_id || '';
+        }
+    } else {
+        document.getElementById('timeline-event-id').value = '';
+        document.getElementById('timeline-event-title').value = '';
+        document.getElementById('timeline-event-date').value = '';
+        document.getElementById('timeline-event-desc').value = '';
+        document.getElementById('timeline-event-lore').value = '';
+    }
+}
+
+function closeTimelineEventForm() {
+    document.getElementById('timeline-form-container').style.display = 'none';
+}
+
+async function saveTimelineEvent() {
+    if (!state.currentProject) return;
+    const title = document.getElementById('timeline-event-title').value.trim();
+    const date = document.getElementById('timeline-event-date').value.trim();
+    const desc = document.getElementById('timeline-event-desc').value.trim();
+    const lore_id = document.getElementById('timeline-event-lore').value;
+    
+    if (!title || !date) {
+        showToast("Titel und Datum/Epoche sind erforderlich.", 'warning');
+        return;
+    }
+    
+    const id = document.getElementById('timeline-event-id').value || 'evt_' + Math.random().toString(36).substr(2, 9);
+    
+    const newEvent = { id, title, date, desc, lore_id };
+    const existingIdx = state.timelineEvents.findIndex(e => e.id === id);
+    
+    if (existingIdx !== -1) {
+        state.timelineEvents[existingIdx] = newEvent;
+    } else {
+        state.timelineEvents.push(newEvent);
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/timeline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state.timelineEvents)
+        });
+        
+        if (!response.ok) throw new Error("Failed to save timeline event");
+        
+        showToast("Ereignis gespeichert", "success");
+        closeTimelineEventForm();
+        renderTimeline();
+    } catch (e) {
+        showToast("Fehler beim Speichern des Ereignisses: " + e.message, "danger");
+    }
+}
+
+async function deleteTimelineEvent(eventId) {
+    if (!state.currentProject) return;
+    showConfirm(
+        "Ereignis löschen",
+        "Möchtest du dieses Ereignis wirklich aus der Zeitleiste entfernen?",
+        async () => {
+            state.timelineEvents = state.timelineEvents.filter(e => e.id !== eventId);
+            try {
+                const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/timeline`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state.timelineEvents)
+                });
+                if (!response.ok) throw new Error();
+                showToast("Ereignis gelöscht", "success");
+                renderTimeline();
+            } catch(e) {
+                showToast("Löschen fehlgeschlagen", "danger");
+            }
+        }
+    );
+}
+
+function renderTimeline() {
+    const list = document.getElementById('timeline-events-list');
+    const flow = document.getElementById('timeline-visual-flow');
+    list.innerHTML = '';
+    flow.innerHTML = '';
+    
+    if (state.timelineEvents.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 13px;">Keine Ereignisse vorhanden.</div>`;
+        flow.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">Die Zeitleiste ist noch leer. Füge links Ereignisse hinzu!</div>`;
+        return;
+    }
+    
+    state.timelineEvents.forEach(ev => {
+        // Sidebar list item
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '8px 12px';
+        item.innerHTML = `
+            <div style="font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${escapeHtml(ev.title)}</div>
+            <div style="display: flex; gap: 4px;">
+                <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 11px;" onclick="openTimelineEventForm('${ev.id}')">✏️</button>
+                <button class="btn btn-secondary btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteTimelineEvent('${ev.id}')">🗑️</button>
+            </div>
+        `;
+        list.appendChild(item);
+        
+        // Visual flow card
+        const card = document.createElement('div');
+        card.className = 'timeline-card';
+        
+        let loreLinkHtml = '';
+        if (ev.lore_id) {
+            const entry = state.loreList.find(l => l.id === ev.lore_id);
+            if (entry) {
+                loreLinkHtml = `<div class="timeline-event-lore-link" onclick="showLoreQuickviewById('${entry.id}')">📖 Verknüpft: ${escapeHtml(entry.name)}</div>`;
+            }
+        }
+        
+        card.innerHTML = `
+            <div class="timeline-dot"></div>
+            <div class="timeline-event-header">
+                <div class="timeline-event-title">${escapeHtml(ev.title)}</div>
+                <div class="timeline-event-date">${escapeHtml(ev.date)}</div>
+            </div>
+            <div class="timeline-event-desc">${escapeHtml(ev.desc || 'Keine Beschreibung vorhanden.')}</div>
+            ${loreLinkHtml}
+        `;
+        flow.appendChild(card);
+    });
+}
+
+// Global Search
+function loadSearchData() {
+    document.getElementById('global-search-input').value = '';
+    document.getElementById('global-search-results').innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 32px;">
+            Gib oben einen Suchbegriff ein und klicke auf Suchen.
+        </div>
+    `;
+}
+
+async function performGlobalSearch() {
+    if (!state.currentProject) return;
+    const searchTerm = document.getElementById('global-search-input').value.trim().toLowerCase();
+    if (!searchTerm) {
+        showToast("Bitte gib einen Suchbegriff ein.", "warning");
+        return;
+    }
+    
+    const resultsContainer = document.getElementById('global-search-results');
+    resultsContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 32px;">Suche läuft...</div>`;
+    
+    try {
+        const promises = state.currentProject.chapters.map(async (ch) => {
+            let url = `${API_URL}/projects/${state.currentProject.id}/chapters/${ch.id}`;
+            if (state.activeLanguage !== 'original') {
+                url = `${API_URL}/projects/${state.currentProject.id}/languages/${state.activeLanguage}/chapters/${ch.id}`;
+            }
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                return { chapter: ch, content: data.content || '' };
+            }
+            return { chapter: ch, content: '' };
+        });
+        
+        const loadedChapters = await Promise.all(promises);
+        
+        let html = '';
+        let matchesCount = 0;
+        
+        // Search in chapters
+        loadedChapters.forEach(({ chapter, content }) => {
+            const idx = content.toLowerCase().indexOf(searchTerm);
+            if (idx !== -1) {
+                matchesCount++;
+                const start = Math.max(0, idx - 40);
+                const end = Math.min(content.length, idx + searchTerm.length + 40);
+                const snippet = content.slice(start, end).replace(/\n/g, ' ');
+                
+                html += `
+                    <div class="list-item" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; align-items: flex-start;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <strong style="color: var(--color-primary);">${escapeHtml(chapter.title)}</strong>
+                            <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="navigateTo('editor', { projectId: '${state.currentProject.id}', chapterId: '${chapter.id}' })">📖 Öffnen</button>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); font-style: italic; background-color: var(--bg-base); padding: 8px; border-radius: 6px; width: 100%; border: 1px solid var(--border-color);">
+                            ...${escapeHtml(snippet)}...
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Search in lore
+        state.loreList.forEach(entry => {
+            const inName = entry.name.toLowerCase().includes(searchTerm);
+            const inDesc = (entry.description || '').toLowerCase().includes(searchTerm);
+            const inShort = (entry.short_description || '').toLowerCase().includes(searchTerm);
+            
+            if (inName || inDesc || inShort) {
+                matchesCount++;
+                const snippet = entry.short_description || entry.description || '';
+                html += `
+                    <div class="list-item" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; align-items: flex-start;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <div>
+                                <strong style="color: var(--color-primary);">${escapeHtml(entry.name)}</strong>
+                                <span style="font-size: 10px; background-color: var(--color-primary-light); color: var(--color-primary); padding: 1px 4px; border-radius: 4px; margin-left: 8px; text-transform: uppercase;">${translateCategory(entry.category)}</span>
+                             </div>
+                             <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="navigateTo('lore'); setTimeout(() => showLoreDetail('${entry.id}'), 100)">📖 Wiki öffnen</button>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); font-style: italic; background-color: var(--bg-base); padding: 8px; border-radius: 6px; width: 100%; border: 1px solid var(--border-color);">
+                             ${escapeHtml(snippet.slice(0, 100))}...
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        if (matchesCount === 0) {
+            resultsContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 32px;">Keine Treffer für "${escapeHtml(searchTerm)}" gefunden.</div>`;
+        } else {
+            resultsContainer.innerHTML = html;
+        }
+        
+    } catch(e) {
+        showToast("Suche fehlgeschlagen: " + e.message, 'danger');
+    }
+}
+
+// Stats & Visualizations
+function loadStatsData() {
+    if (!state.currentProject) return;
+    
+    let totalWords = 0;
+    state.currentProject.chapters.forEach(c => totalWords += c.word_count);
+    
+    const chaptersCount = state.currentProject.chapters.length;
+    const avgWords = chaptersCount > 0 ? Math.round(totalWords / chaptersCount) : 0;
+    
+    // Fill text values
+    document.getElementById('stats-total-words-val').textContent = totalWords.toLocaleString();
+    
+    const goal = state.currentProject.word_count_goal || 50000;
+    const totalPercentage = Math.min(100, Math.round((totalWords / goal) * 100));
+    document.getElementById('stats-total-progress-lbl').textContent = `Ziel: ${goal.toLocaleString()} (${totalPercentage}%)`;
+    
+    document.getElementById('stats-chapters-count-val').textContent = chaptersCount;
+    document.getElementById('stats-avg-words-lbl').textContent = `Ø ${avgWords.toLocaleString()} Wörter pro Kapitel`;
+    
+    const dailyProgress = state.sessionWords || 0;
+    document.getElementById('stats-daily-words-val').textContent = dailyProgress.toLocaleString();
+    const dailyGoal = state.currentProject.daily_word_count_goal || 500;
+    const dailyPercentage = Math.min(100, Math.round((dailyProgress / dailyGoal) * 100));
+    document.getElementById('stats-daily-progress-lbl').textContent = `Tägliches Ziel: ${dailyGoal.toLocaleString()} (${dailyPercentage}%)`;
+    
+    // Draw Bar Chart
+    renderStatsCharts();
+}
+
+function renderStatsCharts() {
+    const container = document.getElementById('stats-chart-container');
+    container.innerHTML = '';
+    
+    const chapters = state.currentProject.chapters;
+    if (chapters.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); font-style: italic; width: 100%; text-align: center;">Keine Kapiteldaten vorhanden.</div>`;
+        return;
+    }
+    
+    const maxWords = Math.max(...chapters.map(c => c.word_count), 1);
+    
+    chapters.forEach(ch => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'stats-chart-bar-wrapper';
+        
+        const pct = Math.max(5, Math.round((ch.word_count / maxWords) * 100));
+        
+        wrapper.innerHTML = `
+            <div class="stats-chart-bar" style="height: ${pct}%;">
+                <div class="stats-chart-bar-tooltip">${ch.title}: ${ch.word_count.toLocaleString()} Wörter</div>
+            </div>
+            <div class="stats-chart-bar-label">${escapeHtml(ch.title)}</div>
+        `;
+        container.appendChild(wrapper);
+    });
+}
+
+// Expose functions globally for dynamic elements (onclicks)
+window.openTimelineEventForm = openTimelineEventForm;
+window.deleteTimelineEvent = deleteTimelineEvent;
+window.showLoreQuickviewById = showLoreQuickviewById;
+
+

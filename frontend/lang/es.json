@@ -263,5 +263,13 @@
     "error_create_branch": "No se pudo crear la rama de idioma",
     "autosaving": "Guardando automáticamente...",
     "saving_permanently": "Guardando permanentemente...",
-    "no_description": "Sin descripción."
+    "no_description": "Sin descripción.",
+    "nav_timeline": "Línea de tiempo",
+    "nav_stats": "Estadísticas de escritura",
+    "nav_bug_report": "Reportar error (GitHub)",
+    "settings_backup_title": "💾 Copias de seguridad",
+    "settings_backup_enabled_lbl": "Activar copias de seguridad automáticas al guardar",
+    "settings_backup_dir_lbl": "Directorio de copia de seguridad (Carpeta destino)",
+    "settings_backup_cloud_hint": "*Consejo: Elija su carpeta de sincronización en la nube (por ejemplo, OneDrive, Google Drive, iCloud, Baidu Wangpan o TeraBox) para asegurar automáticamente las copias de seguridad en la nube.*",
+    "settings_btn_manual_backup": "Crear copia de seguridad manual ahora"
 }

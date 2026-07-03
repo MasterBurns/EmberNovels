@@ -263,5 +263,13 @@
     "error_create_branch": "Impossibile creare il ramo linguistico",
     "autosaving": "Salvataggio automatico...",
     "saving_permanently": "Salvataggio permanente...",
-    "no_description": "Nessuna descrizione."
+    "no_description": "Nessuna descrizione.",
+    "nav_timeline": "Cronologia",
+    "nav_stats": "Statistiche di scrittura",
+    "nav_bug_report": "Segnala bug (GitHub)",
+    "settings_backup_title": "💾 Backup dei dati",
+    "settings_backup_enabled_lbl": "Abilita i backup automatici al salvataggio",
+    "settings_backup_dir_lbl": "Directory di backup (Cartella di destinazione)",
+    "settings_backup_cloud_hint": "*Suggerimento: Scegli la cartella di sincronizzazione cloud (ad esempio, OneDrive, Google Drive, iCloud, Baidu Wangpan o TeraBox) per proteggere automaticamente i backup nel cloud.*",
+    "settings_btn_manual_backup": "Crea backup manuale ora"
 }

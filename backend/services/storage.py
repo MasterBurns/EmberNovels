@@ -755,3 +755,70 @@ class StorageService:
             return True
         except Exception:
             return False
+
+    @classmethod
+    def get_timeline_file(cls, project_id: str) -> Path:
+        return cls.get_projects_dir() / project_id / "timeline.json"
+
+    @classmethod
+    def load_timeline(cls, project_id: str) -> List[Dict[str, Any]]:
+        file_path = cls.get_timeline_file(project_id)
+        if not file_path.exists():
+            return []
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return []
+
+    @classmethod
+    def save_timeline(cls, project_id: str, timeline_events: List[Dict[str, Any]]) -> bool:
+        file_path = cls.get_timeline_file(project_id)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(timeline_events, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception:
+            return False
+
+    @classmethod
+    def create_backup(cls, backup_dir_path: str) -> Dict[str, Any]:
+        """
+        Creates a ZIP backup of all projects and saves it to the specified backup directory.
+        """
+        import zipfile
+        import os
+        from datetime import datetime
+        
+        backup_path = Path(backup_dir_path)
+        if not backup_path.exists():
+            try:
+                backup_path.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                return {"success": False, "error": f"Backup-Verzeichnis konnte nicht erstellt werden: {str(e)}"}
+                
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"embernovels_backup_{timestamp}.zip"
+        zip_filepath = backup_path / zip_filename
+        
+        projects_dir = cls.get_projects_dir()
+        if not projects_dir.exists():
+            return {"success": False, "error": "Projekte-Verzeichnis existiert nicht."}
+            
+        try:
+            with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for root, dirs, files in os.walk(projects_dir):
+                    for file in files:
+                        file_path = Path(root) / file
+                        arcname = file_path.relative_to(projects_dir.parent)
+                        zip_file.write(file_path, arcname)
+            
+            return {
+                "success": True, 
+                "filename": zip_filename, 
+                "filepath": str(zip_filepath),
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Backup-Verzeichnis/Dateizugriff fehlgeschlagen: {str(e)}"}
+

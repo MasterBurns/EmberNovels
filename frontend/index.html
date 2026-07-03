@@ -35,6 +35,24 @@
                         </a>
                     </li>
                     <li>
+                        <a id="nav-timeline" class="nav-item">
+                            <span class="nav-item-icon">⏳</span>
+                            <span data-i18n="nav_timeline">Zeitleiste</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a id="nav-stats" class="nav-item">
+                            <span class="nav-item-icon">📊</span>
+                            <span data-i18n="nav_stats">Schreibstatistiken</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a id="nav-search" class="nav-item">
+                            <span class="nav-item-icon">🔍</span>
+                            <span data-i18n="nav_search">Globale Suche</span>
+                        </a>
+                    </li>
+                    <li>
                         <a id="nav-trash" class="nav-item">
                             <span class="nav-item-icon">🗑️</span>
                             <span data-i18n="nav_trash">Papierkorb</span>
@@ -46,13 +64,20 @@
                             <span data-i18n="nav_settings">Einstellungen</span>
                         </a>
                     </li>
+                    <li style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                        <a id="btn-report-bug" class="nav-item" style="color: var(--color-warning); cursor: pointer;">
+                            <span class="nav-item-icon">🐛</span>
+                            <span data-i18n="nav_bug_report">Bug melden (GitHub)</span>
+                        </a>
+                    </li>
                 </ul>
             </nav>
-            <div class="sidebar-footer">
-                <button id="theme-toggle" class="theme-toggle-btn">
+            <div class="sidebar-footer" style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                <button id="theme-toggle" class="theme-toggle-btn" style="flex: 1;">
                     <span id="theme-icon">🌙</span>
                     <span id="theme-text">Dark Mode</span>
                 </button>
+                <button id="btn-pin-left-sidebar" class="btn btn-secondary pin-btn active" style="padding: 10px; min-width: 40px; display: flex; align-items: center; justify-content: center;" title="Leiste anpinnen">📌</button>
             </div>
         </aside>
 
@@ -154,6 +179,15 @@
                                 </div>
                             </div>
 
+                            <div class="list-container" style="margin-top: 16px;">
+                                <h3 class="list-title" style="margin-bottom: 12px;" data-i18n="project_synopsis_title">Projekt-Zusammenfassung (Synopsis)</h3>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;" data-i18n="project_synopsis_desc">
+                                    Eine grobe Übersicht der Geschichte für dich und die KI.
+                                </p>
+                                <textarea id="project-details-description" class="form-textarea" rows="5" style="width: 100%; font-size: 13px; padding: 10px; resize: vertical; border-radius: 8px; margin-bottom: 12px;" placeholder="z.B. Ein Magierlehrling entdeckt ein uraltes Geheimnis..."></textarea>
+                                <button id="btn-save-project-description" class="btn btn-secondary" style="width: 100%; font-size: 13px;" data-i18n="btn_save_synopsis">Zusammenfassung speichern</button>
+                            </div>
+
                             <div class="list-container">
                                 <h3 class="list-title" style="margin-bottom: 16px;" data-i18n="nav_lore">Lore-Datenbank</h3>
                                 <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;" data-i18n="lore_card_desc">
@@ -211,6 +245,7 @@
                                     <button id="btn-editor-view-wysiwyg" class="toolbar-btn active" data-i18n="editor_view_wysiwyg">📝 Rich-Text</button>
                                     <button id="btn-editor-view-markdown" class="toolbar-btn" data-i18n="editor_view_markdown">💻 Markdown</button>
                                     <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
+                                    <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
                                     <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
                                 <div class="toolbar-group" style="gap: 6px;">
@@ -231,13 +266,21 @@
                             <div id="editor-container" style="flex-grow: 1; height: 0; overflow: hidden;"></div>
                         </div>
                         
-                        <!-- Right Panel: Lore/Wiki view (Optional Split) -->
-                        <div id="editor-lore-panel" class="lore-side-panel" style="display: none; border-left: 1px solid var(--border-color); width: 350px;">
-                            <div class="lore-panel-header">
-                                <h3 style="font-size: 15px; font-weight: 600;">Lore-Quickview</h3>
-                                <button id="btn-close-lore-panel" class="modal-close">×</button>
+                        <!-- Right Panel: Lore & AI Side Panel -->
+                        <div id="editor-lore-panel" class="lore-side-panel" style="display: none; border-left: 1px solid var(--border-color); width: 380px; flex-direction: column;">
+                            <div class="side-panel-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); background-color: var(--bg-surface); align-items: center; justify-content: space-between;">
+                                <div style="display: flex; flex-grow: 1;">
+                                    <button id="tab-btn-lore" class="tab-btn active" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-base); font-weight: 600; cursor: pointer; border-bottom: 2px solid var(--color-primary); font-size: 13px;" data-i18n="editor_tab_lore">📖 Lore-Quickview</button>
+                                    <button id="tab-btn-ai" class="tab-btn" style="flex: 1; padding: 12px; border: none; background: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; font-size: 13px;" data-i18n="editor_tab_ai">🤖 KI-Schreiben</button>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 4px; padding-right: 8px;">
+                                    <button id="btn-pin-right-sidebar" class="pin-btn active" style="background: none; border: none; cursor: pointer; font-size: 14px; color: var(--color-primary); padding: 4px;" title="Rechte Seitenleiste anpinnen">📌</button>
+                                    <button id="btn-close-lore-panel" class="modal-close" style="padding: 4px; border: none; background: none; cursor: pointer; font-size: 18px; line-height: 1;">×</button>
+                                </div>
                             </div>
-                            <div class="lore-panel-body" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                            
+                            <!-- Tab Content: Lore -->
+                            <div id="tab-content-lore" class="side-panel-content" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding: 16px; flex-grow: 1;">
                                 <!-- Section for detected keywords in this chapter -->
                                 <div id="lore-quick-detected-section" style="display: none; background-color: var(--bg-base); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
                                     <strong style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 8px;">Erkannte Begriffe:</strong>
@@ -251,6 +294,39 @@
                                         Hier wird der Lore-Text geladen, wenn du auf ein Keyword klickst.
                                     </div>
                                     <button id="btn-lore-quick-open-wiki" class="btn btn-secondary" style="width: 100%; margin-top: 16px; font-size: 12px; display: none;">📖 Im Wiki öffnen</button>
+                                </div>
+                            </div>
+
+                            <!-- Tab Content: AI Assistant -->
+                            <div id="tab-content-ai" class="side-panel-content" style="display: none; flex-direction: column; gap: 12px; overflow-y: auto; padding: 16px; flex-grow: 1;">
+                                <div class="ai-context-options" style="display: flex; flex-direction: column; gap: 8px; background-color: var(--bg-base); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px;">
+                                    <strong style="text-transform: uppercase; color: var(--text-secondary); font-size: 11px;" data-i18n="ai_context_title">Kontext-Optionen:</strong>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-base);">
+                                        <input type="checkbox" id="ai-opt-include-lore" checked>
+                                        <span data-i18n="ai_opt_lore">Lore-Datenbank einbeziehen</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-base);">
+                                        <input type="checkbox" id="ai-opt-include-chapters" checked>
+                                        <span data-i18n="ai_opt_chapters">Zusammenhang aus vorherigen Kapiteln</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-base);">
+                                        <input type="checkbox" id="ai-opt-include-synopsis" checked>
+                                        <span data-i18n="ai_opt_synopsis">Projekt-Übersicht einbeziehen</span>
+                                    </label>
+                                </div>
+
+                                <div id="ai-chat-history" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base); min-height: 220px; font-size: 13px;">
+                                    <div class="ai-chat-message system" style="color: var(--text-muted); text-align: center; padding: 12px;" data-i18n="ai_chat_welcome">
+                                        Gib unten eine Anweisung ein. Die KI wird den aktivierten Kontext nutzen, um den Text fortzuführen.
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <textarea id="ai-chat-input" class="form-input" style="width: 100%; min-height: 60px; font-size: 13px; padding: 8px; border-radius: 8px; resize: vertical;" placeholder="z.B. Lass den Protagonisten die magische Barriere durchbrechen..." data-i18n="placeholder_ai_chat_prompt"></textarea>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button id="btn-ai-chat-submit" class="btn" style="flex: 1; padding: 8px; font-size: 13px;" data-i18n="btn_ai_generate">🤖 Generieren</button>
+                                        <button id="btn-ai-chat-clear" class="btn btn-secondary" style="padding: 8px 12px; font-size: 13px;" title="Verlauf leeren">🗑️</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -305,6 +381,116 @@
                     </div>
                     <div id="trash-empty-msg" style="text-align: center; color: var(--text-muted); padding: 48px; border: 1px dashed var(--border-color); border-radius: 12px;">
                         <span data-i18n="trash_empty_msg">Der Papierkorb ist leer.</span>
+                    </div>
+                </section>
+
+                <!-- 4.5. TIMELINE VIEW -->
+                <section id="view-timeline" class="view-section">
+                    <div class="section-header">
+                        <h2 class="section-title" data-i18n="nav_timeline">Zeitleiste (Timeline)</h2>
+                        <button id="btn-create-timeline-event" class="btn" style="padding: 8px 16px;">+ Ereignis hinzufügen</button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; height: calc(100vh - 180px); overflow: hidden;">
+                        <!-- Left Panel: Event List & Form -->
+                        <div class="list-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px; overflow-y: auto;">
+                            <h3 class="list-title">Ereignis-Steuerung</h3>
+                            
+                            <!-- Editor Form (Hidden by default) -->
+                            <div id="timeline-form-container" style="display: none; flex-direction: column; gap: 12px; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base);">
+                                <input type="hidden" id="timeline-event-id">
+                                <div class="form-group">
+                                    <label class="form-label" for="timeline-event-title">Titel</label>
+                                    <input type="text" id="timeline-event-title" class="form-input" placeholder="z.B. Die Schlacht von Ember">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="timeline-event-date">Datum / Epoche</label>
+                                    <input type="text" id="timeline-event-date" class="form-input" placeholder="z.B. Jahr 452 n.B.">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="timeline-event-desc">Beschreibung</label>
+                                    <textarea id="timeline-event-desc" class="form-textarea" rows="3" placeholder="Beschreibe das Geschehnis..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="timeline-event-lore">Verknüpfter Lore-Eintrag (Optional)</label>
+                                    <select id="timeline-event-lore" class="form-input" style="height: auto;"></select>
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                    <button id="btn-save-timeline-event" class="btn" style="flex: 1; padding: 6px;">Speichern</button>
+                                    <button id="btn-cancel-timeline-event" class="btn btn-secondary" style="flex: 1; padding: 6px;">Abbrechen</button>
+                                </div>
+                            </div>
+                            
+                            <!-- drag sorting instruction -->
+                            <p style="font-size: 12px; color: var(--text-muted); font-style: italic;">
+                                Die Ereignisse werden rechts chronologisch angezeigt.
+                            </p>
+                            
+                            <div id="timeline-events-list" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Dynamic events list will populate here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel: Visual Timeline Flow -->
+                        <div class="list-container" style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; background-color: var(--bg-surface);">
+                            <div id="timeline-visual-flow" class="timeline-visual-flow" style="position: relative; display: flex; flex-direction: column; gap: 24px; padding-left: 32px; border-left: 2px solid var(--border-color); margin-left: 16px;">
+                                <!-- Vertical timeline cards will draw here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4.6. WRITING STATS VIEW -->
+                <section id="view-stats" class="view-section">
+                    <div class="section-header">
+                        <h2 class="section-title" data-i18n="nav_stats">Schreibstatistiken</h2>
+                    </div>
+                    
+                    <!-- Stats Cards Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div class="list-container" style="padding: 20px; text-align: center; border-radius: 12px;">
+                            <h4 style="color: var(--text-secondary); font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Wörter gesamt</h4>
+                            <div style="font-size: 28px; font-weight: 700; color: var(--color-primary);" id="stats-total-words-val">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="stats-total-progress-lbl">Ziel: 50.000 (0%)</div>
+                        </div>
+                        <div class="list-container" style="padding: 20px; text-align: center; border-radius: 12px;">
+                            <h4 style="color: var(--text-secondary); font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Kapitelanzahl</h4>
+                            <div style="font-size: 28px; font-weight: 700; color: var(--text-base);" id="stats-chapters-count-val">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="stats-avg-words-lbl">Ø 0 Wörter pro Kapitel</div>
+                        </div>
+                        <div class="list-container" style="padding: 20px; text-align: center; border-radius: 12px;">
+                            <h4 style="color: var(--text-secondary); font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">Heutiger Fortschritt</h4>
+                            <div style="font-size: 28px; font-weight: 700; color: var(--color-success);" id="stats-daily-words-val">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="stats-daily-progress-lbl">Tägliches Ziel: 500 (0%)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart area -->
+                    <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 class="list-title">Wortanzahl pro Kapitel (Vergleich)</h3>
+                        <div style="height: 300px; display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 2px solid var(--border-color); border-left: 2px solid var(--border-color); padding: 16px 16px 0 16px; gap: 12px;" id="stats-chart-container">
+                            <!-- Visual bars drawn by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4.7. GLOBAL SEARCH VIEW -->
+                <section id="view-search" class="view-section">
+                    <div class="section-header">
+                        <h2 class="section-title" data-i18n="nav_search">Globale Suche</h2>
+                    </div>
+                    
+                    <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; gap: 12px;">
+                            <input type="text" id="global-search-input" class="form-input" style="flex-grow: 1;" placeholder="Begriff im ganzen Projekt suchen (Kapitel & Lore)...">
+                            <button id="btn-trigger-global-search" class="btn" style="padding: 10px 24px;">Suchen</button>
+                        </div>
+                        
+                        <div id="global-search-results" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+                            <div style="text-align: center; color: var(--text-muted); padding: 32px;">
+                                Gib oben einen Suchbegriff ein und klicke auf Suchen.
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -409,11 +595,32 @@
                             </div>
                         </div>
 
+                        <!-- CARD 3.5: BACKUP & SCHNAPPSCHÜSSE -->
+                        <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                            <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="settings_backup_title">💾 Datensicherung (Backups)</h3>
+                            <div class="form-group" style="display: flex; align-items: flex-start; gap: 10px; margin: 0;">
+                                <input type="checkbox" id="setting-backup-enabled" style="width: auto; cursor: pointer; margin-top: 4px;">
+                                <label for="setting-backup-enabled" style="font-size: 14px; cursor: pointer; user-select: none; line-height: 1.4;">
+                                    <span data-i18n="settings_backup_enabled_lbl">Automatische Backups beim Speichern aktivieren</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-backup-dir" data-i18n="settings_backup_dir_lbl">Backup-Verzeichnis (Zielordner)</label>
+                                <input type="text" id="setting-backup-dir" class="form-input" placeholder="z.B. C:\AutorenBackups oder dein Cloud-Sync-Ordner">
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;" data-i18n="settings_backup_cloud_hint">
+                                    *Tipp: Wähle deinen Cloud-Synchronisationsordner (z.B. OneDrive, Google Drive, iCloud, Baidu Wangpan oder TeraBox), um Backups automatisch in der Cloud zu sichern.*
+                                </span>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button id="btn-trigger-manual-backup" class="btn btn-secondary" style="font-size: 13px; padding: 8px 16px;" data-i18n="settings_btn_manual_backup">Jetzt manuelles Backup erstellen</button>
+                            </div>
+                        </div>
+
                         <!-- CARD 4: ÜBER EMBERNOVELS & UPDATES -->
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.0.2</strong></span>
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.2.0.0</strong></span>
                                 <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
                             </div>
                             <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">

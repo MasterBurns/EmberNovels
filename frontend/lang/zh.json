@@ -263,5 +263,13 @@
     "error_create_branch": "创建语言分支失败",
     "autosaving": "正在自动保存...",
     "saving_permanently": "正在保存内容...",
-    "no_description": "无描述。"
+    "no_description": "无描述。",
+    "nav_timeline": "时间线",
+    "nav_stats": "写作统计",
+    "nav_bug_report": "报告Bug (GitHub)",
+    "settings_backup_title": "💾 数据备份",
+    "settings_backup_enabled_lbl": "启用保存时自动备份",
+    "settings_backup_dir_lbl": "备份目录（目标文件夹）",
+    "settings_backup_cloud_hint": "*提示：选择您的云同步文件夹（例如 OneDrive、Google Drive、iCloud、百度网盘或 TeraBox）以自动在云中保护备份。*",
+    "settings_btn_manual_backup": "立即创建手动备份"
 }

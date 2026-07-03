@@ -26,7 +26,10 @@ class AIService:
                 "openai_model": "gpt-4o-mini",
                 "anthropic_api_key": "",
                 "anthropic_model": "claude-3-5-sonnet",
-                "auto_translate_on_save": True
+                "auto_translate_on_save": True,
+                "backup_enabled": False,
+                "backup_dir": ""
+
             }
         try:
             with open(file_path, 'r', encoding='utf-8') as f:

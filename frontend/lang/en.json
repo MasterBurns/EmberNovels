@@ -263,5 +263,13 @@
     "error_create_branch": "Failed to create language branch",
     "autosaving": "Autosaving...",
     "saving_permanently": "Saving permanently...",
-    "no_description": "No description."
+    "no_description": "No description.",
+    "nav_timeline": "Timeline",
+    "nav_stats": "Writing Stats",
+    "nav_bug_report": "Report Bug (GitHub)",
+    "settings_backup_title": "💾 Data Backup",
+    "settings_backup_enabled_lbl": "Enable automatic backups on save",
+    "settings_backup_dir_lbl": "Backup Directory (Target Folder)",
+    "settings_backup_cloud_hint": "*Tip: Choose your cloud sync folder (e.g., OneDrive, Google Drive, iCloud, Baidu Wangpan, or TeraBox) to automatically secure backups in the cloud.*",
+    "settings_btn_manual_backup": "Create manual backup now"
 }

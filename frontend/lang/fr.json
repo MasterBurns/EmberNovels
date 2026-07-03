@@ -263,5 +263,13 @@
     "error_create_branch": "Échec de la création de la branche de langue",
     "autosaving": "Enregistrement automatique...",
     "saving_permanently": "Enregistrement permanent...",
-    "no_description": "Pas de description."
+    "no_description": "Pas de description.",
+    "nav_timeline": "Chronologie",
+    "nav_stats": "Statistiques de rédaction",
+    "nav_bug_report": "Signaler un bug (GitHub)",
+    "settings_backup_title": "💾 Sauvegarde de données",
+    "settings_backup_enabled_lbl": "Activer les sauvegardes automatiques lors de la sauvegarde",
+    "settings_backup_dir_lbl": "Répertoire de sauvegarde (Dossier cible)",
+    "settings_backup_cloud_hint": "*Astuce : Choisissez votre dossier de synchronisation cloud (par exemple, OneDrive, Google Drive, iCloud, Baidu Wangpan ou TeraBox) pour sécuriser automatiquement les sauvegardes dans le cloud.*",
+    "settings_btn_manual_backup": "Créer une sauvegarde manuelle maintenant"
 }

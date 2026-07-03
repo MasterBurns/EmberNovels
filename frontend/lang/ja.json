@@ -263,5 +263,13 @@
     "error_create_branch": "翻訳ブランチの作成に失敗しました",
     "autosaving": "自動保存中...",
     "saving_permanently": "保存中...",
-    "no_description": "説明なし。"
+    "no_description": "説明なし。",
+    "nav_timeline": "タイムライン",
+    "nav_stats": "執筆統計",
+    "nav_bug_report": "バグ報告 (GitHub)",
+    "settings_backup_title": "💾 データバックアップ",
+    "settings_backup_enabled_lbl": "保存時に自動バックアップを有効にする",
+    "settings_backup_dir_lbl": "バックアップディレクトリ（対象フォルダ）",
+    "settings_backup_cloud_hint": "*ヒント：OneDrive、Google Drive、iCloud、Baidu Wangpan、またはTeraBoxなどのクラウド同期フォルダーを選択すると、クラウド内のバックアップが自動的に保護されます。*",
+    "settings_btn_manual_backup": "今すぐ手動バックアップを作成する"
 }

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from pydantic import BaseModel
 from typing import List, Optional, Any
 from backend.services.storage import StorageService
@@ -71,6 +71,9 @@ def restore_project(project_id: str):
 class ReorderRequest(BaseModel):
     chapters_order: List[str]
 
+class BackupRequest(BaseModel):
+    backup_dir: str
+
 @router.delete("/{project_id}/permanent")
 def permanent_delete_project(project_id: str):
     success = StorageService.permanent_delete_project(project_id)
@@ -84,3 +87,21 @@ def reorder_chapters(project_id: str, data: ReorderRequest):
     if not success:
         raise HTTPException(status_code=404, detail="Project not found or reorder failed")
     return {"message": "Reordered successfully"}
+
+@router.get("/{project_id}/timeline")
+def get_timeline(project_id: str):
+    return StorageService.load_timeline(project_id)
+
+@router.post("/{project_id}/timeline")
+def save_timeline(project_id: str, events: List[Any] = Body(...)):
+    success = StorageService.save_timeline(project_id, events)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save timeline")
+    return {"message": "Timeline saved successfully"}
+
+@router.post("/backup")
+def trigger_backup(data: BackupRequest):
+    res = StorageService.create_backup(data.backup_dir)
+    if not res["success"]:
+        raise HTTPException(status_code=500, detail=res["error"])
+    return res
