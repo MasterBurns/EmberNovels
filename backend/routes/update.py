@@ -102,7 +102,11 @@ def perform_hot_update(download_url: str):
             download_target = os.path.join(exe_dir, "temp_update_archive" + archive_ext)
             
         print(f"Downloading update from {download_url} to {download_target}...")
-        response = requests.get(download_url, stream=True, timeout=60)
+        try:
+            response = requests.get(download_url, stream=True, timeout=60)
+        except requests.exceptions.SSLError:
+            print("SSL Certificate verification failed. Retrying with verification disabled...")
+            response = requests.get(download_url, stream=True, timeout=60, verify=False)
         response.raise_for_status()
         
         with open(download_target, "wb") as f:

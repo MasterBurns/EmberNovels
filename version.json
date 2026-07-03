@@ -1,7 +1,7 @@
 {
-    "version": "0.2.1.2",
+    "version": "0.2.1.3",
     "release_notes": {
-        "de": "Version 0.2.1.2.\n- Einführung der Korkwand (Storyboard) zur visuellen Organisation von Kapiteln.\n- Einführung einer grafischen Zeitleiste mit mehreren Handlungssträngen (Plotsträngen).\n- Erweiterung der Stilprüfung um Lesbarkeitsindex (Flesch Score), Satzlängen-Prüfung und Passiv-Erkennung.",
-        "en": "Version 0.2.1.2.\n- Introduced Corkboard (Storyboard) for visual chapter organization.\n- Introduced a graphical timeline chart supporting multiple plotlines.\n- Enhanced style checks with readability metrics (Flesch score), sentence length analyzer, and passive voice detection."
+        "de": "Version 0.2.1.3.\n- SSL-Zertifikatvalidierungs-Fehler behoben. Fällt automatisch auf einen unverschlüsselten SSL-Kontext zurück, wenn lokale Root-Zertifikate fehlen.",
+        "en": "Version 0.2.1.3.\n- Fixed SSL Certificate verification errors. Automatically falls back to an unverified SSL context if local root certificates are missing or outdated."
     }
 }

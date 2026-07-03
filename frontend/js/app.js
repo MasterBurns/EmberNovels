@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.2.1.2"; // default fallback
+        state.localVersion = "0.2.1.3"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -622,7 +622,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.2.1.2";
+            const version = state.localVersion || "0.2.1.3";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -3222,7 +3222,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.2.1.2";
+    const currentVersion = state.localVersion || "0.2.1.3";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -3230,7 +3230,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.2.1.2";
+        const latestVersion = data.version || "0.2.1.3";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -4941,7 +4941,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.2
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.3
 // ==========================================
 
 let physicsInterval = null;

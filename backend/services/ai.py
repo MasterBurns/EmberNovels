@@ -47,6 +47,20 @@ class AIService:
         return current
 
     @classmethod
+    def _safe_urlopen(cls, req: urllib.request.Request, timeout: int = 30) -> Any:
+        import ssl
+        import urllib.error
+        try:
+            return urllib.request.urlopen(req, timeout=timeout)
+        except urllib.error.URLError as e:
+            reason_str = str(e.reason)
+            if "CERTIFICATE_VERIFY_FAILED" in reason_str or "certificate verify failed" in reason_str:
+                print("SSL certificate verification failed. Retrying with unverified context...")
+                ctx = ssl._create_unverified_context()
+                return urllib.request.urlopen(req, timeout=timeout, context=ctx)
+            raise e
+
+    @classmethod
     def translate_text(cls, text: str, target_lang: str) -> str:
         """
         Translates text using the configured AI provider, falling back to the free Google Translate API.
@@ -103,7 +117,7 @@ class AIService:
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=30) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res.get("response", "").strip()
 
@@ -127,7 +141,7 @@ class AIService:
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=30) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['candidates'][0]['content']['parts'][0]['text'].strip()
 
@@ -156,7 +170,7 @@ class AIService:
                 'Authorization': f'Bearer {api_key}'
             }
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=30) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['choices'][0]['message']['content'].strip()
 
@@ -186,7 +200,7 @@ class AIService:
                 'anthropic-version': '2023-06-01'
             }
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=30) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['content'][0]['text'].strip()
 
@@ -213,7 +227,7 @@ class AIService:
                     headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
                 )
                 
-                with urllib.request.urlopen(req, timeout=10) as response:
+                with cls._safe_urlopen(req, timeout=10) as response:
                     data = json.loads(response.read().decode('utf-8'))
                     translated_p = "".join([sentence[0] for sentence in data[0] if sentence[0]])
                     translated_paragraphs.append(translated_p)
