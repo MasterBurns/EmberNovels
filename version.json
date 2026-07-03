@@ -1,7 +1,7 @@
 {
-    "version": "0.1.2.0",
+    "version": "0.1.2.1",
     "release_notes": {
-        "de": "Version 0.1.2.0 Release.\n- Buchbände-Gruppierung (Bände/Bücher) mit einklappbaren Sidebar-Abschnitten\n- KI-Weltenbauer Lore-Scanner zum automatischen Scannen von Kapiteln auf Charaktere, Orte und Objekte\n- NaNoWriMo Schreibziele-Planer in den Statistiken mit Deadline- und Tageszielberechnung\n- Vorheriges/Nächstes Kapitel Navigationsbuttons im Editor\n- Revisionsverlauf & Kapitel-Snapshots mit manuellem Erstellen und Diff-Vergleich\n- Physikbasierte (Force-Directed) und hierarchische Beziehungsnetzwerk-Layouts\n- EPUB- & PDF-Exporte (mit EbookLib & ReportLab)\n- Offline Stil- & Füllwort-Korrekturprüfung\n- Fehlerbehebung für unberechtigte Warnungen über ungespeicherte Änderungen beim Kapitelwechsel",
-        "en": "Version 0.1.2.0 Release.\n- Book volume organization (Volumes/Books) with collapsible sidebar folders\n- AI Worldbuilding Auto-Scanner to automatically extract characters, locations, and objects from chapters\n- NaNoWriMo Writing Schedule Planner in statistics with deadline and daily target words calculations\n- Previous and Next Chapter navigation buttons in editor\n- Revision history and chapter snapshots with manual saves and diff comparison view\n- Physics-based (Force-Directed) and hierarchical relationship network layouts\n- EPUB & PDF exports (using EbookLib & ReportLab)\n- Offline style and German filler words highlight check\n- Bugfix for false-positive unsaved changes warnings during chapter navigation"
+        "de": "Version 0.1.2.1 Release.\n- Behebung des leeren Log-Fensters im EmberNovels-Kontrollzentrum\n- Hinzufügen eines schicken Flammen-Icons für das Kontrollzentrum in der Taskleiste\n- Weitere Stabilitätsverbesserungen beim automatischen Hot-Update",
+        "en": "Version 0.1.2.1 Release.\n- Fix for the empty log panel inside the EmberNovels control center\n- Added a premium fire flame icon for the control center in the system taskbar\n- Stability enhancements for the seamless in-app auto-update flow"
     }
 }
