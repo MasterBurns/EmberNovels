@@ -165,9 +165,9 @@ del "%~f0"
             os.rename(new_exe_path, current_exe)
             os.chmod(current_exe, 0o755)
             
-            print("Spawning new Unix process...")
+            print("Spawning new Unix process (with 2s delay)...")
             devnull = os.open(os.devnull, os.O_RDWR)
-            subprocess.Popen([current_exe], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull)
+            subprocess.Popen(["sh", "-c", f"sleep 2 && exec {current_exe}"], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull)
             
         print("Shutting down current server process...")
         os._exit(0)

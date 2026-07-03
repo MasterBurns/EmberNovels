@@ -154,3 +154,13 @@ def ai_chat_assistant(req: AIChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+class ModelFetchRequest(BaseModel):
+    provider: str
+    api_key: Optional[str] = ""
+    url: Optional[str] = ""
+
+@router.post("/models")
+def fetch_models(req: ModelFetchRequest):
+    return AIService.fetch_available_models(req.provider, req.api_key, req.url)
+

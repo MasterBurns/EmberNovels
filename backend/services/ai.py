@@ -236,3 +236,85 @@ class AIService:
                 translated_paragraphs.append(p)
                 
         return "\n".join(translated_paragraphs)
+
+    @classmethod
+    def fetch_available_models(cls, provider: str, api_key: str = "", url: str = "") -> List[str]:
+        """Queries the active provider's API for available models."""
+        provider = provider.lower()
+        if provider == "ollama":
+            if not url:
+                url = "http://localhost:11434"
+            try:
+                req = urllib.request.Request(
+                    f"{url}/api/tags",
+                    headers={'Content-Type': 'application/json'}
+                )
+                with cls._safe_urlopen(req, timeout=10) as response:
+                    res = json.loads(response.read().decode('utf-8'))
+                    return [m["name"] for m in res.get("models", [])]
+            except Exception as e:
+                print(f"Ollama fetch failed: {e}")
+                return ["llama3", "llama2", "mistral", "gemma", "phi3"]
+                
+        elif provider == "gemini":
+            if not api_key:
+                return ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.5-flash"]
+            try:
+                req_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+                req = urllib.request.Request(
+                    req_url,
+                    headers={'Content-Type': 'application/json'}
+                )
+                with cls._safe_urlopen(req, timeout=10) as response:
+                    res = json.loads(response.read().decode('utf-8'))
+                    extracted = []
+                    for m in res.get("models", []):
+                        methods = m.get("supportedGenerationMethods", [])
+                        if "generateContent" in methods:
+                            # Extract model name without 'models/' prefix
+                            model_id = m.get("name", "").split("/")[-1]
+                            extracted.append(model_id)
+                    return sorted(extracted) if extracted else ["gemini-1.5-flash", "gemini-1.5-pro"]
+            except Exception as e:
+                print(f"Gemini fetch failed: {e}")
+                return ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.5-flash"]
+                
+        elif provider == "openai":
+            if not api_key:
+                return ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+            try:
+                req = urllib.request.Request(
+                    "https://api.openai.com/v1/models",
+                    headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+                )
+                with cls._safe_urlopen(req, timeout=10) as response:
+                    res = json.loads(response.read().decode('utf-8'))
+                    models = [m["id"] for m in res.get("data", [])]
+                    # Filter chat/completion models
+                    filtered = [m for m in models if m.startswith(("gpt-", "o1-", "o3-"))]
+                    return sorted(filtered) if filtered else ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
+            except Exception as e:
+                print(f"OpenAI fetch failed: {e}")
+                return ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+                
+        elif provider == "anthropic":
+            if not api_key:
+                return ["claude-3-5-sonnet", "claude-3-haiku", "claude-3-opus"]
+            try:
+                req = urllib.request.Request(
+                    "https://api.anthropic.com/v1/models",
+                    headers={
+                        'x-api-key': api_key,
+                        'anthropic-version': '2023-06-01',
+                        'Content-Type': 'application/json'
+                    }
+                )
+                with cls._safe_urlopen(req, timeout=10) as response:
+                    res = json.loads(response.read().decode('utf-8'))
+                    extracted = [m["id"] for m in res.get("data", [])]
+                    return sorted(extracted) if extracted else ["claude-3-5-sonnet", "claude-3-haiku", "claude-3-opus"]
+            except Exception as e:
+                print(f"Anthropic fetch failed: {e}")
+                return ["claude-3-5-sonnet", "claude-3-haiku", "claude-3-opus"]
+                
+        return []

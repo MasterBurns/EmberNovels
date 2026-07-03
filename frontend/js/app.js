@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.2.1.3"; // default fallback
+        state.localVersion = "0.2.1.4"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -301,6 +301,51 @@ function setupEventListeners() {
     
     // Settings save
     document.getElementById('btn-save-settings').addEventListener('click', handleSaveSettings);
+    
+    // Bind AI model fetch buttons
+    document.querySelectorAll('.btn-load-models').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const provider = btn.getAttribute('data-provider');
+            let apiKey = "";
+            let url = "";
+            
+            if (provider === 'gemini') apiKey = document.getElementById('setting-gemini-key').value;
+            else if (provider === 'openai') apiKey = document.getElementById('setting-openai-key').value;
+            else if (provider === 'anthropic') apiKey = document.getElementById('setting-anthropic-key').value;
+            else if (provider === 'ollama') url = document.getElementById('setting-ollama-url').value;
+            
+            const originalText = btn.textContent;
+            btn.textContent = "Lädt...";
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_URL}/ai/models`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, api_key: apiKey, url })
+                });
+                
+                if (!response.ok) throw new Error("Konnte Modelle nicht laden");
+                const models = await response.json();
+                
+                const datalist = document.getElementById(`${provider}-models-datalist`);
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    models.forEach(model => {
+                        const opt = document.createElement('option');
+                        opt.value = model;
+                        datalist.appendChild(opt);
+                    });
+                    showToast(`${models.length} Modelle geladen!`, "success");
+                }
+            } catch(e) {
+                showToast("Fehler beim Laden der Modelle: " + e.message, "danger");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        });
+    });
     
     // AI Settings provider change panel display toggle
     document.getElementById('setting-ai-provider').addEventListener('change', (e) => {
@@ -622,7 +667,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.2.1.3";
+            const version = state.localVersion || "0.2.1.4";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -3222,7 +3267,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.2.1.3";
+    const currentVersion = state.localVersion || "0.2.1.4";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -3230,7 +3275,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.2.1.3";
+        const latestVersion = data.version || "0.2.1.4";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -4941,7 +4986,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.3
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.4
 // ==========================================
 
 let physicsInterval = null;
