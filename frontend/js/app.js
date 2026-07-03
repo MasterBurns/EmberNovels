@@ -511,6 +511,7 @@ function setupEventListeners() {
             document.getElementById('stats-word-goal').value = state.currentProject.word_count_goal;
             document.getElementById('stats-daily-goal').value = state.currentProject.daily_word_count_goal;
             document.getElementById('stats-deadline-date').value = state.currentProject.deadline_date || "";
+            document.getElementById('stats-original-language').value = state.currentProject.original_language || "de";
             openModal('modal-project-stats');
         });
     }
@@ -2813,19 +2814,19 @@ async function handleImportWizardSubmit() {
     }
 }
 
-// Save Project stats from Modal
 async function handleSaveProjectStats() {
     if (!state.currentProject) return;
     
     const word_count_goal = parseInt(document.getElementById('stats-word-goal').value) || 50000;
     const daily_word_count_goal = parseInt(document.getElementById('stats-daily-goal').value) || 500;
     const deadline_date = document.getElementById('stats-deadline-date').value || "";
+    const original_language = document.getElementById('stats-original-language').value || "de";
     
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ word_count_goal, daily_word_count_goal, deadline_date })
+            body: JSON.stringify({ word_count_goal, daily_word_count_goal, deadline_date, original_language })
         });
         
         if (!response.ok) throw new Error("Failed to update project stats");

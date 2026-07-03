@@ -20,6 +20,7 @@ class ProjectUpdate(BaseModel):
     deadline_date: Optional[str] = None
     volumes: Optional[List[Dict[str, Any]]] = None
     chapters_volume_mapping: Optional[Dict[str, str]] = None
+    original_language: Optional[str] = None
 
 @router.get("")
 def list_projects():
