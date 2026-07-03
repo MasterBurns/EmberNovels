@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from pydantic import BaseModel
 from typing import List, Optional, Any, Dict
@@ -79,6 +80,12 @@ class ReorderRequest(BaseModel):
 class BackupRequest(BaseModel):
     backup_dir: str
 
+class SearchReplaceRequest(BaseModel):
+    search_term: str
+    replace_term: str
+    match_case: bool = False
+    whole_word: bool = False
+
 @router.delete("/{project_id}/permanent")
 def permanent_delete_project(project_id: str):
     success = StorageService.permanent_delete_project(project_id)
@@ -122,6 +129,17 @@ def save_relationships(project_id: str, data: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail="Failed to save relationships")
     return {"message": "Relationships saved successfully"}
 
+@router.get("/{project_id}/stats")
+def get_project_stats(project_id: str):
+    import json
+    from pathlib import Path
+    project_dir = Path(StorageService.BASE_DIR) / project_id
+    stats_file = project_dir / "stats.json"
+    if stats_file.exists():
+        with open(stats_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
 @router.post("/{project_id}/cloud-backup")
 def trigger_cloud_backup(project_id: str):
     from backend.services.cloud import CloudService
@@ -133,3 +151,42 @@ def trigger_cloud_backup(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
     
     raise HTTPException(status_code=500, detail="Unknown error during cloud backup.")
+
+@router.post("/{project_id}/search-replace")
+def search_replace_in_project(project_id: str, data: SearchReplaceRequest):
+    chapters = StorageService.list_chapters(project_id)
+    replaced_count = 0
+    modified_files = 0
+    
+    for ch in chapters:
+        chapter_id = ch["id"]
+        ch_data = StorageService.get_chapter_content(project_id, chapter_id)
+        if "error" in ch_data:
+            continue
+            
+        content = ch_data.get("content", "")
+        if not content:
+            continue
+            
+        # Build Regex
+        flags = 0 if data.match_case else re.IGNORECASE
+        pattern_str = re.escape(data.search_term)
+        
+        if data.whole_word:
+            pattern_str = r'\b' + pattern_str + r'\b'
+            
+        pattern = re.compile(pattern_str, flags)
+        
+        # Check if match exists
+        matches = len(pattern.findall(content))
+        if matches > 0:
+            new_content = pattern.sub(data.replace_term, content)
+            StorageService.save_chapter(project_id, chapter_id, new_content)
+            replaced_count += matches
+            modified_files += 1
+            
+    return {
+        "success": True,
+        "replaced_count": replaced_count,
+        "modified_files": modified_files
+    }

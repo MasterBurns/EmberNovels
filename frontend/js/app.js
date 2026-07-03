@@ -20,6 +20,7 @@ const state = {
     detectedKeywordsTimeout: null,
     activeBranch: 'original',
     chapterSortOrder: 'asc',
+    viewMode: 'list', // 'list' or 'corkboard'
     leftSidebarPinned: true,
     rightSidebarPinned: true,
     zenModeActive: false,
@@ -494,6 +495,17 @@ function setupEventListeners() {
         });
     }
 
+    const btnToggleCorkboard = document.getElementById('btn-toggle-corkboard');
+    if (btnToggleCorkboard) {
+        btnToggleCorkboard.addEventListener('click', () => {
+            state.viewMode = state.viewMode === 'list' ? 'corkboard' : 'list';
+            btnToggleCorkboard.textContent = state.viewMode === 'list' ? '📌 Korktafel' : '📝 Liste';
+            if (state.currentProject) {
+                loadProjectDetails(state.currentProject.id);
+            }
+        });
+    }
+
     // Language Branch triggers
     document.getElementById('btn-create-language').addEventListener('click', () => openModal('modal-language'));
     document.getElementById('btn-submit-language').addEventListener('click', handleCreateLanguageBranch);
@@ -737,6 +749,9 @@ function setupEventListeners() {
     
     const btnCopyWebnovel = document.getElementById('btn-editor-copy-webnovel');
     if (btnCopyWebnovel) btnCopyWebnovel.addEventListener('click', handleCopyForWebnovel);
+    
+    const btnTypography = document.getElementById('btn-editor-typography');
+    if (btnTypography) btnTypography.addEventListener('click', handleCleanTypography);
 
     const btnCreateSnapManual = document.getElementById('btn-create-snapshot-manual');
     if (btnCreateSnapManual) btnCreateSnapManual.addEventListener('click', createManualSnapshot);
@@ -758,6 +773,13 @@ function setupEventListeners() {
             });
         });
     }
+
+    // Search and Replace triggers
+    const btnOpenSearchReplace = document.getElementById('btn-open-search-replace');
+    if (btnOpenSearchReplace) btnOpenSearchReplace.addEventListener('click', () => openModal('modal-search-replace'));
+    
+    const btnSubmitSearchReplace = document.getElementById('btn-submit-search-replace');
+    if (btnSubmitSearchReplace) btnSubmitSearchReplace.addEventListener('click', handleSearchReplace);
 
     // Wiki auto scan trigger
     const btnWikiScan = document.getElementById('btn-wiki-scan');
@@ -976,9 +998,14 @@ async function loadProjectDetails(projectId) {
             } catch(err) {
                 console.error("Error loading branch selector", err);
             }
+            
             branchSelect.value = currentSelected;
         }
 
+        // Render Activity Calendar
+        loadProjectStats(projectId);
+
+        // Render Chapter List
         // Show/hide branch warning banner
         const warningBanner = document.getElementById('project-branch-warning-banner');
         if (warningBanner) {
@@ -1285,7 +1312,19 @@ async function loadProjectDetails(projectId) {
             }
             
             makeChaptersDraggable();
+            renderCorkboard(chaptersCopy, grouped);
         }
+        
+        // Toggle view
+        const corkboardEl = document.getElementById('chapters-corkboard');
+        if (state.viewMode === 'corkboard') {
+            list.style.display = 'none';
+            corkboardEl.style.display = 'grid';
+        } else {
+            list.style.display = 'block';
+            corkboardEl.style.display = 'none';
+        }
+        
     } catch (e) {
         showToast(e.message, 'danger');
         navigateTo('projects');
@@ -3158,6 +3197,88 @@ async function handleSaveProjectStats() {
         loadProjectDetails(state.currentProject.id);
     } catch(err) {
         showToast(err.message, "danger");
+    }
+}
+
+function renderCorkboard(chapters, grouped) {
+    const container = document.getElementById('chapters-corkboard');
+    container.innerHTML = '';
+    
+    if (typeof Sortable === 'undefined') {
+        container.innerHTML = '<div style="color: var(--danger);">SortableJS is missing.</div>';
+        return;
+    }
+    
+    // We render a flat grid for now. Grouping on corkboard would be more complex (multiple grids).
+    chapters.forEach((c, index) => {
+        const card = document.createElement('div');
+        card.className = 'corkboard-card';
+        card.setAttribute('data-chapter-id', c.id);
+        
+        const isOriginal = state.activeLanguage === 'original';
+        
+        let metaText = `${c.word_count} W.`;
+        if (!isOriginal) {
+            metaText = `(${state.activeLanguage.toUpperCase()}) ${metaText}`;
+        }
+        
+        card.innerHTML = `
+            <div class="corkboard-pin"></div>
+            <div class="corkboard-title" style="flex-grow: 1;">${escapeHtml(c.title)}</div>
+            <div class="corkboard-meta" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>${metaText}</span>
+                <span>🗑️</span>
+            </div>
+        `;
+        
+        card.addEventListener('click', (e) => {
+            if (e.target.innerText === '🗑️') {
+                e.stopPropagation();
+                showConfirm("Kapitel löschen", `Möchtest du das Kapitel "${c.title}" wirklich löschen?`, () => {
+                    deleteChapter(state.currentProject.id, c.id);
+                });
+            } else {
+                navigateTo('editor', { projectId: state.currentProject.id, chapterId: c.id });
+            }
+        });
+        
+        container.appendChild(card);
+    });
+    
+    // Initialize Sortable
+    if (state.activeLanguage === 'original') {
+        new Sortable(container, {
+            animation: 150,
+            ghostClass: 'dragging',
+            onEnd: async (evt) => {
+                const itemEl = evt.item;
+                const chapterId = itemEl.getAttribute('data-chapter-id');
+                const newIndex = evt.newIndex;
+                
+                // Construct new order array
+                const newOrder = [];
+                container.querySelectorAll('.corkboard-card').forEach(card => {
+                    newOrder.push(card.getAttribute('data-chapter-id'));
+                });
+                
+                // If sorted desc, we need to reverse newOrder before saving
+                if (state.chapterSortOrder === 'desc') {
+                    newOrder.reverse();
+                }
+                
+                try {
+                    await fetch(`${API_URL}/projects/${state.currentProject.id}/reorder`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newOrder)
+                    });
+                } catch (e) {
+                    showToast("Fehler beim Speichern der Reihenfolge", "danger");
+                }
+                // Reload to sync with list view
+                loadProjectDetails(state.currentProject.id);
+            }
+        });
     }
 }
 
@@ -6020,6 +6141,69 @@ async function renderCorkboard() {
     // Always render unassigned column
     container.appendChild(renderColumn('unassigned', "Ungruppierte Kapitel", grouped.unassigned));
 }
+
+async function handleSearchReplace() {
+    const searchTerm = document.getElementById('search-replace-find').value;
+    const replaceTerm = document.getElementById('search-replace-with').value;
+    const matchCase = document.getElementById('search-replace-match-case').checked;
+    const wholeWord = document.getElementById('search-replace-whole-word').checked;
+    
+    if (!searchTerm) {
+        showToast("Bitte Suchbegriff eingeben.", "warning");
+        return;
+    }
+    if (!state.currentProject) {
+        showToast("Kein Projekt geladen.", "danger");
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/projects/${state.currentProject.id}/search-replace`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                search_term: searchTerm,
+                replace_term: replaceTerm,
+                match_case: matchCase,
+                whole_word: wholeWord
+            })
+        });
+        
+        if (!res.ok) throw new Error("Ersetzen fehlgeschlagen");
+        
+        const data = await res.json();
+        showToast(`Erfolgreich! ${data.replaced_count} Ersetzungen in ${data.modified_files} Dateien vorgenommen.`, "success");
+        closeModal('modal-search-replace');
+        
+        // Reload chapter if in editor
+        if (state.currentChapter) {
+            loadChapterContent(state.currentProject.id, state.currentChapter.id);
+        }
+    } catch (e) {
+        showToast(e.message, "danger");
+    }
+}
+
+function handleCleanTypography() {
+    if (!state.editor) return;
+    
+    let text = state.editor.getMarkdown();
+    
+    // Replace logic for smart typography (German)
+    // 1. Double quotes "..." to „...“
+    // We use a regex to find words wrapped in quotes
+    text = text.replace(/"([^"]*)"/g, '„$1“');
+    // 2. Single quotes '...' to ‚...‘ (Optional, might conflict with apostrophes, so skip or use carefully)
+    // 3. Ellipses ... to …
+    text = text.replace(/\.{3}/g, '…');
+    // 4. Double dashes -- to em-dash —
+    text = text.replace(/--/g, '—');
+    
+    state.editor.setMarkdown(text);
+    showToast("Typografie bereinigt! ✨", "success");
+    markDirty();
+}
+
 
 // Expose functions globally
 window.applyPhysicsLayout = applyPhysicsLayout;

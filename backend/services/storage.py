@@ -435,12 +435,38 @@ class StorageService:
         return True
 
     @classmethod
+    def record_daily_stats(cls, project_id: str, words_added: int):
+        if words_added <= 0:
+            return
+            
+        project_dir = Path(cls.BASE_DIR) / project_id
+        stats_file = project_dir / "stats.json"
+        
+        stats = {}
+        if stats_file.exists():
+            try:
+                with open(stats_file, 'r', encoding='utf-8') as f:
+                    stats = json.load(f)
+            except:
+                pass
+                
+        today = datetime.now().strftime("%Y-%m-%d")
+        if today not in stats:
+            stats[today] = {"words_added": 0}
+            
+        stats[today]["words_added"] += words_added
+        
+        with open(stats_file, 'w', encoding='utf-8') as f:
+            json.dump(stats, f, indent=4)
+
+    @classmethod
     def save_chapter(cls, project_id: str, chapter_id: str, content: str) -> bool:
         """
         Save chapter content explicitly.
         1. Prepares a snapshot in .history/ with timestamp.
         2. Writes to the original file.
         3. Cleans up the .tmp file.
+        4. Records word count for streak calendar.
         """
         chapters_dir = cls.get_chapters_dir(project_id)
         file_path = chapters_dir / f"{chapter_id}.md"
@@ -448,9 +474,15 @@ class StorageService:
         history_dir = chapters_dir / ".history"
         history_dir.mkdir(parents=True, exist_ok=True)
         
+        old_words = 0
+        
         # 1. Create history snapshot of previous version if it exists
         if file_path.exists():
             try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    old_content = f.read()
+                    old_words = len([w for w in old_content.split() if w.strip()])
+                    
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 history_file = history_dir / f"{chapter_id}_{timestamp}.md"
                 shutil.copy2(file_path, history_file)
@@ -462,13 +494,23 @@ class StorageService:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
             
+        # Record stats
+        new_words = len([w for w in content.split() if w.strip()])
+        diff = new_words - old_words
+        if diff > 0:
+            cls.record_daily_stats(project_id, diff)
+            
         # 3. Remove .tmp file
         if tmp_path.exists():
-            tmp_path.unlink()
+            try:
+                tmp_path.unlink()
+            except:
+                pass
             
         # Update project updated_at timestamp
         cls.update_project_metadata(project_id, {})
         return True
+
 
     @classmethod
     def resolve_recovery(cls, project_id: str, chapter_id: str, keep_recovery: bool) -> bool:

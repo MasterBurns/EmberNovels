@@ -148,8 +148,14 @@
                                         </select>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button id="btn-open-search-replace" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" title="Suchen und Ersetzen im gesamten Projekt">
+                                            🔍 Suchen & Ersetzen
+                                        </button>
                                         <button id="btn-create-volume" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;">
                                             <span>+</span> Band hinzufügen
+                                        </button>
+                                        <button id="btn-toggle-corkboard" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" title="Ansicht wechseln">
+                                            📌 Korktafel
                                         </button>
                                         <button id="btn-sort-chapters" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" data-i18n="btn_sort_chapters_asc">
                                             Sortierung: ⬆️ Alt zuerst
@@ -163,7 +169,10 @@
                                     <span>🌐</span> <span data-i18n="branch_warning_prefix">Du befindest dich im Sprachzweig:</span> <strong id="active-branch-banner-name">EN</strong>. <span data-i18n="branch_warning_suffix">Kapitel werden in dieser Sprache geöffnet und editiert.</span>
                                 </div>
                                 <div id="chapters-list" class="list-items">
-                                    <!-- Chapters will be rendered here -->
+                                    <!-- Chapters will be rendered here in list format -->
+                                </div>
+                                <div id="chapters-corkboard" class="corkboard-grid" style="display: none;">
+                                    <!-- Chapters will be rendered here as cards -->
                                 </div>
                             </div>
                         </div>
@@ -194,6 +203,12 @@
                                     <div style="display: flex; justify-content: space-between;">
                                         <span style="color: var(--text-secondary);" data-i18n="stats_created_at">Erstellt am:</span>
                                         <strong id="stat-created-at">-</strong>
+                                    </div>
+                                    <div style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Aktivität (Letzte 30 Tage)</div>
+                                        <div id="stat-activity-calendar" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                            <!-- Heatmap boxes -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -267,6 +282,7 @@
                                     <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
                                     <button id="btn-editor-history" class="toolbar-btn">🕒 Versionsverlauf</button>
                                     <button id="btn-editor-copy-webnovel" class="toolbar-btn" title="Kopiert den Text im HTML Format für Webnovel">📋 Kopieren (Webnovel)</button>
+                                    <button id="btn-editor-typography" class="toolbar-btn" title="Bereinigt Typografie (z.B. einfache Anführungszeichen in typografische)">✨ Typografie bereinigen</button>
                                     <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
                                 </div>
                                 <div class="toolbar-group" style="gap: 6px;">
@@ -1175,6 +1191,41 @@
         </div>
     </div>
 
+    <!-- MODAL: SEARCH & REPLACE -->
+    <div id="modal-search-replace" class="modal-overlay" style="z-index: 105;">
+        <div class="modal" style="max-width: 450px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Suchen & Ersetzen im gesamten Projekt</h3>
+                <button class="modal-close" onclick="closeModal('modal-search-replace')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Dieser Vorgang sucht und ersetzt den angegebenen Text in <strong>allen</strong> Kapiteln dieses Projekts.</p>
+                <div class="form-group">
+                    <label class="form-label" for="search-replace-find">Suchen nach</label>
+                    <input type="text" id="search-replace-find" class="form-input" placeholder="Wort oder Text">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="search-replace-with">Ersetzen durch</label>
+                    <input type="text" id="search-replace-with" class="form-input" placeholder="Neuer Text">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" id="search-replace-match-case">
+                        Groß-/Kleinschreibung beachten
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="checkbox" id="search-replace-whole-word">
+                        Nur ganze Wörter
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-search-replace')">Abbrechen</button>
+                <button id="btn-submit-search-replace" class="btn" style="background-color: var(--danger);">Alle Ersetzen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: PROJECT STATS CONFIG -->
     <div id="modal-project-stats" class="modal-overlay" style="z-index: 105;">
         <div class="modal" style="max-width: 400px; width: 90%;">
@@ -1288,6 +1339,8 @@
 
     <!-- Toast UI Editor Library -->
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <!-- SortableJS for Corkboard -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Application Script -->
     <script src="js/app.js"></script>
 </body>
