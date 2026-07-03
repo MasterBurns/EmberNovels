@@ -3045,6 +3045,12 @@ function setupLoreTooltip() {
         }
     });
 
+    document.addEventListener('mouseout', (e) => {
+        const keyword = e.target.closest('.smart-keyword');
+        if (keyword) {
+            tooltipEl.style.display = 'none';
+            tooltipEl.style.opacity = '0';
+        }
     });
 }
 
