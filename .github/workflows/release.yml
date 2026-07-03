@@ -126,9 +126,35 @@ jobs:
           name: EmberNovels-macOS
           path: ./release-assets
 
+      - name: Extract Localized Release Notes
+        id: release_notes
+        shell: python
+        run: |
+          import json
+          import os
+
+          with open("version.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          notes = data.get("release_notes", {})
+          body = []
+
+          if isinstance(notes, dict):
+              if "de" in notes:
+                  body.append("## 🇩🇪 Release Notes (Deutsch)\n" + notes["de"])
+              if "en" in notes:
+                  body.append("\n## 🇺🇸 Release Notes (English)\n" + notes["en"])
+          else:
+              body.append(str(notes))
+
+          full_body = "\n".join(body)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("notes<<EOF\n" + full_body + "\nEOF\n")
+
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
+          body: ${{ steps.release_notes.outputs.notes }}
           files: |
             release-assets/EmberNovels-Setup.exe
             release-assets/*.zip
@@ -137,3 +163,4 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

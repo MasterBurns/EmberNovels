@@ -1211,4 +1211,12 @@ button, input, textarea, select {
     white-space: nowrap;
 }
 
+/* Relationship Graph styling */
+#relationships-canvas {
+    background-image: radial-gradient(var(--border-color) 1px, transparent 0);
+    background-size: 24px 24px;
+}
 
+[data-theme="light"] #relationships-canvas {
+    background-image: radial-gradient(#e2e8f0 1px, transparent 0);
+}

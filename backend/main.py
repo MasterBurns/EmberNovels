@@ -30,9 +30,23 @@ app.include_router(exports_router, prefix=API_PREFIX)
 app.include_router(languages_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
 
+import json
+
+@app.get(f"{API_PREFIX}/version")
+def get_version():
+    version_path = os.path.join(os.getcwd(), "version.json")
+    if not os.path.exists(version_path):
+        return {"version": "0.2.0.0", "release_notes": {}}
+    try:
+        with open(version_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        return {"version": "0.2.0.0", "error": str(e)}
+
 @app.get("/")
 def read_root():
     return RedirectResponse(url="/index.html")
+
 
 # Path to static frontend files
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")

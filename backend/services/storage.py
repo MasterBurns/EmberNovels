@@ -822,3 +822,29 @@ class StorageService:
         except Exception as e:
             return {"success": False, "error": f"Backup-Verzeichnis/Dateizugriff fehlgeschlagen: {str(e)}"}
 
+    @classmethod
+    def get_relationships_file(cls, project_id: str) -> Path:
+        return cls.get_projects_dir() / project_id / "relationships.json"
+
+    @classmethod
+    def load_relationships(cls, project_id: str) -> Dict[str, Any]:
+        file_path = cls.get_relationships_file(project_id)
+        if not file_path.exists():
+            return {"nodes": {}, "links": []}
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {"nodes": {}, "links": []}
+
+    @classmethod
+    def save_relationships(cls, project_id: str, data: Dict[str, Any]) -> bool:
+        file_path = cls.get_relationships_file(project_id)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception:
+            return False
+
+

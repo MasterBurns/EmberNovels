@@ -47,6 +47,12 @@
                         </a>
                     </li>
                     <li>
+                        <a id="nav-relationships" class="nav-item">
+                            <span class="nav-item-icon">👥</span>
+                            <span data-i18n="nav_relationships">Beziehungsnetzwerk</span>
+                        </a>
+                    </li>
+                    <li>
                         <a id="nav-search" class="nav-item">
                             <span class="nav-item-icon">🔍</span>
                             <span data-i18n="nav_search">Globale Suche</span>
@@ -494,6 +500,57 @@
                     </div>
                 </section>
 
+                <!-- 4.8. RELATIONSHIPS NETWORK VIEW -->
+                <section id="view-relationships" class="view-section">
+                    <div class="section-header">
+                        <h2 class="section-title" data-i18n="nav_relationships">Beziehungsnetzwerk</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-relationships-reset" class="btn btn-secondary" style="padding: 8px 16px;">Anordnung zurücksetzen</button>
+                            <button id="btn-relationships-save" class="btn" style="padding: 8px 16px;">Layout speichern</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; height: calc(100vh - 180px); overflow: hidden;">
+                        <!-- Left Control Panel: Add/List relationships -->
+                        <div class="list-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px; overflow-y: auto;">
+                            <h3 class="list-title">Beziehung hinzufügen</h3>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background-color: var(--bg-base);">
+                                <div class="form-group">
+                                    <label class="form-label" for="rel-char-1">Charakter 1</label>
+                                    <select id="rel-char-1" class="form-input" style="height: auto;"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="rel-char-2">Charakter 2</label>
+                                    <select id="rel-char-2" class="form-input" style="height: auto;"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="rel-type">Beziehungstyp</label>
+                                    <input type="text" id="rel-type" class="form-input" placeholder="z.B. Ehepartner, Kind, Feind">
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                    <input type="checkbox" id="rel-bidirectional" style="width: auto; cursor: pointer;" checked>
+                                    <label for="rel-bidirectional" style="font-size: 13px; cursor: pointer; user-select: none;">Beidseitig (A &harr; B)</label>
+                                </div>
+                                <button id="btn-save-relationship" class="btn" style="margin-top: 8px; padding: 8px;">Hinzufügen</button>
+                            </div>
+                            
+                            <h3 class="list-title" style="margin-top: 8px;">Aktive Verbindungen</h3>
+                            <div id="relationships-connections-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                <!-- Dynamic links list with deletes -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel: Canvas Graph -->
+                        <div class="list-container" style="padding: 0; overflow: hidden; position: relative; display: flex; flex-direction: column; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; height: 100%;">
+                            <canvas id="relationships-canvas" style="flex-grow: 1; cursor: grab; width: 100%; height: 100%; display: block; background-color: var(--bg-surface);"></canvas>
+                            <div style="position: absolute; bottom: 12px; right: 12px; background-color: rgba(15, 23, 42, 0.7); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 5;">
+                                Tipp: Ziehe Charaktere zum Ordnen · Doppelklick öffnet Wiki
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- 5. SETTINGS VIEW -->
                 <section id="view-settings" class="view-section">
                     <div class="section-header">
@@ -620,7 +677,7 @@
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.2.0.0</strong></span>
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.1.1.0</strong></span>
                                 <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
                             </div>
                             <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">

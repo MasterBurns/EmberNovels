@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from pydantic import BaseModel
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from backend.services.storage import StorageService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -105,3 +105,15 @@ def trigger_backup(data: BackupRequest):
     if not res["success"]:
         raise HTTPException(status_code=500, detail=res["error"])
     return res
+
+@router.get("/{project_id}/relationships")
+def get_relationships(project_id: str):
+    return StorageService.load_relationships(project_id)
+
+@router.post("/{project_id}/relationships")
+def save_relationships(project_id: str, data: Dict[str, Any] = Body(...)):
+    success = StorageService.save_relationships(project_id, data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save relationships")
+    return {"message": "Relationships saved successfully"}
+
