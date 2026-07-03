@@ -162,7 +162,8 @@ del "%~f0"
             os.chmod(current_exe, 0o755)
             
             print("Spawning new Unix process...")
-            subprocess.Popen([current_exe])
+            devnull = os.open(os.devnull, os.O_RDWR)
+            subprocess.Popen([current_exe], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull)
             
         print("Shutting down current server process...")
         os._exit(0)

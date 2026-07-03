@@ -1,7 +1,7 @@
 {
-    "version": "0.2.1.0",
+    "version": "0.2.1.1",
     "release_notes": {
-        "de": "Version 0.2.1.0 (Minor Update).\n- Löschen von Übersetzungs-Sprachzweigen (Branches) direkt in der Seitenleiste.\n- Dynamische Anzeige der Originalsprache im Sprachzweig-Panel statt Hardcodierung.\n- Verbesserte Fehlertoleranz bei KI-Übersetzungen im Hintergrund zur Vermeidung von Serverabstürzen.",
-        "en": "Version 0.2.1.0 (Minor Update).\n- Delete translation branches directly from the sidebar.\n- Dynamic original language name rendering in the branches list instead of hardcoding.\n- Added try-catch safety around background translations to prevent process crashes."
+        "de": "Version 0.2.1.1 (Hotfix).\n- Behebung des Problems beim Auto-Update unter Unix, bei dem der Prozess nach dem Hotswap nicht detached neu gestartet wurde.\n- Dokumentationsupdate in README.md.",
+        "en": "Version 0.2.1.1 (Hotfix).\n- Fixed detached sub-process launch issue during Unix hot-swapping.\n- Updated README.md documentation to correctly reflect current features."
     }
 }
