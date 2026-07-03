@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch(e) {
         console.warn("Could not load version from backend", e);
-        state.localVersion = "0.2.1.1"; // default fallback
+        state.localVersion = "0.2.1.2"; // default fallback
     }
 
     // Check local settings for autosave interval
@@ -255,6 +255,15 @@ function navigateTo(view, params = {}) {
             headerAction.style.display = 'none';
             headerTitle.textContent = `${t('nav_relationships', 'Beziehungsnetzwerk')}: ${state.currentProject.title}`;
             loadRelationshipsData();
+            break;
+
+        case 'corkboard':
+            document.getElementById('nav-corkboard').classList.add('active');
+            btnBackDetails.style.display = 'inline-flex';
+            btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
+            headerAction.style.display = 'none';
+            headerTitle.textContent = `📌 Korkwand: ${state.currentProject.title}`;
+            renderCorkboard();
             break;
     }
 }
@@ -588,6 +597,16 @@ function setupEventListeners() {
             }
         });
     }
+    const navCorkboard = document.getElementById('nav-corkboard');
+    if (navCorkboard) {
+        navCorkboard.addEventListener('click', () => {
+            if (state.currentProject) navigateTo('corkboard');
+            else {
+                showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus.'), 'warning');
+                navigateTo('projects');
+            }
+        });
+    }
     const navSearch = document.getElementById('nav-search');
     if (navSearch) {
         navSearch.addEventListener('click', () => {
@@ -603,7 +622,7 @@ function setupEventListeners() {
     const btnReportBug = document.getElementById('btn-report-bug');
     if (btnReportBug) {
         btnReportBug.addEventListener('click', () => {
-            const version = state.localVersion || "0.2.1.1";
+            const version = state.localVersion || "0.2.1.2";
             const userAgent = navigator.userAgent;
             const title = encodeURIComponent("[Bug] EmberNovels v" + version);
             const body = encodeURIComponent(
@@ -3203,7 +3222,7 @@ async function checkAppUpdates() {
     notes.textContent = '';
     triggerBtn.style.display = 'none';
     
-    const currentVersion = state.localVersion || "0.2.1.1";
+    const currentVersion = state.localVersion || "0.2.1.2";
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
@@ -3211,7 +3230,7 @@ async function checkAppUpdates() {
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
-        const latestVersion = data.version || "0.2.1.1";
+        const latestVersion = data.version || "0.2.1.2";
         const isNewer = compareVersions(latestVersion, currentVersion) > 0;
         
         if (isNewer) {
@@ -3931,12 +3950,28 @@ function openTimelineEventForm(eventId = null) {
         select.appendChild(opt);
     });
 
+    // Populate plotlines datalist
+    const datalist = document.getElementById('timeline-plotline-datalist');
+    if (datalist) {
+        datalist.innerHTML = '';
+        const uniquePlotlines = new Set();
+        (state.timelineEvents || []).forEach(e => {
+            if (e.plotline) uniquePlotlines.add(e.plotline);
+        });
+        uniquePlotlines.forEach(pl => {
+            const opt = document.createElement('option');
+            opt.value = pl;
+            datalist.appendChild(opt);
+        });
+    }
+
     if (eventId) {
         const ev = state.timelineEvents.find(e => e.id === eventId);
         if (ev) {
             document.getElementById('timeline-event-id').value = ev.id;
             document.getElementById('timeline-event-title').value = ev.title;
             document.getElementById('timeline-event-date').value = ev.date;
+            document.getElementById('timeline-event-plotline').value = ev.plotline || '';
             document.getElementById('timeline-event-desc').value = ev.desc || '';
             document.getElementById('timeline-event-lore').value = ev.lore_id || '';
         }
@@ -3944,6 +3979,7 @@ function openTimelineEventForm(eventId = null) {
         document.getElementById('timeline-event-id').value = '';
         document.getElementById('timeline-event-title').value = '';
         document.getElementById('timeline-event-date').value = '';
+        document.getElementById('timeline-event-plotline').value = '';
         document.getElementById('timeline-event-desc').value = '';
         document.getElementById('timeline-event-lore').value = '';
     }
@@ -3957,6 +3993,7 @@ async function saveTimelineEvent() {
     if (!state.currentProject) return;
     const title = document.getElementById('timeline-event-title').value.trim();
     const date = document.getElementById('timeline-event-date').value.trim();
+    const plotline = document.getElementById('timeline-event-plotline').value.trim() || 'Hauptplot';
     const desc = document.getElementById('timeline-event-desc').value.trim();
     const lore_id = document.getElementById('timeline-event-lore').value;
     
@@ -3967,7 +4004,7 @@ async function saveTimelineEvent() {
     
     const id = document.getElementById('timeline-event-id').value || 'evt_' + Math.random().toString(36).substr(2, 9);
     
-    const newEvent = { id, title, date, desc, lore_id };
+    const newEvent = { id, title, date, plotline, desc, lore_id };
     const existingIdx = state.timelineEvents.findIndex(e => e.id === id);
     
     if (existingIdx !== -1) {
@@ -4019,15 +4056,147 @@ async function deleteTimelineEvent(eventId) {
 function renderTimeline() {
     const list = document.getElementById('timeline-events-list');
     const flow = document.getElementById('timeline-visual-flow');
+    const chartContainer = document.getElementById('timeline-graphical-chart');
+    
     list.innerHTML = '';
     flow.innerHTML = '';
+    if (chartContainer) chartContainer.innerHTML = '';
     
     if (state.timelineEvents.length === 0) {
         list.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 13px;">Keine Ereignisse vorhanden.</div>`;
         flow.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">Die Zeitleiste ist noch leer. Füge links Ereignisse hinzu!</div>`;
+        if (chartContainer) {
+            chartContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">Füge Ereignisse hinzu, um den Zeitstrahl zu zeichnen.</div>`;
+        }
         return;
     }
     
+    // 1. Draw SVG Plotlines Chart
+    if (chartContainer) {
+        const plotlines = Array.from(new Set(state.timelineEvents.map(e => e.plotline || 'Hauptplot')));
+        const plotlineEvents = {};
+        plotlines.forEach(pl => plotlineEvents[pl] = []);
+        state.timelineEvents.forEach(ev => {
+            const pl = ev.plotline || 'Hauptplot';
+            plotlineEvents[pl].push(ev);
+        });
+        
+        let maxEvents = 1;
+        plotlines.forEach(pl => {
+            maxEvents = Math.max(maxEvents, plotlineEvents[pl].length);
+        });
+        
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        const trackHeight = 70;
+        const svgHeight = Math.max(160, 30 + plotlines.length * trackHeight);
+        const svgWidth = Math.max(800, 150 + maxEvents * 170);
+        
+        svg.setAttribute("width", svgWidth);
+        svg.setAttribute("height", svgHeight);
+        svg.style.display = "block";
+        
+        const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#ef4444", "#06b6d4"];
+        
+        plotlines.forEach((pl, plIdx) => {
+            const y = 40 + plIdx * trackHeight;
+            const color = colors[plIdx % colors.length];
+            const events = plotlineEvents[pl];
+            
+            // Draw background track line
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", "120");
+            line.setAttribute("y1", y);
+            line.setAttribute("x2", svgWidth - 40);
+            line.setAttribute("y2", y);
+            line.setAttribute("stroke", "var(--border-color)");
+            line.setAttribute("stroke-width", "2");
+            line.setAttribute("stroke-dasharray", "4,4");
+            svg.appendChild(line);
+            
+            // Draw track label
+            const label = document.createElementNS(svgNS, "text");
+            label.setAttribute("x", "15");
+            label.setAttribute("y", y + 4);
+            label.setAttribute("font-size", "12");
+            label.setAttribute("font-weight", "600");
+            label.setAttribute("fill", "var(--text-base)");
+            label.textContent = pl;
+            svg.appendChild(label);
+            
+            // Connect nodes with a colored line
+            if (events.length > 1) {
+                const path = document.createElementNS(svgNS, "path");
+                let pathD = "";
+                events.forEach((ev, evIdx) => {
+                    const x = 150 + evIdx * 170;
+                    if (evIdx === 0) pathD += `M ${x} ${y}`;
+                    else pathD += ` L ${x} ${y}`;
+                });
+                path.setAttribute("d", pathD);
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", color);
+                path.setAttribute("stroke-width", "3");
+                svg.appendChild(path);
+            }
+            
+            // Draw node circles & text
+            events.forEach((ev, evIdx) => {
+                const x = 150 + evIdx * 170;
+                
+                const group = document.createElementNS(svgNS, "g");
+                group.setAttribute("cursor", "pointer");
+                group.addEventListener("click", () => openTimelineEventForm(ev.id));
+                
+                // Circle
+                const circle = document.createElementNS(svgNS, "circle");
+                circle.setAttribute("cx", x);
+                circle.setAttribute("cy", y);
+                circle.setAttribute("r", "8");
+                circle.setAttribute("fill", color);
+                circle.setAttribute("stroke", "var(--bg-surface)");
+                circle.setAttribute("stroke-width", "2");
+                group.appendChild(circle);
+                
+                // Hover tooltip
+                const titleNode = document.createElementNS(svgNS, "title");
+                titleNode.textContent = `${ev.title} (${ev.date})\n${ev.desc || ''}`;
+                group.appendChild(titleNode);
+                
+                // Date text
+                const dateTxt = document.createElementNS(svgNS, "text");
+                dateTxt.setAttribute("x", x);
+                dateTxt.setAttribute("y", y - 14);
+                dateTxt.setAttribute("text-anchor", "middle");
+                dateTxt.setAttribute("font-size", "10");
+                dateTxt.setAttribute("font-weight", "700");
+                dateTxt.setAttribute("fill", "var(--color-primary)");
+                dateTxt.textContent = ev.date;
+                group.appendChild(dateTxt);
+                
+                // Title text
+                const titleTxt = document.createElementNS(svgNS, "text");
+                titleTxt.setAttribute("x", x);
+                titleTxt.setAttribute("y", y + 20);
+                titleTxt.setAttribute("text-anchor", "middle");
+                titleTxt.setAttribute("font-size", "11");
+                titleTxt.setAttribute("font-weight", "500");
+                titleTxt.setAttribute("fill", "var(--text-base)");
+                
+                // Clip long titles
+                let displayTitle = ev.title;
+                if (displayTitle.length > 20) displayTitle = displayTitle.substring(0, 18) + "...";
+                titleTxt.textContent = displayTitle;
+                
+                group.appendChild(titleTxt);
+                svg.appendChild(group);
+            });
+        });
+        
+        chartContainer.appendChild(svg);
+    }
+    
+    // 2. Populate Sidebar List & Vertical Flow
     state.timelineEvents.forEach(ev => {
         // Sidebar list item
         const item = document.createElement('div');
@@ -4061,7 +4230,10 @@ function renderTimeline() {
             <div class="timeline-dot"></div>
             <div class="timeline-event-header">
                 <div class="timeline-event-title">${escapeHtml(ev.title)}</div>
-                <div class="timeline-event-date">${escapeHtml(ev.date)}</div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span style="font-size: 10px; background-color: var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px; font-weight: 600;">${escapeHtml(ev.plotline || 'Hauptplot')}</span>
+                    <span class="timeline-event-date">${escapeHtml(ev.date)}</span>
+                </div>
             </div>
             <div class="timeline-event-desc">${escapeHtml(ev.desc || 'Keine Beschreibung vorhanden.')}</div>
             ${loreLinkHtml}
@@ -4769,7 +4941,7 @@ function refreshRelationshipsConnectionsList() {
 window.deleteRelationshipLink = deleteRelationshipLink;
 
 // ==========================================
-// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.1
+// G. DYNAMIC EXTENSIONS & FEATURE SET v0.2.1.2
 // ==========================================
 
 let physicsInterval = null;
@@ -5007,6 +5179,97 @@ function runStyleCheck() {
     resultsContainer.innerHTML = '';
     
     const suggestions = [];
+    
+    // Heuristic Syllable counter
+    const countSyllables = (word, lang) => {
+        word = word.toLowerCase().replace(/[^a-zäöüßéèàùâêîôûœæ]/g, '');
+        if (word.length <= 3) return 1;
+        let count = (word.match(/[aeiouyäöüéèàùâêîôûœæ]+/g) || []).length;
+        if (lang === 'en') {
+            if (word.endsWith('e')) count--;
+            if (word.endsWith('le') && !/[aeiouy]/.test(word.charAt(word.length - 3))) count++;
+        }
+        return Math.max(1, count);
+    };
+    
+    // 1. Analyze readability and sentences
+    const sentenceRegex = /([^.!?\n]+[.!?\n]+)/g;
+    let sentenceCount = 0;
+    let wordCount = 0;
+    let syllableCount = 0;
+    const sentences = [];
+    let sMatch;
+    
+    while ((sMatch = sentenceRegex.exec(text)) !== null) {
+        const sentenceText = sMatch[1];
+        const startIndex = sMatch.index;
+        const cleanWords = sentenceText.trim().split(/\s+/).filter(w => w.replace(/[^a-zA-ZäöüÄÖÜß]/g, '').length > 0);
+        
+        if (cleanWords.length > 0) {
+            sentenceCount++;
+            wordCount += cleanWords.length;
+            
+            cleanWords.forEach(w => {
+                const syl = countSyllables(w, state.activeLanguage || 'de');
+                syllableCount += syl;
+            });
+            
+            sentences.push({
+                text: sentenceText,
+                startIndex,
+                length: sentenceText.length,
+                wordCount: cleanWords.length
+            });
+        }
+    }
+    
+    // Fallback if no proper punctuation is used
+    if (wordCount === 0) {
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+        wordCount = words.length;
+        sentenceCount = 1;
+        words.forEach(w => {
+            syllableCount += countSyllables(w, state.activeLanguage || 'de');
+        });
+    }
+    
+    const asl = sentenceCount > 0 ? (wordCount / sentenceCount) : 0;
+    const asw = wordCount > 0 ? (syllableCount / wordCount) : 0;
+    
+    // Calculate Flesch Score
+    let fleschScore = 100;
+    if (wordCount > 0) {
+        if (state.activeLanguage === 'en') {
+            fleschScore = 206.835 - (1.015 * asl) - (84.6 * asw);
+        } else {
+            fleschScore = 180 - asl - (58.5 * asw);
+        }
+    }
+    fleschScore = Math.max(0, Math.min(100, Math.round(fleschScore)));
+    
+    let fleschRating = "Sehr leicht";
+    let fleschColor = "#22c55e"; // green
+    if (fleschScore < 30) {
+        fleschRating = "Sehr schwer (Akademiker)";
+        fleschColor = "#ef4444"; // red
+    } else if (fleschScore < 50) {
+        fleschRating = "Schwer (Sekundarstufe II)";
+        fleschColor = "#f97316"; // orange
+    } else if (fleschScore < 60) {
+        fleschRating = "Etwas schwer";
+        fleschColor = "#eab308"; // yellow
+    } else if (fleschScore < 70) {
+        fleschRating = "Mittelschwer / Standard";
+        fleschColor = "#3b82f6"; // blue
+    } else if (fleschScore < 80) {
+        fleschRating = "Mittelleicht";
+        fleschColor = "#06b6d4"; // cyan
+    } else if (fleschScore < 90) {
+        fleschRating = "Leicht";
+        fleschColor = "#10b981"; // emerald
+    }
+    
+    // 2. Scan for duplicate consecutive words
     const duplicateRegex = /\b(\w+)\b[\s,.;:!?/-]+\b\1\b/gi;
     let match;
     while ((match = duplicateRegex.exec(text)) !== null) {
@@ -5024,6 +5287,7 @@ function runStyleCheck() {
         });
     }
     
+    // 3. Scan for filler words
     const fillerRegex = /\b(\w+)\b/gi;
     while ((match = fillerRegex.exec(text)) !== null) {
         const word = match[1];
@@ -5040,14 +5304,70 @@ function runStyleCheck() {
         }
     }
     
+    // 4. Highlight long sentences (> 25 words)
+    sentences.forEach(s => {
+        if (s.wordCount > 25) {
+            suggestions.push({
+                type: 'long-sentence',
+                title: `Langer Satz (${s.wordCount} Wörter)`,
+                description: `Dieser Satz ist recht lang und verschachtelt. Versuche, ihn aufzuteilen, um den Lesefluss zu verbessern.`,
+                index: s.startIndex,
+                length: s.length,
+                badge: 'Langer Satz'
+            });
+        }
+    });
+    
+    // 5. Highlight passive voice
+    const passiveRegex = (state.activeLanguage === 'en') ? /\b(is|was|were|been|be)\b/gi : /\b(wurde|wurden|werde|werden|wird|worden)\b/gi;
+    while ((match = passiveRegex.exec(text)) !== null) {
+        const word = match[1];
+        const startIndex = match.index;
+        suggestions.push({
+            type: 'passive',
+            title: `Passiv-Hilfsverb: "${word}"`,
+            description: `Dieser Satz nutzt eventuell eine Passiv-Konstruktion. Aktive Verben wirken oft lebendiger.`,
+            index: startIndex,
+            length: word.length,
+            badge: 'Passiv'
+        });
+    }
+    
     suggestions.sort((a, b) => a.index - b.index);
     
+    // Draw Summary Card
+    const summaryCard = document.createElement('div');
+    summaryCard.style.padding = '14px';
+    summaryCard.style.border = '1px solid var(--border-color)';
+    summaryCard.style.borderRadius = '12px';
+    summaryCard.style.backgroundColor = 'var(--bg-surface)';
+    summaryCard.style.display = 'flex';
+    summaryCard.style.flexDirection = 'column';
+    summaryCard.style.gap = '8px';
+    summaryCard.style.marginBottom = '16px';
+    summaryCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Lesbarkeitsindex (Flesch)</span>
+            <strong style="font-size: 20px; color: ${fleschColor};">${fleschScore}</strong>
+        </div>
+        <div style="font-size: 12px; color: var(--text-base); font-weight: 500;">Stufe: <span style="color: ${fleschColor};">${fleschRating}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px; border-top: 1px solid var(--border-color); padding-top: 8px; color: var(--text-muted);">
+            <span>Sätze: ${sentenceCount}</span>
+            <span>Wörter: ${wordCount}</span>
+            <span>Ø Satzlänge: ${asl.toFixed(1)} W.</span>
+        </div>
+    `;
+    resultsContainer.appendChild(summaryCard);
+    
     if (suggestions.length === 0) {
-        resultsContainer.innerHTML = `
-            <div style="text-align: center; color: var(--color-success); font-size: 13px; padding: 20px; font-weight: 600;">
-                ✓ Keine Stilauffälligkeiten gefunden!
-            </div>
-        `;
+        const noAlerts = document.createElement('div');
+        noAlerts.style.textAlign = 'center';
+        noAlerts.style.color = 'var(--color-success)';
+        noAlerts.style.fontSize = '13px';
+        noAlerts.style.padding = '20px';
+        noAlerts.style.fontWeight = '600';
+        noAlerts.textContent = '✓ Keine Stilauffälligkeiten gefunden!';
+        resultsContainer.appendChild(noAlerts);
         return;
     }
     
@@ -5062,6 +5382,7 @@ function runStyleCheck() {
         card.style.flexDirection = 'column';
         card.style.gap = '4px';
         card.style.transition = 'background-color 0.2s';
+        card.style.marginBottom = '8px';
         
         card.addEventListener('mouseenter', () => {
             card.style.backgroundColor = 'var(--bg-surface)';
@@ -5074,8 +5395,18 @@ function runStyleCheck() {
             highlightWordInEditor(sug.index, sug.length);
         });
         
-        const badgeColor = sug.type === 'duplicate' ? 'var(--color-primary)' : 'var(--text-muted)';
-        const badgeBg = sug.type === 'duplicate' ? 'var(--color-primary-light)' : 'rgba(241, 245, 249, 0.1)';
+        let badgeColor = 'var(--text-muted)';
+        let badgeBg = 'rgba(241, 245, 249, 0.1)';
+        if (sug.type === 'duplicate') {
+            badgeColor = 'var(--color-primary)';
+            badgeBg = 'var(--color-primary-light)';
+        } else if (sug.type === 'long-sentence') {
+            badgeColor = '#f97316';
+            badgeBg = 'rgba(249, 115, 22, 0.15)';
+        } else if (sug.type === 'passive') {
+            badgeColor = '#3b82f6';
+            badgeBg = 'rgba(59, 130, 246, 0.15)';
+        }
         
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -5411,6 +5742,190 @@ function renderSideBySideDiff(snapshotText, currentText) {
     container.appendChild(grid);
 }
 
+async function renderCorkboard() {
+    if (!state.currentProject) return;
+    
+    const container = document.getElementById('corkboard-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const chapters = state.currentProject.chapters || [];
+    const volumes = state.currentProject.volumes || [];
+    const mapping = state.currentProject.chapters_volume_mapping || {};
+    const descs = state.currentProject.chapters_descriptions || {};
+    
+    // Group chapters
+    const grouped = { unassigned: [] };
+    volumes.forEach(vol => grouped[vol.id] = []);
+    chapters.forEach(ch => {
+        const volId = mapping[ch.id];
+        if (volId && grouped[volId]) {
+            grouped[volId].push(ch);
+        } else {
+            grouped.unassigned.push(ch);
+        }
+    });
+    
+    // Helper to render volume column
+    const renderColumn = (colId, colTitle, colChapters) => {
+        const colEl = document.createElement('div');
+        colEl.className = 'corkboard-column';
+        colEl.setAttribute('data-volume-id', colId);
+        
+        const header = document.createElement('div');
+        header.className = 'corkboard-column-header';
+        
+        const countWords = colChapters.reduce((sum, ch) => sum + ch.word_count, 0);
+        header.innerHTML = `
+            <span class="corkboard-column-title">📁 ${escapeHtml(colTitle)} <span style="font-size: 11px; font-weight: normal; color: var(--text-secondary);">(${colChapters.length} Kap. · ${countWords.toLocaleString()} W.)</span></span>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">+ Kap.</button>
+        `;
+        
+        // Add new chapter trigger
+        header.querySelector('button').addEventListener('click', () => {
+            showPrompt("Neues Kapitel erstellen", "Kapitel-Titel:", "", async (title) => {
+                if (title && title.trim()) {
+                    try {
+                        const chRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: title })
+                        });
+                        if (!chRes.ok) throw new Error("Kapitel konnte nicht erstellt werden");
+                        const newChapter = await chRes.json();
+                        
+                        // Map to this volume
+                        if (colId !== 'unassigned') {
+                            const newMapping = { ...state.currentProject.chapters_volume_mapping };
+                            newMapping[newChapter.id] = colId;
+                            await updateProjectMetadataDirectly({ chapters_volume_mapping: newMapping });
+                        }
+                        
+                        showToast("Kapitel erstellt!", "success");
+                        loadProjectDetails(state.currentProject.id).then(() => {
+                            renderCorkboard();
+                        });
+                    } catch (err) {
+                        showToast(err.message, "danger");
+                    }
+                }
+            });
+        });
+        
+        const grid = document.createElement('div');
+        grid.className = 'corkboard-cards-grid';
+        grid.setAttribute('data-volume-id', colId);
+        
+        // Drag over column behaviors
+        colEl.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            colEl.style.borderColor = 'var(--color-primary)';
+            colEl.style.backgroundColor = 'var(--color-primary-light)';
+        });
+        colEl.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+        });
+        colEl.addEventListener('dragleave', () => {
+            colEl.style.borderColor = '';
+            colEl.style.backgroundColor = '';
+        });
+        colEl.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            colEl.style.borderColor = '';
+            colEl.style.backgroundColor = '';
+            
+            const chapterId = e.dataTransfer.getData('text/plain') || state.draggedChapterId;
+            if (!chapterId) return;
+            
+            const newMapping = { ...state.currentProject.chapters_volume_mapping };
+            if (colId === 'unassigned') {
+                delete newMapping[chapterId];
+            } else {
+                newMapping[chapterId] = colId;
+            }
+            
+            await updateProjectMetadataDirectly({ chapters_volume_mapping: newMapping });
+            loadProjectDetails(state.currentProject.id).then(() => {
+                renderCorkboard();
+            });
+        });
+        
+        // Populate chapter cards
+        colChapters.forEach(ch => {
+            const card = document.createElement('div');
+            card.className = 'cork-card';
+            card.setAttribute('draggable', 'true');
+            card.setAttribute('data-chapter-id', ch.id);
+            
+            card.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', ch.id);
+                state.draggedChapterId = ch.id;
+                card.classList.add('dragging');
+            });
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                state.draggedChapterId = null;
+            });
+            
+            const descVal = descs[ch.id] || ch.description || '';
+            
+            card.innerHTML = `
+                <div class="cork-card-title" title="${escapeHtml(ch.title)}">${escapeHtml(ch.title)}</div>
+                <textarea class="cork-card-desc" placeholder="Kapitelbeschreibung eingeben...">${escapeHtml(descVal)}</textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span style="font-size: 10px; color: var(--text-muted);">${ch.word_count} Wörter</span>
+                    <button class="btn-delete" style="background:none; border:none; cursor:pointer; font-size:11px; padding:2px;" title="Löschen">🗑️</button>
+                </div>
+            `;
+            
+            // Edit synopsis blur auto-save
+            const textarea = card.querySelector('textarea');
+            textarea.addEventListener('blur', async () => {
+                const newText = textarea.value.trim();
+                const currentDescs = { ...state.currentProject.chapters_descriptions };
+                if (currentDescs[ch.id] !== newText) {
+                    currentDescs[ch.id] = newText;
+                    await updateProjectMetadataDirectly({ chapters_descriptions: currentDescs });
+                    showToast("Kapitel-Zusammenfassung gespeichert", "success");
+                }
+            });
+            textarea.addEventListener('click', (e) => e.stopPropagation()); // prevent navigating to editor
+            
+            // Click card navigation to editor
+            card.addEventListener('click', () => {
+                navigateTo('editor', { projectId: state.currentProject.id, chapterId: ch.id });
+            });
+            
+            // Delete chapter
+            card.querySelector('.btn-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirm(t('delete_chapter_title', 'Kapitel löschen'), `${t('delete_chapter_body', 'Möchtest du das Kapitel wirklich in den Papierkorb verschieben?')} "${ch.title}"`, () => {
+                    deleteChapter(state.currentProject.id, ch.id).then(() => {
+                        loadProjectDetails(state.currentProject.id).then(() => {
+                            renderCorkboard();
+                        });
+                    });
+                });
+            });
+            
+            grid.appendChild(card);
+        });
+        
+        colEl.appendChild(header);
+        colEl.appendChild(grid);
+        return colEl;
+    };
+    
+    // Render columns
+    volumes.forEach(vol => {
+        container.appendChild(renderColumn(vol.id, vol.title, grouped[vol.id]));
+    });
+    
+    // Always render unassigned column
+    container.appendChild(renderColumn('unassigned', "Ungruppierte Kapitel", grouped.unassigned));
+}
+
 // Expose functions globally
 window.applyPhysicsLayout = applyPhysicsLayout;
 window.applyHierarchicalLayout = applyHierarchicalLayout;
@@ -5420,3 +5935,4 @@ window.restoreSelectedSnapshot = restoreSelectedSnapshot;
 window.openChapterSettingsModal = openChapterSettingsModal;
 window.saveChapterSettings = saveChapterSettings;
 window.runStyleCheck = runStyleCheck;
+window.renderCorkboard = renderCorkboard;

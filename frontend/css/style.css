@@ -1225,3 +1225,99 @@ button, input, textarea, select {
     border-color: var(--color-primary) !important;
     background-color: var(--color-primary-light) !important;
 }
+
+/* Corkboard styling */
+.corkboard-column {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+}
+
+.corkboard-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.corkboard-column-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-base);
+}
+
+.corkboard-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    min-height: 100px;
+}
+
+.cork-card {
+    background-color: var(--bg-base);
+    border: 1px dashed var(--border-color);
+    border-left: 5px solid var(--color-primary);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: grab;
+    user-select: none;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.cork-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--bg-surface);
+}
+
+.cork-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.cork-card.drag-over {
+    border: 2px dashed var(--color-primary);
+}
+
+.cork-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-base);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cork-card-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    border: none;
+    background: transparent;
+    resize: none;
+    width: 100%;
+}
+
+.cork-card-desc:focus {
+    outline: 1px solid var(--color-primary);
+    background: var(--bg-base);
+    border-radius: 4px;
+}

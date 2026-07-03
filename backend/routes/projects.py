@@ -21,6 +21,7 @@ class ProjectUpdate(BaseModel):
     volumes: Optional[List[Dict[str, Any]]] = None
     chapters_volume_mapping: Optional[Dict[str, str]] = None
     original_language: Optional[str] = None
+    chapters_descriptions: Optional[Dict[str, str]] = None
 
 @router.get("")
 def list_projects():

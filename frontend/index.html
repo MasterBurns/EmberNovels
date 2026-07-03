@@ -47,6 +47,12 @@
                         </a>
                     </li>
                     <li>
+                        <a id="nav-corkboard" class="nav-item">
+                            <span class="nav-item-icon">📋</span>
+                            <span data-i18n="nav_corkboard">Korkwand</span>
+                        </a>
+                    </li>
+                    <li>
                         <a id="nav-relationships" class="nav-item">
                             <span class="nav-item-icon">👥</span>
                             <span data-i18n="nav_relationships">Beziehungsnetzwerk</span>
@@ -444,6 +450,11 @@
                                     <input type="text" id="timeline-event-date" class="form-input" placeholder="z.B. Jahr 452 n.B.">
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label" for="timeline-event-plotline">Handlungsstrang (Plotline)</label>
+                                    <input type="text" id="timeline-event-plotline" class="form-input" placeholder="z.B. Hauptplot, Liebesgeschichte" list="timeline-plotline-datalist">
+                                    <datalist id="timeline-plotline-datalist"></datalist>
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label" for="timeline-event-desc">Beschreibung</label>
                                     <textarea id="timeline-event-desc" class="form-textarea" rows="3" placeholder="Beschreibe das Geschehnis..."></textarea>
                                 </div>
@@ -468,7 +479,15 @@
                         </div>
                         
                         <!-- Right Panel: Visual Timeline Flow -->
-                        <div class="list-container" style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; background-color: var(--bg-surface);">
+                        <div class="list-container" style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background-color: var(--bg-surface);">
+                            <!-- Graphical Plotlines Chart -->
+                            <div class="list-container" style="padding: 16px; border-radius: 12px; background-color: var(--bg-base); display: flex; flex-direction: column; gap: 12px;">
+                                <h4 class="list-title" style="margin-bottom: 0;">📈 Handlungsstränge (Zeitachse)</h4>
+                                <div id="timeline-graphical-chart" style="width: 100%; overflow-x: auto; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; min-height: 180px; position: relative;">
+                                    <!-- Graphical chart canvas/SVG will render here -->
+                                </div>
+                            </div>
+                            
                             <div id="timeline-visual-flow" class="timeline-visual-flow" style="position: relative; display: flex; flex-direction: column; gap: 24px; padding-left: 32px; border-left: 2px solid var(--border-color); margin-left: 16px;">
                                 <!-- Vertical timeline cards will draw here -->
                             </div>
@@ -621,6 +640,18 @@
                     </div>
                 </section>
 
+                <!-- 4.9. CORKBOARD (KORKWAND) VIEW -->
+                <section id="view-corkboard" class="view-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📌 Korkwand (Storyboard)</h2>
+                        <div style="font-size: 13px; color: var(--text-secondary);">Ordne deine Kapitel visuell per Drag & Drop in Bände ein.</div>
+                    </div>
+                    
+                    <div id="corkboard-container" style="display: flex; flex-direction: column; gap: 24px; min-height: 400px; padding: 8px;">
+                        <!-- Volume boards drawn dynamically here -->
+                    </div>
+                </section>
+
                 <!-- 5. SETTINGS VIEW -->
                 <section id="view-settings" class="view-section">
                     <div class="section-header">
@@ -747,7 +778,7 @@
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="about_title">ℹ️ Über EmberNovels</h3>
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.2.1.1</strong></span>
+                                <span style="font-size: 14px;"><span data-i18n="about_version">Version</span>: <strong id="lbl-app-version">0.2.1.2</strong></span>
                                 <button id="btn-check-update" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="about_update_check">Nach Updates suchen</button>
                             </div>
                             <div id="update-status-panel" style="display: none; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 13px; color: var(--text-secondary); flex-direction: column; gap: 8px;">

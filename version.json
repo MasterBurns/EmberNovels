@@ -1,7 +1,7 @@
 {
-    "version": "0.2.1.1",
+    "version": "0.2.1.2",
     "release_notes": {
-        "de": "Version 0.2.1.1 (Hotfix).\n- Behebung des Problems beim Auto-Update unter Unix, bei dem der Prozess nach dem Hotswap nicht detached neu gestartet wurde.\n- Dokumentationsupdate in README.md.",
-        "en": "Version 0.2.1.1 (Hotfix).\n- Fixed detached sub-process launch issue during Unix hot-swapping.\n- Updated README.md documentation to correctly reflect current features."
+        "de": "Version 0.2.1.2.\n- Einführung der Korkwand (Storyboard) zur visuellen Organisation von Kapiteln.\n- Einführung einer grafischen Zeitleiste mit mehreren Handlungssträngen (Plotsträngen).\n- Erweiterung der Stilprüfung um Lesbarkeitsindex (Flesch Score), Satzlängen-Prüfung und Passiv-Erkennung.",
+        "en": "Version 0.2.1.2.\n- Introduced Corkboard (Storyboard) for visual chapter organization.\n- Introduced a graphical timeline chart supporting multiple plotlines.\n- Enhanced style checks with readability metrics (Flesch score), sentence length analyzer, and passive voice detection."
     }
 }
