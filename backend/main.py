@@ -10,6 +10,7 @@ from backend.routes.lore import router as lore_router
 from backend.routes.exports import router as exports_router
 from backend.routes.languages import router as languages_router
 from backend.routes.ai import router as ai_router
+from backend.routes.update import router as update_router
 
 app = FastAPI(title=APP_NAME, description="Local web-based writing software")
 
@@ -29,6 +30,7 @@ app.include_router(lore_router, prefix=API_PREFIX)
 app.include_router(exports_router, prefix=API_PREFIX)
 app.include_router(languages_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
+app.include_router(update_router, prefix=API_PREFIX)
 
 import json
 

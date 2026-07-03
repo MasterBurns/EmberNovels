@@ -3012,9 +3012,98 @@ async function checkAppUpdates() {
             newTriggerBtn.addEventListener('click', () => {
                 showConfirm(
                     t('update_install_title', 'Update installieren'),
-                    `${t('update_install_body_prefix', 'Möchtest du zu GitHub weitergeleitet werden, um Version')} ${latestVersion} ${t('update_install_body_suffix', 'herunterzuladen und zu installieren?')}`,
-                    () => {
-                        window.open('https://github.com/MasterBurns/EmberNovels/releases', '_blank');
+                    `Möchtest du das Update auf Version ${latestVersion} jetzt automatisch installieren lassen? EmberNovels startet danach automatisch neu.`,
+                    async () => {
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                            @keyframes loading-bar {
+                                0% { transform: translateX(-100%); }
+                                100% { transform: translateX(350%); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+
+                        const overlay = document.createElement('div');
+                        overlay.id = 'update-fullscreen-overlay';
+                        overlay.style = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; color: white; font-family: sans-serif;';
+                        overlay.innerHTML = `
+                            <div style="font-size: 40px; animation: spin 2s linear infinite;">🔥</div>
+                            <h2 style="margin: 0; font-size: 22px;">EmberNovels wird aktualisiert</h2>
+                            <p style="margin: 0; color: #94a3b8; font-size: 14px;" id="update-overlay-status">Suche passende Paket-Datei...</p>
+                            <div style="width: 250px; height: 6px; background-color: #1e293b; border-radius: 3px; overflow: hidden; border: 1px solid #334155;">
+                                <div style="width: 30%; height: 100%; background-color: #f97316; animation: loading-bar 1.5s infinite ease-in-out;"></div>
+                            </div>
+                        `;
+                        document.body.appendChild(overlay);
+
+                        const statusText = document.getElementById('update-overlay-status');
+
+                        try {
+                            const releasesRes = await fetch('https://api.github.com/repos/MasterBurns/EmberNovels/releases/latest');
+                            if (!releasesRes.ok) throw new Error("Konnte Release-Assets von GitHub nicht abfragen.");
+                            const releaseData = await releasesRes.json();
+
+                            const platform = navigator.userAgent.toLowerCase();
+                            let targetAsset = null;
+
+                            if (platform.includes('win')) {
+                                targetAsset = releaseData.assets.find(a => a.name.endsWith('.exe'));
+                            } else if (platform.includes('mac') || platform.includes('darwin')) {
+                                targetAsset = releaseData.assets.find(a => a.name.includes('macOS') || a.name.endsWith('.zip'));
+                            } else if (platform.includes('linux')) {
+                                targetAsset = releaseData.assets.find(a => a.name.includes('Linux') && a.name.endsWith('.tar.gz'));
+                            }
+
+                            if (!targetAsset) {
+                                throw new Error("Kein passendes ausführbares Paket für dein Betriebssystem gefunden.");
+                            }
+
+                            statusText.textContent = `Lade ${targetAsset.name} herunter...`;
+
+                            const triggerRes = await fetch(`${API_URL}/update/trigger`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ download_url: targetAsset.browser_download_url })
+                            });
+
+                            if (!triggerRes.ok) {
+                                const errData = await triggerRes.json();
+                                throw new Error(errData.detail || "Server meldet Fehler beim Update-Start.");
+                            }
+
+                            statusText.textContent = "Server startet neu. Verbinde wieder...";
+
+                            let pollCount = 0;
+                            const pollInterval = setInterval(async () => {
+                                pollCount++;
+                                try {
+                                    const verRes = await fetch('/api/version');
+                                    if (verRes.ok) {
+                                        const verData = await verRes.json();
+                                        if (verData.version === latestVersion) {
+                                            clearInterval(pollInterval);
+                                            statusText.textContent = "Erfolgreich aktualisiert! Lade neu...";
+                                            setTimeout(() => {
+                                                location.reload();
+                                            }, 1000);
+                                        }
+                                    }
+                                } catch (e) {
+                                    // Connection refused while restarting (expected)
+                                }
+
+                                if (pollCount > 80) {
+                                    clearInterval(pollInterval);
+                                    overlay.remove();
+                                    showToast("Update-Verbindungstimeout. Bitte starte die Anwendung manuell neu.", "danger");
+                                }
+                            }, 1500);
+
+                        } catch (err) {
+                            overlay.remove();
+                            showToast("Update fehlgeschlagen: " + err.message, "danger");
+                        }
                     }
                 );
             });

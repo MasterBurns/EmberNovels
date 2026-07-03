@@ -38,6 +38,15 @@ def shutdown():
     os._exit(0)
 
 def main():
+    # Clean up old Unix binary after update hotswap
+    if getattr(sys, 'frozen', False):
+        old_exe_path = sys.executable + ".old"
+        if os.path.exists(old_exe_path):
+            try:
+                os.remove(old_exe_path)
+            except Exception:
+                pass
+
     # Start Uvicorn in daemon thread
     server_thread = threading.Thread(target=start_server, daemon=True)
     server_thread.start()
