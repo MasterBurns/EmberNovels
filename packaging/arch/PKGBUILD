@@ -1,0 +1,24 @@
+# Maintainer: MasterBurns <https://github.com/MasterBurns>
+pkgname=embernovels-bin
+pkgver=0.1.1.0
+pkgrel=1
+pkgdesc="Modern desktop writing application with AI assistance"
+arch=('x86_64')
+url="https://github.com/MasterBurns/EmberNovels"
+license=('MIT')
+depends=('glibc')
+provides=('embernovels')
+conflicts=('embernovels')
+source=("https://github.com/MasterBurns/EmberNovels/releases/download/v${pkgver}/EmberNovels-Linux.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+    # Install binary
+    install -Dm755 "${srcdir}/EmberNovels" "${pkgdir}/usr/bin/EmberNovels"
+    
+    # Install desktop entry
+    install -Dm644 "${srcdir}/EmberNovels.desktop" "${pkgdir}/usr/share/applications/EmberNovels.desktop"
+    
+    # Install icon
+    install -Dm644 "${srcdir}/icon.jpg" "${pkgdir}/usr/share/pixmaps/EmberNovels.jpg"
+}

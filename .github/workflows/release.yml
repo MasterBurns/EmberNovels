@@ -70,6 +70,33 @@ jobs:
           cp install.sh dist/
           chmod +x dist/install.sh
           tar -czvf EmberNovels-Linux.tar.gz -C dist EmberNovels EmberNovels.desktop icon.jpg install.sh
+          
+          # Build Debian package
+          mkdir -p debian-pkg/DEBIAN
+          mkdir -p debian-pkg/usr/bin
+          mkdir -p debian-pkg/usr/share/applications
+          mkdir -p debian-pkg/usr/share/pixmaps
+          
+          cp dist/EmberNovels debian-pkg/usr/bin/
+          cp EmberNovels.desktop debian-pkg/usr/share/applications/
+          cp icon.jpg debian-pkg/usr/share/pixmaps/EmberNovels.jpg
+          
+          # Fix paths inside debian desktop entry
+          sed -i "s|Icon=EmberNovels|Icon=/usr/share/pixmaps/EmberNovels.jpg|g" debian-pkg/usr/share/applications/EmberNovels.desktop
+          sed -i "s|Exec=EmberNovels|Exec=/usr/bin/EmberNovels|g" debian-pkg/usr/share/applications/EmberNovels.desktop
+          
+          VERSION=$(python -c "import json; print(json.load(open('version.json'))['version'])")
+          cat <<EOF > debian-pkg/DEBIAN/control
+Package: embernovels
+Version: $VERSION
+Architecture: amd64
+Maintainer: MasterBurns <https://github.com/MasterBurns>
+Description: Modern desktop writing application with AI assistance.
+Section: office
+Priority: optional
+Depends: libc6
+EOF
+          dpkg-deb --build debian-pkg EmberNovels.deb
 
 
       - name: Package macOS Binary
@@ -98,6 +125,8 @@ jobs:
             dist/${{ matrix.binary_name }}
             *.zip
             *.tar.gz
+            *.deb
+
 
   create-release:
     name: Create GitHub Release
@@ -164,6 +193,7 @@ jobs:
             release-assets/EmberNovels-Setup.exe
             release-assets/*.zip
             release-assets/*.tar.gz
+            release-assets/*.deb
           draft: false
           prerelease: false
         env:
