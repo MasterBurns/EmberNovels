@@ -59,6 +59,12 @@
                         </a>
                     </li>
                     <li>
+                        <a id="nav-mindmap" class="nav-item">
+                            <span class="nav-item-icon">🧠</span>
+                            <span>Mindmap</span>
+                        </a>
+                    </li>
+                    <li>
                         <a id="nav-search" class="nav-item">
                             <span class="nav-item-icon">🔍</span>
                             <span data-i18n="nav_search">Globale Suche</span>
@@ -653,6 +659,24 @@
                             <div style="position: absolute; bottom: 12px; right: 12px; background-color: rgba(15, 23, 42, 0.7); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 5;">
                                 Tipp: Ziehe Charaktere zum Ordnen · Doppelklick öffnet Wiki
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4.10. MINDMAP VIEW -->
+                <section id="view-mindmap" class="view-section" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">🧠 Mindmap Manager</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-mindmap-add-node" class="btn btn-primary" style="padding: 8px 16px;">Knoten hinzufügen</button>
+                            <button id="btn-mindmap-save" class="btn" style="padding: 8px 16px;">Layout speichern</button>
+                        </div>
+                    </div>
+                    
+                    <div style="position: relative; height: calc(100vh - 180px); background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+                        <div id="mindmap-network" style="width: 100%; height: 100%;"></div>
+                        <div style="position: absolute; bottom: 12px; right: 12px; background-color: rgba(15, 23, 42, 0.7); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 5;">
+                            Tipp: Ziehe Knoten um sie zu bewegen · Scrollen zum Zoomen · Kante ziehen zum Verbinden · ENTF zum Löschen · Doppelklick zum Öffnen
                         </div>
                     </div>
                 </section>
@@ -1337,8 +1361,46 @@
         </div>
     </div>
 
+    <!-- Modal: Add Mindmap Node -->
+    <div id="modal-mindmap-node" class="modal-overlay">
+        <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Knoten zur Mindmap hinzufügen</h2>
+                <button class="modal-close" onclick="closeModal('modal-mindmap-node')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="mindmap-node-type">Knoten-Typ</label>
+                    <select id="mindmap-node-type" class="form-input" style="height: auto;">
+                        <option value="custom">Individueller Text</option>
+                        <option value="character">Charakter</option>
+                        <option value="lore">Lore / Wiki-Eintrag</option>
+                        <option value="chapter">Kapitel</option>
+                        <option value="timeline">Zeitstrahl-Ereignis</option>
+                    </select>
+                </div>
+                
+                <div id="mindmap-node-custom-container" class="form-group">
+                    <label class="form-label" for="mindmap-node-label">Beschriftung</label>
+                    <input type="text" id="mindmap-node-label" class="form-input" placeholder="Name des Knotens">
+                </div>
+                
+                <div id="mindmap-node-entity-container" class="form-group" style="display: none;">
+                    <label class="form-label" for="mindmap-node-entity">Element auswählen</label>
+                    <select id="mindmap-node-entity" class="form-input" style="height: auto;"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-mindmap-node')">Abbrechen</button>
+                <button id="btn-mindmap-node-save" class="btn">Hinzufügen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast UI Editor Library -->
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <!-- Vis Network Library -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- SortableJS for Corkboard -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Application Script -->

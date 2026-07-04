@@ -7,6 +7,19 @@ from tkinter import scrolledtext
 import uvicorn
 import logging
 import base64
+import json
+
+def get_version():
+    try:
+        if getattr(sys, 'frozen', False):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(base_dir, 'version.json'), 'r', encoding='utf-8') as f:
+            return json.load(f).get('version', 'Unknown')
+    except Exception:
+        return "Unknown"
+import json
 
 # Adjust path for PyInstaller package files
 if getattr(sys, 'frozen', False):
@@ -92,19 +105,33 @@ def main():
     except Exception as e:
         print(f"Failed to set window icon: {e}")
 
-    title_font = ("Helvetica", 14, "bold")
+    app_version = get_version()
+
+    title_font = ("Helvetica", 16, "bold")
     button_font = ("Helvetica", 11, "bold")
     log_font = ("Consolas", 9)
 
+    # Header frame for modern layout
+    header_frame = tk.Frame(root, bg="#0f172a", pady=15)
+    header_frame.pack(fill=tk.X)
+
     lbl_title = tk.Label(
-        root, 
-        text="🔥 EmberNovels Server läuft im Hintergrund", 
+        header_frame, 
+        text="🔥 EmberNovels Server", 
         font=title_font, 
         fg="#f97316", 
-        bg="#0f172a",
-        pady=10
+        bg="#0f172a"
     )
     lbl_title.pack()
+
+    lbl_version = tk.Label(
+        header_frame,
+        text=f"Version {app_version}",
+        font=("Helvetica", 10),
+        fg="#94a3b8",
+        bg="#0f172a"
+    )
+    lbl_version.pack(pady=(2, 0))
 
     btn_frame = tk.Frame(root, bg="#0f172a")
     btn_frame.pack(pady=10)
@@ -118,8 +145,8 @@ def main():
         fg="white", 
         activebackground="#f97316", 
         activeforeground="white",
-        padx=15, 
-        pady=6,
+        padx=20, 
+        pady=8,
         bd=0,
         cursor="hand2"
     )
@@ -127,15 +154,15 @@ def main():
 
     btn_close = tk.Button(
         btn_frame, 
-        text="🛑 EmberNovels beenden", 
+        text="🛑 Beenden", 
         font=button_font, 
         command=shutdown,
-        bg="#dc2626", 
-        fg="white", 
-        activebackground="#ef4444", 
+        bg="#1e293b", 
+        fg="#e2e8f0", 
+        activebackground="#334155", 
         activeforeground="white",
-        padx=15, 
-        pady=6,
+        padx=20, 
+        pady=8,
         bd=0,
         cursor="hand2"
     )
@@ -144,7 +171,7 @@ def main():
     lbl_logs = tk.Label(
         root, 
         text="Server Logs:", 
-        font=("Helvetica", 10), 
+        font=("Helvetica", 10, "bold"), 
         fg="#94a3b8", 
         bg="#0f172a"
     )
@@ -152,13 +179,15 @@ def main():
 
     txt_logs = scrolledtext.ScrolledText(
         root, 
-        height=12, 
+        height=14, 
         font=log_font, 
         bg="#1e293b", 
-        fg="#e2e8f0", 
+        fg="#cbd5e1", 
         insertbackground="white", 
-        bd=1, 
-        relief=tk.FLAT
+        bd=0, 
+        relief=tk.FLAT,
+        padx=10,
+        pady=10
     )
     txt_logs.pack(fill=tk.BOTH, expand=True, padx=20, pady=(5, 20))
 
@@ -180,8 +209,9 @@ def main():
 
     root.protocol("WM_DELETE_WINDOW", shutdown)
 
-    # Auto open browser on load
-    root.after(1000, open_browser)
+    # Auto open browser on load (unless disabled via flag)
+    if "--no-browser" not in sys.argv:
+        root.after(1000, open_browser)
 
     root.mainloop()
 

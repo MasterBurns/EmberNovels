@@ -129,6 +129,17 @@ def save_relationships(project_id: str, data: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail="Failed to save relationships")
     return {"message": "Relationships saved successfully"}
 
+@router.get("/{project_id}/mindmap")
+def get_mindmap(project_id: str):
+    return StorageService.load_mindmap(project_id)
+
+@router.post("/{project_id}/mindmap")
+def save_mindmap(project_id: str, data: Dict[str, Any] = Body(...)):
+    success = StorageService.save_mindmap(project_id, data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save mindmap")
+    return {"message": "Mindmap saved successfully"}
+
 @router.get("/{project_id}/stats")
 def get_project_stats(project_id: str):
     import json

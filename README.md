@@ -16,7 +16,7 @@ Select your language below / Wähle deine Sprache:
 ### Über EmberNovels
 EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft. Deine Manuskripte werden in offenen Textformaten gespeichert (Markdown/JSON) - maximale Datensicherheit ohne Cloud-Zwang.
 
-### Aktuelle Features (v0.2.1.1)
+### Aktuelle Features (v0.3.0.0)
 1. **Zen-Modus & einklappbare Sidebars**: Konzentriere dich voll und ganz auf dein Schreiben. Sidebars lassen sich einklappen und bei Bedarf über ein Pinning-System (`📌`/`📍`) anheften, um permanent sichtbar zu bleiben.
 2. **Lore-Wiki (Weltenbau)**: Lege Charaktere, Orte, Gegenstände und historische Ereignisse an. EmberNovels erkennt Lore-Keywords automatisch im Text und blendet beim Hovern ein elegantes schwebendes Infofenster mit Details ein.
 3. **Zeitleisten-Editor (Timeline)**: Organisiere die Chronologie deiner Geschichte. Verknüpfe Ereignisse direkt mit Lore-Einträgen für ein interaktives Planungserlebnis.
@@ -30,9 +30,10 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 11. **Beziehungsnetzwerke**: Interaktive grafische Visualisierung von Charakterbeziehungen mit Physik-Simulation und Zoom/Pan.
 12. **Export-Assistent**: Exportiere deine Bücher direkt als ePub oder PDF (unterstützt Markdown-Formatierung).
 13. **Buch-Bände (Volume Organizer)**: Organisiere und gruppiere deine Kapitel strukturiert in verschiedenen Bänden mittels Drag & Drop.
+14. **Mindmap Manager**: Interaktive Mindmap zur visuellen Vernetzung von Charakteren, Lore, Kapiteln und dem Zeitstrahl.
 
 ### Geplante Funktionen (Roadmap)
-- **Korkwand**: Ein virtuelles Board für Notizzettel, um Szenen frei anzuordnen.
+- Weitere API-Integrationen für zusätzliche lokale LLMs.
 
 </details>
 
@@ -44,7 +45,7 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 ### About EmberNovels
 EmberNovels is a feature-rich desktop application for authors and novel writers. It runs entirely locally, storing your manuscripts in open file formats (Markdown/JSON) - providing maximum data privacy.
 
-### Existing Features (v0.2.1.1)
+### Existing Features (v0.3.0.0)
 1. **Zen Mode & Collapsible Sidebars**: Write distraction-free. Collapse both sidebars to focus on your writing, or pin them using the pinning system (`📌`/`📍`) to keep them visible.
 2. **Lore Wiki (Worldbuilding)**: Create entries for characters, locations, items, and historical events. EmberNovels automatically detects these keywords in your manuscript and displays detailed facts in glassmorphic hover tooltips.
 3. **Timeline Editor**: Plan your novel's chronology. Link historical events directly to Lore Wiki entries for interactive planning.
@@ -58,9 +59,10 @@ EmberNovels is a feature-rich desktop application for authors and novel writers.
 11. **Relationship Graphs**: Interactive visualization of character connections with spring force-directed simulation and camera zoom/pan.
 12. **Export Wizard**: Convert and export your novels to ePub or PDF formats (supporting markdown styles).
 13. **Volume Organizer**: Categorize and group your chapters into volume folders easily using drag & drop.
+14. **Mindmap Manager**: Interactive mindmap to visually connect characters, lore, chapters, and timeline events.
 
 ### Planned Features (Roadmap)
-- **Corkboard Mindmap**: Virtual index cards to outline and rearrange scenes.
+- More API integrations for additional local LLMs.
 
 </details>
 

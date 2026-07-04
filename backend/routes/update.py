@@ -133,8 +133,24 @@ def perform_hot_update(download_url: str):
         if not is_frozen:
             print("Running in development mode. Simulating success, skipping hot-swap.")
             if os.path.exists(new_exe_path):
-                os.remove(new_exe_path)
-            return
+                try:
+                    os.remove(new_exe_path)
+                except Exception:
+                    pass
+            
+            # Restart the script for dev mode testing
+            python_exe = sys.executable
+            main_script = os.path.abspath(sys.argv[0])
+            print("Spawning new development process...")
+            devnull = os.open(os.devnull, os.O_RDWR)
+            
+            if sys.platform == "win32":
+                subprocess.Popen([python_exe, main_script, "--no-browser"], creationflags=subprocess.DETACHED_PROCESS, close_fds=True)
+            else:
+                subprocess.Popen([python_exe, main_script, "--no-browser"], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull, close_fds=True)
+            
+            print("Shutting down current server process...")
+            os._exit(0)
             
         if sys.platform == "win32":
             # Windows hot-swap batch file
@@ -143,14 +159,14 @@ def perform_hot_update(download_url: str):
 timeout /t 2 /nobreak > nul
 del "{current_exe}"
 move "{new_exe_path}" "{current_exe}"
-start "" "{current_exe}"
+start "" "{current_exe}" --no-browser
 del "%~f0"
 """
             with open(bat_path, "w", encoding="utf-8") as f:
                 f.write(bat_content)
                 
             print("Spawning detached Windows update batch script...")
-            subprocess.Popen(["cmd.exe", "/c", bat_path], creationflags=subprocess.DETACHED_PROCESS)
+            subprocess.Popen(["cmd.exe", "/c", bat_path], creationflags=subprocess.DETACHED_PROCESS, close_fds=True)
             
         else:
             # Unix (Linux / macOS) hot-swap
@@ -167,7 +183,7 @@ del "%~f0"
             
             print("Spawning new Unix process (with 2s delay)...")
             devnull = os.open(os.devnull, os.O_RDWR)
-            subprocess.Popen(["sh", "-c", f'sleep 2 && exec "{current_exe}"'], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull)
+            subprocess.Popen(["sh", "-c", f'sleep 2 && exec "{current_exe}" --no-browser'], preexec_fn=os.setsid, stdout=devnull, stderr=devnull, stdin=devnull, close_fds=True)
             
         print("Shutting down current server process...")
         os._exit(0)

@@ -1,7 +1,7 @@
 {
-    "version": "0.2.2.6",
+    "version": "0.3.0.0",
     "release_notes": {
-        "de": "Version 0.2.2.6 - Hotfix.\n- 🐛 Frontend: Behebt das Timing-Problem beim App-Start, wodurch das Frontend manchmal geladen wurde, bevor das Backend hochgefahren war. Versionsanzeige und Projekte laden jetzt extrem zuverlässig.\n- 🐛 Linux: Behebt einen Fehler, bei dem die App nach einem Update nicht automatisch neu startete, wenn der Ordnername Leerzeichen oder Klammern enthielt.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.",
-        "en": "Version 0.2.2.6 - Hotfix.\n- 🐛 Frontend: Fixes a timing issue during app startup where the frontend loaded before the backend was ready. Version display and project loading is now highly reliable.\n- 🐛 Linux: Fixes an issue where the app failed to auto-restart after an update if the path contained spaces or parentheses.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics."
+        "de": "Version 0.3.0.0 - Major Update.\n- ✨ Neu: Mindmap Manager! Du kannst jetzt interaktive Mindmaps erstellen und Charaktere, Lore, Kapitel sowie Zeitstrahl-Ereignisse visuell vernetzen.\n- ✨ Das Kontrollzentrum wurde im Design überarbeitet und zeigt nun die aktive Server-Version.\n- 🐛 Linux Neustart-Fehler bei Updates behoben (Sockets werden nun sauber freigegeben).\n- 🚀 Kein störendes Aufspringen von Browser-Tabs nach einem Auto-Update mehr.",
+        "en": "Version 0.3.0.0 - Major Update.\n- ✨ New: Mindmap Manager! Create interactive mindmaps and visually link characters, lore, chapters, and timeline events.\n- ✨ The Control Center design has been updated and now displays the active server version.\n- 🐛 Fixed Linux restart failures during updates by preventing socket inheritance.\n- 🚀 Auto-updates no longer force open new browser tabs if one is already active."
     }
 }
