@@ -77,7 +77,37 @@ def open_browser():
 def shutdown():
     os._exit(0)
 
+
+def get_ui_language():
+    import json, sys
+    if getattr(sys, 'frozen', False):
+        settings_path = os.path.join(sys._MEIPASS, "settings.json")
+    else:
+        settings_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
+    
+    if os.path.exists(settings_path):
+        try:
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('ui_language', 'de')
+        except:
+            pass
+    return 'de'
+
+UI_TEXT = {
+    'de': {'browser': '🌐 Browser öffnen', 'stop': '🛑 Beenden', 'logs': 'Server Logs:'},
+    'en': {'browser': '🌐 Open Browser', 'stop': '🛑 Stop Server', 'logs': 'Server Logs:'},
+    'es': {'browser': '🌐 Abrir Navegador', 'stop': '🛑 Detener Servidor', 'logs': 'Registros del Servidor:'},
+    'fr': {'browser': '🌐 Ouvrir le Navigateur', 'stop': '🛑 Arrêter le Serveur', 'logs': 'Journaux du Serveur:'},
+    'it': {'browser': '🌐 Apri Browser', 'stop': '🛑 Ferma il Server', 'logs': 'Log del Server:'},
+    'ja': {'browser': '🌐 ブラウザを開く', 'stop': '🛑 サーバーを停止', 'logs': 'サーバーログ:'},
+    'zh': {'browser': '🌐 打开浏览器', 'stop': '🛑 停止服务器', 'logs': '服务器日志:'}
+}
+
 def main():
+    ui_lang = get_ui_language()
+    texts = UI_TEXT.get(ui_lang, UI_TEXT['de'])
+
     # Clean up old Unix binary after update hotswap
     if getattr(sys, 'frozen', False):
         old_exe_path = sys.executable + ".old"
@@ -93,7 +123,7 @@ def main():
 
     # Create GUI Control Window
     root = tk.Tk()
-    root.title("EmberNovels - Kontrollzentrum")
+    root.title("EmberNovels Kontrollzentrum" if ui_lang == "de" else "EmberNovels Control Center")
     root.geometry("600x400")
     root.configure(bg="#0f172a")
 
