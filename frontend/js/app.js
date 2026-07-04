@@ -274,7 +274,7 @@ function navigateTo(view, params = {}) {
             btnBackDetails.style.display = 'inline-flex';
             btnBackDetails.onclick = () => navigateTo('project-details', { projectId: state.currentProject.id });
             headerAction.style.display = 'none';
-            headerTitle.textContent = `🧠 Mindmap Manager: ${state.currentProject.title}`;
+            headerTitle.textContent = `${t('mindmap_title_project', '🧠 Mindmap Manager')}: ${state.currentProject.title}`;
             loadMindmapData();
             break;
 
@@ -6382,11 +6382,11 @@ if (btnMindmapSave) {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                showToast("Mindmap gespeichert", "success");
+                showToast(t('mindmap_saved', 'Mindmap gespeichert'), "success");
             }
         } catch (e) {
             console.error(e);
-            showToast("Fehler beim Speichern der Mindmap", "error");
+            showToast(t('mindmap_save_error', 'Fehler beim Speichern der Mindmap'), "error");
         }
     });
 }
@@ -6462,7 +6462,7 @@ if (btnMindmapNodeSave) {
         }
 
         if (!label) {
-            showToast("Bitte Beschriftung oder Element auswählen", "warning");
+            showToast(t('mindmap_empty_warning', 'Bitte Beschriftung oder Element auswählen'), "warning");
             return;
         }
 
