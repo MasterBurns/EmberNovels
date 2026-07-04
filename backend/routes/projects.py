@@ -133,7 +133,7 @@ def save_relationships(project_id: str, data: Dict[str, Any] = Body(...)):
 def get_project_stats(project_id: str):
     import json
     from pathlib import Path
-    project_dir = Path(StorageService.BASE_DIR) / project_id
+    project_dir = StorageService.get_projects_dir() / project_id
     stats_file = project_dir / "stats.json"
     if stats_file.exists():
         with open(stats_file, 'r', encoding='utf-8') as f:
