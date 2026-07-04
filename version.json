@@ -1,7 +1,7 @@
 {
-    "version": "0.2.2.4",
+    "version": "0.2.2.5",
     "release_notes": {
-        "de": "Version 0.2.2.4 - Hotfix.\n- 🐛 Frontend: Behebt das Problem, dass beim Start manchmal keine Projekte angezeigt wurden.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.\n\nVersion 0.3.0.0 (Meilenstein 1 Features):\n- 📌 Neue Korktafel-Ansicht: Organisiere deine Kapitel visuell per Drag & Drop.",
-        "en": "Version 0.2.2.4 - Hotfix.\n- 🐛 Frontend: Fixes an issue where projects were not immediately displayed on startup.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics.\n\nVersion 0.3.0.0 (Milestone 1 Features):\n- 📌 New Corkboard View: Visually organize your chapters via drag & drop."
+        "de": "Version 0.2.2.5 - Hotfix.\n- 🐛 Linux: Behebt einen Fehler, bei dem die App nach einem Update nicht automatisch neu startete, wenn der Ordnername Leerzeichen oder Klammern enthielt.\n- 🐛 Frontend: Behebt das Problem, dass beim Start manchmal keine Projekte angezeigt wurden.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.",
+        "en": "Version 0.2.2.5 - Hotfix.\n- 🐛 Linux: Fixes an issue where the app failed to auto-restart after an update if the path contained spaces or parentheses.\n- 🐛 Frontend: Fixes an issue where projects were not immediately displayed on startup.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics."
     }
 }
