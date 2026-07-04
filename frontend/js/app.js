@@ -6203,7 +6203,52 @@ function handleCleanTypography() {
     showToast("Typografie bereinigt! ✨", "success");
     markDirty();
 }
-
+async function loadProjectStats(projectId) {
+    const calendarContainer = document.getElementById('stat-activity-calendar');
+    if (!calendarContainer) return;
+    
+    calendarContainer.innerHTML = '';
+    
+    try {
+        const res = await fetch(`${API_URL}/projects/${projectId}/stats`);
+        const stats = res.ok ? await res.json() : {};
+        
+        // Generate last 30 days
+        const today = new Date();
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            const dayStats = stats[dateStr];
+            const words = dayStats ? dayStats.words_added : 0;
+            
+            const box = document.createElement('div');
+            box.style.width = '14px';
+            box.style.height = '14px';
+            box.style.borderRadius = '3px';
+            box.style.backgroundColor = 'var(--bg-base)';
+            box.title = `${dateStr}: ${words} Wörter`;
+            
+            if (words > 0) {
+                // Determine color intensity based on word count
+                if (words < 500) {
+                    box.style.backgroundColor = '#9be9a8';
+                } else if (words < 1500) {
+                    box.style.backgroundColor = '#40c463';
+                } else if (words < 3000) {
+                    box.style.backgroundColor = '#30a14e';
+                } else {
+                    box.style.backgroundColor = '#216e39';
+                }
+            }
+            
+            calendarContainer.appendChild(box);
+        }
+    } catch (e) {
+        console.error("Error loading stats", e);
+    }
+}
 
 // Expose functions globally
 window.applyPhysicsLayout = applyPhysicsLayout;
@@ -6215,3 +6260,4 @@ window.openChapterSettingsModal = openChapterSettingsModal;
 window.saveChapterSettings = saveChapterSettings;
 window.runStyleCheck = runStyleCheck;
 window.renderCorkboard = renderCorkboard;
+window.loadProjectStats = loadProjectStats;
