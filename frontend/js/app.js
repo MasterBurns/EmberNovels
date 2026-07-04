@@ -3612,7 +3612,8 @@ async function checkAppUpdates() {
                             }
 
                             if (!targetAsset) {
-                                throw new Error("Kein passendes ausführbares Paket für dein Betriebssystem gefunden.");
+                                // Fallback for source code installations
+                                targetAsset = { name: "Quellcode (ZIP)", browser_download_url: releaseData.zipball_url };
                             }
 
                             statusText.textContent = `Lade ${targetAsset.name} herunter...`;

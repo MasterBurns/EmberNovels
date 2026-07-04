@@ -131,14 +131,51 @@ def perform_hot_update(download_url: str):
             print("Extraction complete.")
             
         if not is_frozen:
-            print("Running in development mode. Simulating success, skipping hot-swap.")
-            if os.path.exists(new_exe_path):
+            print("Running in source/development mode. Applying source update...")
+            if is_archive:
+                print(f"Extracting source from archive {download_target}...")
+                import zipfile
+                import tarfile
+                import shutil
+                extract_dir = os.path.join(exe_dir, "temp_source_extract")
+                os.makedirs(extract_dir, exist_ok=True)
+                
                 try:
-                    os.remove(new_exe_path)
-                except Exception:
-                    pass
+                    if download_target.endswith(".zip"):
+                        with zipfile.ZipFile(download_target, 'r') as zip_ref:
+                            zip_ref.extractall(extract_dir)
+                    else:
+                        with tarfile.open(download_target, 'r:gz') as tar_ref:
+                            tar_ref.extractall(extract_dir)
+                            
+                    # GitHub zipballs contain a single top-level folder
+                    extracted_items = os.listdir(extract_dir)
+                    if len(extracted_items) == 1:
+                        source_root = os.path.join(extract_dir, extracted_items[0])
+                    else:
+                        source_root = extract_dir
+                        
+                    # Copy all files from source_root to exe_dir
+                    for item in os.listdir(source_root):
+                        s = os.path.join(source_root, item)
+                        d = os.path.join(exe_dir, item)
+                        if os.path.isdir(s):
+                            shutil.copytree(s, d, dirs_exist_ok=True)
+                        else:
+                            shutil.copy2(s, d)
+                            
+                    print("Source files updated successfully.")
+                except Exception as e:
+                    print(f"Failed to extract and copy source: {e}")
+                finally:
+                    if os.path.exists(download_target):
+                        try: os.remove(download_target)
+                        except: pass
+                    if os.path.exists(extract_dir):
+                        try: shutil.rmtree(extract_dir)
+                        except: pass
             
-            # Restart the script for dev mode testing
+            # Restart the script
             python_exe = sys.executable
             main_script = os.path.abspath(sys.argv[0])
             print("Spawning new development process...")
