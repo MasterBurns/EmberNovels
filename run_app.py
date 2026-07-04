@@ -138,7 +138,7 @@ def main():
 
     btn_open = tk.Button(
         btn_frame, 
-        text="🌐 Browser öffnen", 
+        text=texts["browser"], 
         font=button_font, 
         command=open_browser,
         bg="#ea580c", 
@@ -154,7 +154,7 @@ def main():
 
     btn_close = tk.Button(
         btn_frame, 
-        text="🛑 Beenden", 
+        text=texts["stop"], 
         font=button_font, 
         command=shutdown,
         bg="#1e293b", 
@@ -170,7 +170,7 @@ def main():
 
     lbl_logs = tk.Label(
         root, 
-        text="Server Logs:", 
+        text=texts["logs"], 
         font=("Helvetica", 10, "bold"), 
         fg="#94a3b8", 
         bg="#0f172a"

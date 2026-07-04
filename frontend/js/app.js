@@ -68,8 +68,24 @@ async function waitForBackend(maxRetries = 20) {
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     
+
     // Initialize UI Language
     state.uiLanguage = localStorage.getItem('ember_ui_language') || 'de';
+    
+    // Fetch global settings from backend
+    try {
+        const res = await fetch(`${API_BASE}/settings`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.settings && data.settings.ui_language) {
+                state.uiLanguage = data.settings.ui_language;
+                localStorage.setItem('ember_ui_language', state.uiLanguage);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load global settings", e);
+    }
+
     await loadUiLanguage(state.uiLanguage);
     
     // Wait for backend to be ready before fetching data
@@ -2552,7 +2568,20 @@ async function handleSaveSettings() {
     // Save UI language to localStorage and reload it
     const uiLang = document.getElementById('setting-ui-language').value;
     const oldUiLang = localStorage.getItem('ember_ui_language') || 'de';
+
     localStorage.setItem('ember_ui_language', uiLang);
+    
+    // Save to backend so the python app (Control Center) knows about it
+    try {
+        await fetch(`${API_BASE}/settings`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ui_language: uiLang})
+        });
+    } catch (e) {
+        console.error("Failed to save global settings to backend", e);
+    }
+
     state.uiLanguage = uiLang;
     if (uiLang !== oldUiLang) {
         await loadUiLanguage(uiLang);
