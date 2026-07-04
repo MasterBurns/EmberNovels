@@ -1,7 +1,7 @@
 {
-    "version": "0.2.2.5",
+    "version": "0.2.2.6",
     "release_notes": {
-        "de": "Version 0.2.2.5 - Hotfix.\n- 🐛 Linux: Behebt einen Fehler, bei dem die App nach einem Update nicht automatisch neu startete, wenn der Ordnername Leerzeichen oder Klammern enthielt.\n- 🐛 Frontend: Behebt das Problem, dass beim Start manchmal keine Projekte angezeigt wurden.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.",
-        "en": "Version 0.2.2.5 - Hotfix.\n- 🐛 Linux: Fixes an issue where the app failed to auto-restart after an update if the path contained spaces or parentheses.\n- 🐛 Frontend: Fixes an issue where projects were not immediately displayed on startup.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics."
+        "de": "Version 0.2.2.6 - Hotfix.\n- 🐛 Frontend: Behebt das Timing-Problem beim App-Start, wodurch das Frontend manchmal geladen wurde, bevor das Backend hochgefahren war. Versionsanzeige und Projekte laden jetzt extrem zuverlässig.\n- 🐛 Linux: Behebt einen Fehler, bei dem die App nach einem Update nicht automatisch neu startete, wenn der Ordnername Leerzeichen oder Klammern enthielt.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.",
+        "en": "Version 0.2.2.6 - Hotfix.\n- 🐛 Frontend: Fixes a timing issue during app startup where the frontend loaded before the backend was ready. Version display and project loading is now highly reliable.\n- 🐛 Linux: Fixes an issue where the app failed to auto-restart after an update if the path contained spaces or parentheses.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics."
     }
 }

@@ -43,6 +43,27 @@ const state = {
 // Base API URL
 const API_URL = '/api';
 
+async function waitForBackend(maxRetries = 20) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await fetch(`${API_URL}/version`);
+            if (response.ok) {
+                const data = await response.json();
+                state.localVersion = data.version;
+                const versionLbl = document.getElementById('lbl-app-version');
+                if (versionLbl) versionLbl.textContent = data.version;
+                return true;
+            }
+        } catch (e) {
+            // backend not ready yet
+        }
+        await new Promise(r => setTimeout(r, 500));
+    }
+    console.warn("Backend did not start in time. Falling back to defaults.");
+    state.localVersion = "0.2.1.4";
+    return false;
+}
+
 // On Document Load
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
@@ -51,22 +72,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.uiLanguage = localStorage.getItem('ember_ui_language') || 'de';
     await loadUiLanguage(state.uiLanguage);
     
+    // Wait for backend to be ready before fetching data
+    await waitForBackend();
+    
     setupEventListeners();
     navigateTo('projects');
-    
-    // Fetch local version info from backend
-    try {
-        const response = await fetch(`${API_URL}/version`);
-        if (response.ok) {
-            const data = await response.json();
-            state.localVersion = data.version;
-            const versionLbl = document.getElementById('lbl-app-version');
-            if (versionLbl) versionLbl.textContent = data.version;
-        }
-    } catch(e) {
-        console.warn("Could not load version from backend", e);
-        state.localVersion = "0.2.1.4"; // default fallback
-    }
 
     // Check local settings for autosave interval
     const savedInterval = localStorage.getItem('ember_autosave_interval');
