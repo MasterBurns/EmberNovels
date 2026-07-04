@@ -830,7 +830,7 @@ function setupEventListeners() {
 
 
 // 1. PROJECTS LOGIC
-async function loadProjects() {
+async function loadProjects(retryCount = 0) {
     const grid = document.getElementById('projects-grid');
     // Clear dynamic cards except the creation one
     const createCard = document.getElementById('card-create-project');
@@ -874,6 +874,11 @@ async function loadProjects() {
         });
         
     } catch (e) {
+        if (retryCount < 3) {
+            console.warn(`Retry ${retryCount+1}/3: Waiting for backend...`);
+            setTimeout(() => loadProjects(retryCount + 1), 1000);
+            return;
+        }
         showToast(t('error_load_projects', 'Fehler beim Laden der Projekte: ') + e.message, "danger");
     }
 }

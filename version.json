@@ -1,7 +1,7 @@
 {
-    "version": "0.2.2.3",
+    "version": "0.2.2.4",
     "release_notes": {
-        "de": "Version 0.2.2.3 - Hotfix.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.\n\nVersion 0.3.0.0 (Meilenstein 1 Features):\n- 📌 Neue Korktafel-Ansicht: Organisiere deine Kapitel visuell per Drag & Drop.\n- 🔍 Globale Suchen & Ersetzen-Funktion: Ändere Begriffe über alle Kapitel hinweg.\n- ✨ Smart Typography: Bereinige Anführungszeichen und Gedankenstriche mit einem Klick.\n- 📅 Writing Streak Calendar: Verfolge deinen Schreibfortschritt wie auf GitHub.",
-        "en": "Version 0.2.2.3 - Hotfix.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics.\n\nVersion 0.3.0.0 (Milestone 1 Features):\n- 📌 New Corkboard View: Visually organize your chapters via drag & drop.\n- 🔍 Global Search & Replace: Change terms across all chapters at once.\n- ✨ Smart Typography: Clean up quotes and dashes with a single click.\n- 📅 Writing Streak Calendar: Track your writing progress like on GitHub."
+        "de": "Version 0.2.2.4 - Hotfix.\n- 🐛 Frontend: Behebt das Problem, dass beim Start manchmal keine Projekte angezeigt wurden.\n- 🐛 Backend: Behebt einen 500er Server Error (AttributeError: BASE_DIR) beim Laden der Projekt-Statistiken.\n\nVersion 0.3.0.0 (Meilenstein 1 Features):\n- 📌 Neue Korktafel-Ansicht: Organisiere deine Kapitel visuell per Drag & Drop.",
+        "en": "Version 0.2.2.4 - Hotfix.\n- 🐛 Frontend: Fixes an issue where projects were not immediately displayed on startup.\n- 🐛 Backend: Fixes a 500 server error (AttributeError: BASE_DIR) when loading project statistics.\n\nVersion 0.3.0.0 (Milestone 1 Features):\n- 📌 New Corkboard View: Visually organize your chapters via drag & drop."
     }
 }
