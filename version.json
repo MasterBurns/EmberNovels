@@ -1,7 +1,7 @@
 {
-    "version": "0.2.2.1",
+    "version": "0.2.2.2",
     "release_notes": {
-        "de": "Version 0.3.0.0 - Productivity & View Update.\n- 📌 Neue Korktafel-Ansicht: Organisiere deine Kapitel visuell per Drag & Drop.\n- 🔍 Globale Suchen & Ersetzen-Funktion: Ändere Begriffe über alle Kapitel hinweg.\n- ✨ Smart Typography: Bereinige Anführungszeichen und Gedankenstriche mit einem Klick.\n- 📅 Writing Streak Calendar: Verfolge deinen Schreibfortschritt wie auf GitHub.",
-        "en": "Version 0.3.0.0 - Productivity & View Update.\n- 📌 New Corkboard View: Visually organize your chapters via drag & drop.\n- 🔍 Global Search & Replace: Change terms across all chapters at once.\n- ✨ Smart Typography: Clean up quotes and dashes with a single click.\n- 📅 Writing Streak Calendar: Track your writing progress like on GitHub."
+        "de": "Version 0.2.2.2 - Hotfix.\n- 🐛 Frontend: Behebt einen Fehler beim Start (ReferenceError: loadProjectStats is not defined) in der Projektübersicht.\n\nVersion 0.3.0.0 (Meilenstein 1 Features):\n- 📌 Neue Korktafel-Ansicht: Organisiere deine Kapitel visuell per Drag & Drop.\n- 🔍 Globale Suchen & Ersetzen-Funktion: Ändere Begriffe über alle Kapitel hinweg.\n- ✨ Smart Typography: Bereinige Anführungszeichen und Gedankenstriche mit einem Klick.\n- 📅 Writing Streak Calendar: Verfolge deinen Schreibfortschritt wie auf GitHub.",
+        "en": "Version 0.2.2.2 - Hotfix.\n- 🐛 Frontend: Fixes a startup crash (ReferenceError: loadProjectStats is not defined) in the project details view.\n\nVersion 0.3.0.0 (Milestone 1 Features):\n- 📌 New Corkboard View: Visually organize your chapters via drag & drop.\n- 🔍 Global Search & Replace: Change terms across all chapters at once.\n- ✨ Smart Typography: Clean up quotes and dashes with a single click.\n- 📅 Writing Streak Calendar: Track your writing progress like on GitHub."
     }
 }
