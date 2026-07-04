@@ -668,6 +668,7 @@
                     <div class="section-header">
                         <h2 class="section-title" data-i18n="mindmap_title">🧠 Mindmap Manager</h2>
                         <div style="display: flex; gap: 8px;">
+                            <button id="btn-mindmap-auto" class="btn btn-secondary" style="padding: 8px 16px;" onclick="autoGenerateMindmap()">✨ Auto-Generieren</button>
                             <button id="btn-mindmap-add-node" class="btn btn-primary" style="padding: 8px 16px;" data-i18n="mindmap_add_node">Knoten hinzufügen</button>
                             <button id="btn-mindmap-save" class="btn" style="padding: 8px 16px;" data-i18n="mindmap_save_layout">Layout speichern</button>
                         </div>
@@ -1020,6 +1021,12 @@
                         <option value="pdf">📕 PDF-Dokument (.pdf)</option>
                         <option value="epub">📖 eBook-Datei (.epub)</option>
                         <option value="zip">📦 ZIP-Archiv (.zip)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="export-volume-group" style="display: none;">
+                    <label class="form-label" for="export-volume-select">Nach Band filtern</label>
+                    <select id="export-volume-select" class="form-input" style="height: auto;" onchange="onExportVolumeChange()">
+                        <option value="">-- Alle Bände --</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1399,9 +1406,8 @@
 
     <!-- Toast UI Editor Library -->
     <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-    <!-- Vis Network Library -->
-    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <!-- SortableJS for Corkboard -->
+    <script src="js/marked.min.js"></script>
+    <script src="js/vis-network.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Application Script -->
     <script src="js/app.js"></script>

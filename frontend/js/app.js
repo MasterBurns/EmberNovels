@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Fetch global settings from backend
     try {
-        const res = await fetch(`${API_BASE}/settings`);
+        const res = await fetch(`${API_URL}/settings`);
         if (res.ok) {
             const data = await res.json();
             if (data.success && data.settings && data.settings.ui_language) {
@@ -2427,6 +2427,25 @@ function openExportModal() {
     const list = document.getElementById('export-chapters-list');
     list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">${t('loading_chapter', 'Lade Kapitel...')}</div>`;
     
+    // Populate volume dropdown
+    const volSelect = document.getElementById('export-volume-select');
+    const volGroup = document.getElementById('export-volume-group');
+    if (volSelect && volGroup) {
+        volSelect.innerHTML = '<option value="">-- Alle Bände --</option>';
+        const volumes = state.currentProject.volumes || [];
+        if (volumes.length > 0) {
+            volGroup.style.display = 'block';
+            volumes.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.title;
+                volSelect.appendChild(opt);
+            });
+        } else {
+            volGroup.style.display = 'none';
+        }
+    }
+    
     fetch(`${API_URL}/projects/${state.currentProject.id}/chapters`)
         .then(res => res.json())
         .then(chapters => {
@@ -2436,6 +2455,7 @@ function openExportModal() {
                 return;
             }
             
+            const mapping = state.currentProject.chapters_volume_mapping || {};
             chapters.forEach(ch => {
                 const item = document.createElement('div');
                 item.style.display = 'flex';
@@ -2443,8 +2463,10 @@ function openExportModal() {
                 item.style.gap = '8px';
                 item.style.marginBottom = '6px';
                 
+                const volId = mapping[ch.id] || '';
+                
                 item.innerHTML = `
-                    <input type="checkbox" id="export-ch-${ch.id}" class="export-chapter-chk" value="${ch.id}" checked>
+                    <input type="checkbox" id="export-ch-${ch.id}" class="export-chapter-chk" value="${ch.id}" data-volume="${volId}" checked>
                     <label for="export-ch-${ch.id}" style="font-size: 13px; cursor: pointer; user-select: none;">
                         ${escapeHtml(ch.title)}
                     </label>
@@ -2458,6 +2480,19 @@ function openExportModal() {
             showToast(t('error_load_chapters', 'Kapitel konnten nicht geladen werden.'), "danger");
         });
 }
+
+function onExportVolumeChange() {
+    const volId = document.getElementById('export-volume-select').value;
+    const checkboxes = document.querySelectorAll('.export-chapter-chk');
+    checkboxes.forEach(chk => {
+        if (!volId) {
+            chk.checked = true; // Select all if no volume filter
+        } else {
+            chk.checked = (chk.getAttribute('data-volume') === volId);
+        }
+    });
+}
+
 
 function updateDetectedKeywords() {
     const detectedSection = document.getElementById('lore-quick-detected-section');
@@ -2573,7 +2608,7 @@ async function handleSaveSettings() {
     
     // Save to backend so the python app (Control Center) knows about it
     try {
-        await fetch(`${API_BASE}/settings`, {
+        await fetch(`${API_URL}/settings`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ui_language: uiLang})
@@ -6516,4 +6551,113 @@ if (btnMindmapNodeSave) {
 
         closeModal('modal-mindmap-node');
     });
+}
+
+
+async function autoGenerateMindmap() {
+    if (!state.currentProject) return;
+    
+    showToast("Generiere Mindmap...", "info");
+    
+    try {
+        const loreRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore`);
+        const loreData = await loreRes.json();
+        
+        const chRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters`);
+        const chData = await chRes.json();
+        
+        mindmapNodes.clear();
+        mindmapEdges.clear();
+        
+        const newNodes = [];
+        const newEdges = [];
+        
+        // Add characters
+        const chars = loreData.filter(l => l.type === 'character');
+        chars.forEach(c => {
+            newNodes.push({
+                id: c.id,
+                label: c.title,
+                group: 'character',
+                shape: 'dot',
+                color: '#3b82f6',
+                font: { color: '#e2e8f0' }
+            });
+            
+            // Link character relations
+            if (c.relations) {
+                for (const [targetId, relType] of Object.entries(c.relations)) {
+                    newEdges.push({
+                        from: c.id,
+                        to: targetId,
+                        label: relType,
+                        arrows: 'to',
+                        color: { color: '#64748b' }
+                    });
+                }
+            }
+        });
+        
+        // Add locations
+        const locs = loreData.filter(l => l.type === 'location');
+        locs.forEach(l => {
+            newNodes.push({
+                id: l.id,
+                label: l.title,
+                group: 'location',
+                shape: 'square',
+                color: '#10b981',
+                font: { color: '#e2e8f0' }
+            });
+        });
+        
+        // Add items
+        const items = loreData.filter(l => l.type === 'item');
+        items.forEach(i => {
+            newNodes.push({
+                id: i.id,
+                label: i.title,
+                group: 'item',
+                shape: 'triangle',
+                color: '#f59e0b',
+                font: { color: '#e2e8f0' }
+            });
+        });
+        
+        // Add chapters
+        chData.forEach(ch => {
+            newNodes.push({
+                id: 'ch_' + ch.id,
+                label: ch.title,
+                group: 'chapter',
+                shape: 'box',
+                color: '#8b5cf6',
+                font: { color: '#ffffff' }
+            });
+            
+            // If the chapter has detected lore, link them
+            if (ch.metadata && ch.metadata.detected_lore) {
+                ch.metadata.detected_lore.forEach(loreId => {
+                    newEdges.push({
+                        from: 'ch_' + ch.id,
+                        to: loreId,
+                        arrows: 'to',
+                        color: { color: '#4c1d95' }
+                    });
+                });
+            }
+        });
+        
+        mindmapNodes.add(newNodes);
+        mindmapEdges.add(newEdges);
+        
+        if (mindmapNetwork) {
+            mindmapNetwork.fit();
+        }
+        
+        showToast("Mindmap erfolgreich generiert!", "success");
+    } catch(e) {
+        showToast("Fehler bei der Mindmap-Generierung.", "error");
+        console.error(e);
+    }
 }
