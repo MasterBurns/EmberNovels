@@ -131,6 +131,7 @@ async function waitForBackend(maxRetries = 20) {
             if (response.ok) {
                 const data = await response.json();
                 state.localVersion = data.version;
+                state.isCompiled = data.is_compiled;
                 const versionLbl = document.getElementById('lbl-app-version');
                 if (versionLbl) versionLbl.textContent = data.version;
                 return true;

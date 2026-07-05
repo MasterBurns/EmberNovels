@@ -63,7 +63,11 @@ def perform_hot_update(download_url: str):
             # Find the root of the source (usually inside a single top-level folder)
             extracted_items = os.listdir(extract_dir)
             if len(extracted_items) == 1:
-                source_root = os.path.join(extract_dir, extracted_items[0])
+                item_path = os.path.join(extract_dir, extracted_items[0])
+                if os.path.isdir(item_path):
+                    source_root = item_path
+                else:
+                    source_root = extract_dir
             else:
                 source_root = extract_dir
                 

@@ -39,18 +39,21 @@ import json
 @app.get(f"{API_PREFIX}/version")
 def get_version():
     import sys
-    if getattr(sys, 'frozen', False):
+    is_compiled = getattr(sys, 'frozen', False)
+    if is_compiled:
         version_path = os.path.join(sys._MEIPASS, "version.json")
     else:
         version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "version.json")
         
     if not os.path.exists(version_path):
-        return {"version": "0.1.2.0", "release_notes": {}}
+        return {"version": "0.1.2.0", "release_notes": {}, "is_compiled": is_compiled}
     try:
         with open(version_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            data["is_compiled"] = is_compiled
+            return data
     except Exception as e:
-        return {"version": "0.1.2.0", "error": str(e)}
+        return {"version": "0.1.2.0", "error": str(e), "is_compiled": is_compiled}
 
 @app.get("/")
 def read_root():

@@ -123,17 +123,22 @@ async function checkAppUpdates() {
                             const platform = navigator.userAgent.toLowerCase();
                             let targetAsset = null;
 
-                            if (platform.includes('win')) {
-                                targetAsset = releaseData.assets.find(a => a.name.includes('Windows') && a.name.endsWith('.zip'));
-                            } else if (platform.includes('mac') || platform.includes('darwin')) {
-                                targetAsset = releaseData.assets.find(a => a.name.includes('macOS') || a.name.endsWith('.zip'));
-                            } else if (platform.includes('linux')) {
-                                targetAsset = releaseData.assets.find(a => a.name.includes('Linux') && a.name.endsWith('.tar.gz'));
-                            }
-
-                            if (!targetAsset) {
-                                // Fallback for source code installations
+                            // If we are not compiled (running from source), we MUST download the zipball source code.
+                            if (state.isCompiled === false) {
                                 targetAsset = { name: "Quellcode (ZIP)", browser_download_url: releaseData.zipball_url };
+                            } else {
+                                if (platform.includes('win')) {
+                                    targetAsset = releaseData.assets.find(a => a.name.includes('Windows') && a.name.endsWith('.zip'));
+                                } else if (platform.includes('mac') || platform.includes('darwin')) {
+                                    targetAsset = releaseData.assets.find(a => a.name.includes('macOS') || a.name.endsWith('.zip'));
+                                } else if (platform.includes('linux')) {
+                                    targetAsset = releaseData.assets.find(a => a.name.includes('Linux') && a.name.endsWith('.tar.gz'));
+                                }
+                                
+                                if (!targetAsset) {
+                                    // Fallback for source code installations
+                                    targetAsset = { name: "Quellcode (ZIP)", browser_download_url: releaseData.zipball_url };
+                                }
                             }
 
                             statusText.textContent = `Lade ${targetAsset.name} herunter...`;

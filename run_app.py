@@ -228,9 +228,18 @@ def main():
 
     # Configure custom logging handler for Python / Uvicorn logger streams
     log_handler = TkinterLogHandler(txt_logs)
-    log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', '%H:%M:%S'))
-    logging.getLogger().addHandler(log_handler)
-    logging.getLogger().setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', '%H:%M:%S')
+    log_handler.setFormatter(formatter)
+    
+    # Also add a file handler so we have a persistent log
+    log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "embernovels_server.log")
+    file_handler = logging.FileHandler(log_file_path, mode="w", encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(log_handler)
+    root_logger.addHandler(file_handler)
 
     for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
         logger = logging.getLogger(logger_name)
