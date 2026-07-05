@@ -100,7 +100,8 @@ class StorageService:
             "word_count_goal": 50000,
             "daily_word_count_goal": 500,
             "status": "active",
-            "chapters_order": []
+            "chapters_order": [],
+            "active_modules": ["editor", "lore", "timeline", "stats", "corkboard", "relationships", "mindmap", "export"]
         }
         
         with open(project_path / "project.json", 'w', encoding='utf-8') as f:

@@ -7,13 +7,19 @@ router = APIRouter()
 
 def get_settings_path():
     import sys
+    from pathlib import Path
     if getattr(sys, 'frozen', False):
-        return os.path.join(sys._MEIPASS, "settings.json")
+        config_dir = Path.home() / "EmberNovels"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        return str(config_dir / "settings.json")
     else:
         return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "settings.json")
 
+from typing import Optional
 class GlobalSettings(BaseModel):
     ui_language: str
+    first_run_completed: Optional[bool] = False
+    tutorial_modules_seen: Optional[bool] = False
 
 @router.get("/settings")
 def get_global_settings():
@@ -31,13 +37,16 @@ def get_global_settings():
 def save_global_settings(settings: GlobalSettings):
     path = get_settings_path()
     try:
-        # Load existing if exists
         data = {}
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         
         data["ui_language"] = settings.ui_language
+        if settings.first_run_completed is not None:
+            data["first_run_completed"] = settings.first_run_completed
+        if settings.tutorial_modules_seen is not None:
+            data["tutorial_modules_seen"] = settings.tutorial_modules_seen
         
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)

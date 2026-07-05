@@ -1,7 +1,7 @@
 {
-    "version": "0.3.0.6",
+    "version": "0.3.5.0",
     "release_notes": {
-        "de": "Version 0.3.0.1 - Full i18n Update.\n- 🌍 Vollständige Lokalisierung des Frontends für alle 7 unterstützten Sprachen.\n- 🌍 Das Kontrollzentrum (Server-Launcher) startet nun in der vom Nutzer im Frontend gewählten UI-Sprache.\n- ✨ Einführung eines globalen Settings-APIs zur App-übergreifenden Sprachsynchronisierung.",
-        "en": "Version 0.3.0.1 - Full i18n Update.\n- 🌍 Full localization of the frontend for all 7 supported languages.\n- 🌍 The Control Center (server launcher) now starts in the UI language selected by the user in the frontend.\n- ✨ Introduction of a global settings API for app-wide language synchronization."
+        "de": "Version 0.3.5.0 - Modulares Frontend & Bugfixes.\n- 🏗️ Komplettes Refactoring: Die App lädt nun modular, was die Performance und Stabilität drastisch erhöht.\n- ⚙️ Dynamische Projekt-Module: Wähle in den Einstellungen pro Projekt aus, welche Tools in der Seitenleiste angezeigt werden sollen.\n- 🌍 OOBE Sprachenwahl: Neues Ersteinrichtungs-Tutorial für Sprachen und Module.\n- 🐛 Bugfixes: Projekte laden nun sofort beim App-Start und Wiki-Charaktere lassen sich direkt aus der Mindmap erstellen.\n- 🔄 Update-Manager: Der Update-Prozess wurde für Windows, Linux und Mac komplett neu geschrieben und arbeitet nun robust im Hintergrund.",
+        "en": "Version 0.3.5.0 - Modular Frontend & Bugfixes.\n- 🏗️ Complete Refactoring: The app now loads modularly, drastically increasing performance and stability.\n- ⚙️ Dynamic Project Modules: Choose which tools to display in the sidebar per project via settings.\n- 🌍 OOBE Language Selection: New onboarding tutorial for languages and modules.\n- 🐛 Bugfixes: Projects now load instantly on startup, and Wiki characters can be created directly from the Mindmap.\n- 🔄 Update Manager: The update process has been completely rewritten for Windows, Linux, and Mac, working robustly in the background."
     }
 }

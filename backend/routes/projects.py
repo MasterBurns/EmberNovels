@@ -23,6 +23,7 @@ class ProjectUpdate(BaseModel):
     chapters_volume_mapping: Optional[Dict[str, str]] = None
     original_language: Optional[str] = None
     chapters_descriptions: Optional[Dict[str, str]] = None
+    active_modules: Optional[List[str]] = None
 
 @router.get("")
 def list_projects():

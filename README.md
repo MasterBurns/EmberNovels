@@ -16,8 +16,8 @@ Select your language below / Wähle deine Sprache:
 ### Über EmberNovels
 EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft. Deine Manuskripte werden in offenen Textformaten gespeichert (Markdown/JSON) - maximale Datensicherheit ohne Cloud-Zwang.
 
-### Aktuelle Features (v0.3.0.0)
-1. **Zen-Modus & einklappbare Sidebars**: Konzentriere dich voll und ganz auf dein Schreiben. Sidebars lassen sich einklappen und bei Bedarf über ein Pinning-System (`📌`/`📍`) anheften, um permanent sichtbar zu bleiben.
+### Aktuelle Features (v0.3.5.0)
+1. **Dynamische & Einklappbare Sidebars**: Wähle in den Projekteinstellungen individuell, welche Tools (wie Mindmap oder Timeline) in der Seitenleiste angezeigt werden sollen. Passe die App exakt an dein aktuelles Schreibprojekt an. Sidebars lassen sich einklappen und bei Bedarf über ein Pinning-System (`📌`/`📍`) anheften, um permanent sichtbar zu bleiben.
 2. **Lore-Wiki (Weltenbau)**: Lege Charaktere, Orte, Gegenstände und historische Ereignisse an. EmberNovels erkennt Lore-Keywords automatisch im Text und blendet beim Hovern ein elegantes schwebendes Infofenster mit Details ein.
 3. **Zeitleisten-Editor (Timeline)**: Organisiere die Chronologie deiner Geschichte. Verknüpfe Ereignisse direkt mit Lore-Einträgen für ein interaktives Planungserlebnis.
 4. **Schreibstatistiken**: Verfolge dein Wortziel, die tägliche Schreibgeschwindigkeit (Session-Wortzähler) und vergleiche die Wortanzahl deiner Kapitel in einem visuellen Diagramm.
@@ -31,6 +31,7 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 12. **Export-Assistent**: Exportiere deine Bücher direkt als ePub oder PDF (unterstützt Markdown-Formatierung).
 13. **Buch-Bände (Volume Organizer)**: Organisiere und gruppiere deine Kapitel strukturiert in verschiedenen Bänden mittels Drag & Drop.
 14. **Mindmap Manager**: Interaktive Mindmap zur visuellen Vernetzung von Charakteren, Lore, Kapiteln und dem Zeitstrahl.
+15. **Smartes OOBE & Update System**: Automatischer Sprachwahl-Assistent beim ersten Start und ein komplett sicheres Hintergrund-Update-System, das dich auf dem Laufenden hält.
 
 ### Geplante Funktionen (Roadmap)
 - Weitere API-Integrationen für zusätzliche lokale LLMs.
@@ -45,8 +46,8 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 ### About EmberNovels
 EmberNovels is a feature-rich desktop application for authors and novel writers. It runs entirely locally, storing your manuscripts in open file formats (Markdown/JSON) - providing maximum data privacy.
 
-### Existing Features (v0.3.0.0)
-1. **Zen Mode & Collapsible Sidebars**: Write distraction-free. Collapse both sidebars to focus on your writing, or pin them using the pinning system (`📌`/`📍`) to keep them visible.
+### Existing Features (v0.3.5.0)
+1. **Dynamic & Collapsible Sidebars**: Customize which tools (like Mindmap or Timeline) are displayed in the sidebar on a per-project basis via settings. Tailor the app exactly to your current writing project. Collapse both sidebars to focus on your writing, or pin them using the pinning system (`📌`/`📍`) to keep them visible.
 2. **Lore Wiki (Worldbuilding)**: Create entries for characters, locations, items, and historical events. EmberNovels automatically detects these keywords in your manuscript and displays detailed facts in glassmorphic hover tooltips.
 3. **Timeline Editor**: Plan your novel's chronology. Link historical events directly to Lore Wiki entries for interactive planning.
 4. **Writing Stats**: Track your total word count goal, average words per chapter, daily session writing progress, and view chapter size comparisons in a dynamic bar chart.
@@ -60,6 +61,7 @@ EmberNovels is a feature-rich desktop application for authors and novel writers.
 12. **Export Wizard**: Convert and export your novels to ePub or PDF formats (supporting markdown styles).
 13. **Volume Organizer**: Categorize and group your chapters into volume folders easily using drag & drop.
 14. **Mindmap Manager**: Interactive mindmap to visually connect characters, lore, chapters, and timeline events.
+15. **Smart OOBE & Update System**: Automatic language selection wizard on first start and a fully secure background update system that keeps you up to date.
 
 ### Planned Features (Roadmap)
 - More API integrations for additional local LLMs.

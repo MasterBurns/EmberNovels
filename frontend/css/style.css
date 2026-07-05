@@ -82,6 +82,9 @@ button, input, textarea, select {
     flex-direction: column;
     padding: 24px 16px;
     flex-shrink: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     transition: width 0.3s ease, padding 0.3s ease, border-right 0.3s ease;
 }
 
