@@ -96,6 +96,9 @@ async function openEditor(projectId, chapterId) {
                 clearTimeout(state.detectedKeywordsTimeout);
                 state.detectedKeywordsTimeout = setTimeout(updateDetectedKeywords, 400);
             });
+            
+            // Setup the mousemove event for inline lore tooltips
+            setupLoreTooltip();
         }
         
         // Make sure theme matches
@@ -312,5 +315,99 @@ async function handleCopyForWebnovel() {
             showToast('Fehler beim Kopieren: ' + e.message, 'danger');
         }
     }
+}
+
+function setupLoreTooltip() {
+    const editorContainer = document.getElementById('editor-container');
+    const tooltip = document.getElementById('editor-lore-tooltip');
+    if (!editorContainer || !tooltip) return;
+    
+    let debounceTimer;
+    
+    editorContainer.addEventListener('mousemove', (e) => {
+        clearTimeout(debounceTimer);
+        tooltip.classList.remove('visible');
+        
+        // Ensure we only show tooltip if loreList exists and has entries
+        if (!state.loreList || state.loreList.length === 0) return;
+        
+        debounceTimer = setTimeout(() => {
+            let range;
+            let textNode;
+            let offset;
+            
+            if (document.caretRangeFromPoint) {
+                range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                if (range) {
+                    textNode = range.startContainer;
+                    offset = range.startOffset;
+                }
+            } else if (document.caretPositionFromPoint) {
+                const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                if (pos) {
+                    textNode = pos.offsetNode;
+                    offset = pos.offset;
+                }
+            }
+            
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                const text = textNode.textContent;
+                let start = offset;
+                // Find word boundaries (including German umlauts)
+                while (start > 0 && /[a-zA-ZäöüÄÖÜß]/.test(text[start - 1])) {
+                    start--;
+                }
+                let end = offset;
+                while (end < text.length && /[a-zA-ZäöüÄÖÜß]/.test(text[end])) {
+                    end++;
+                }
+                
+                if (start < end) {
+                    const word = text.substring(start, end).trim();
+                    if (word.length > 2) {
+                        const wordLower = word.toLowerCase();
+                        const foundLore = state.loreList.find(l => 
+                            l.title.toLowerCase() === wordLower || 
+                            (l.aliases && l.aliases.some(a => a.toLowerCase() === wordLower))
+                        );
+                        
+                        if (foundLore) {
+                            tooltip.style.display = 'block';
+                            tooltip.querySelector('.tooltip-title').textContent = foundLore.title;
+                            tooltip.querySelector('.tooltip-category').textContent = foundLore.category || 'Lore';
+                            
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = foundLore.content || '';
+                            let plainText = tempDiv.textContent || tempDiv.innerText || '';
+                            if (plainText.length > 150) plainText = plainText.substring(0, 150) + '...';
+                            
+                            tooltip.querySelector('.tooltip-body').textContent = plainText;
+                            
+                            let tipX = e.clientX + 15;
+                            let tipY = e.clientY + 15;
+                            
+                            if (tipX + 300 > window.innerWidth) {
+                                tipX = e.clientX - 315;
+                            }
+                            if (tipY + 150 > window.innerHeight) {
+                                tipY = e.clientY - 165;
+                            }
+                            
+                            tooltip.style.left = `${tipX}px`;
+                            tooltip.style.top = `${tipY}px`;
+                            
+                            void tooltip.offsetWidth; // force reflow
+                            tooltip.classList.add('visible');
+                        }
+                    }
+                }
+            }
+        }, 250);
+    });
+    
+    editorContainer.addEventListener('mouseleave', () => {
+        clearTimeout(debounceTimer);
+        tooltip.classList.remove('visible');
+    });
 }
 

@@ -1324,3 +1324,56 @@ button, input, textarea, select {
     background: var(--bg-base);
     border-radius: 4px;
 }
+
+/* Editor Lore Hover Tooltip */
+.editor-lore-tooltip {
+    position: absolute;
+    z-index: 9999;
+    max-width: 300px;
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: none; /* Let mouse pass through */
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-out;
+    transform: translateY(10px);
+    color: var(--text-color);
+}
+
+.editor-lore-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.editor-lore-tooltip .tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.editor-lore-tooltip .tooltip-title {
+    font-weight: 600;
+    font-size: 1.1em;
+    color: var(--accent-color);
+}
+
+.editor-lore-tooltip .tooltip-category {
+    font-size: 0.7em;
+    padding: 2px 6px;
+    background: var(--surface-bg-alt);
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.editor-lore-tooltip .tooltip-body {
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
