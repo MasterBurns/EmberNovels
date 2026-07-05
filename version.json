@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.6",
+    "version": "0.3.6.7",
     "release_notes": {
-        "de": "Version 0.3.6.6 - AI-Einstellungen & Updater.\n- ✨ Neu: Die AI-Modell-Auswahl ist nun eine echte, aufklappbare Dropdown-Liste.\n- ✨ Neu: Für die Gemini API wird nun eine Nutzungsanzeige eingeblendet, die dir zeigt, wie viele Free Tier Anfragen (von 1500 pro Tag) du bereits verbraucht hast.\n- 🐛 Fix: Weiterer Stabilitäts-Fix für den automatischen Updater unter Linux (Verwendung von nohup zur Prozess-Entkopplung).\n- 📝 Info: Text für den Gemini Free Tier verdeutlicht: Bei Erreichen des Limits gibt es lediglich eine Fehlermeldung (429), es können keine versteckten Kosten anfallen.",
-        "en": "Version 0.3.6.6 - AI Settings & Updater.\n- ✨ New: The AI model selection field is now a proper dropdown list.\n- ✨ New: Added a usage tracker for the Gemini API that shows how many Free Tier requests (out of 1500 per day) you have used.\n- 🐛 Fix: Another stability fix for the automatic updater on Linux (using nohup for process decoupling).\n- 📝 Info: Clarified text for the Gemini Free Tier: Reaching the limit simply results in an error message (429), there are no hidden costs."
+        "de": "Version 0.3.6.7 - UI-Polishing & Bugfixes.\n- ✨ Neu: Die Toolbar-Dropdowns im Editor sehen nun deutlich moderner und ansprechender aus (inklusive sanfter Animationen und Schatten).\n- 🐛 Fix: Das Dropdown für die KI-Modelle zeigt nun den Text der Modelle wieder korrekt an.\n- 🐛 Fix: Der Hover-Effekt für Lore-Einträge wurde im WYSIWYG-Editor nochmal deutlich robuster gemacht, um Probleme mit Zero-Width-Spaces und verschachtelten HTML-Elementen zu umgehen.",
+        "en": "Version 0.3.6.7 - UI Polishing & Bugfixes.\n- ✨ New: The editor toolbar dropdowns now have a much more modern and appealing look (including smooth animations and shadows).\n- 🐛 Fix: The AI models dropdown now correctly displays the text of the loaded models.\n- 🐛 Fix: The hover tooltip for Lore entries has been made much more robust in the WYSIWYG editor to handle zero-width spaces and nested HTML elements."
     }
 }

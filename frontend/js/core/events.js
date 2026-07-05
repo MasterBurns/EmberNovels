@@ -56,6 +56,7 @@ function setupEventListeners() {
                     models.forEach(model => {
                         const opt = document.createElement('option');
                         opt.value = model;
+                        opt.textContent = model;
                         if (!Array.from(datalist.options).some(o => o.value === model)) datalist.appendChild(opt);
                     });
                     showToast(`${models.length} Modelle geladen!`, "success");

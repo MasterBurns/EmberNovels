@@ -678,55 +678,94 @@ button, input, textarea, select {
 }
 
 .toolbar-dropdown-btn {
-    background: none;
-    border: 1px solid transparent;
-    padding: 6px 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
     border-radius: 6px;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .toolbar-dropdown-btn:hover {
-    background-color: var(--bg-surface);
+    background-color: var(--bg-surface-hover);
+    border-color: var(--color-primary);
     color: var(--color-primary);
-    border-color: var(--border-color);
+}
+
+.toolbar-dropdown-btn .chevron {
+    transition: transform 0.2s ease;
+    opacity: 0.6;
+}
+
+.toolbar-dropdown:hover .toolbar-dropdown-btn .chevron {
+    transform: rotate(180deg);
+    opacity: 1;
 }
 
 .toolbar-dropdown-content {
     display: none;
     position: absolute;
-    background-color: var(--bg-surface);
-    min-width: 200px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    background: var(--bg-surface);
+    min-width: 220px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2), 0 0 0 1px var(--border-color);
     z-index: 1000;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 4px 0;
+    border-radius: 8px;
+    padding: 6px;
     top: 100%;
     left: 0;
-    margin-top: 0;
+    margin-top: 6px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .toolbar-dropdown:hover .toolbar-dropdown-content {
     display: block;
+    animation: dropdownFadeIn 0.2s forwards ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.toolbar-dropdown::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 100%;
+    height: 6px;
 }
 
 .toolbar-dropdown-content .toolbar-btn {
     width: 100%;
     text-align: left;
     border: none;
-    border-radius: 0;
-    padding: 8px 16px;
+    border-radius: 6px;
+    padding: 8px 12px;
     background-color: transparent;
     justify-content: flex-start;
+    font-size: 13px;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .toolbar-dropdown-content .toolbar-btn:hover {
     background-color: var(--bg-surface-hover);
+    color: var(--color-primary);
 }
 
 .editor-dual-view {

@@ -370,20 +370,33 @@ function setupLoreTooltip() {
                 }
             }
             
+            if (textNode && textNode.nodeType === Node.ELEMENT_NODE) {
+                if (textNode.childNodes.length > 0 && offset < textNode.childNodes.length) {
+                    const child = textNode.childNodes[offset];
+                    if (child && child.nodeType === Node.TEXT_NODE) {
+                        textNode = child;
+                        offset = 0;
+                    } else if (child && child.innerText) {
+                        // For spans with inner text
+                        textNode = { nodeType: Node.TEXT_NODE, textContent: child.innerText };
+                        offset = 0;
+                    }
+                }
+            }
+            
             if (textNode && textNode.nodeType === Node.TEXT_NODE) {
                 const text = textNode.textContent;
                 let start = offset;
-                // Find word boundaries (including German umlauts)
-                while (start > 0 && /[a-zA-ZäöüÄÖÜß]/.test(text[start - 1])) {
+                while (start > 0 && /[a-zA-ZäöüÄÖÜß\-]/.test(text[start - 1])) {
                     start--;
                 }
                 let end = offset;
-                while (end < text.length && /[a-zA-ZäöüÄÖÜß]/.test(text[end])) {
+                while (end < text.length && /[a-zA-ZäöüÄÖÜß\-]/.test(text[end])) {
                     end++;
                 }
                 
                 if (start < end) {
-                    const word = text.substring(start, end).trim();
+                    let word = text.substring(start, end).replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
                     if (word.length > 2) {
                         const wordLower = word.toLowerCase();
                         const foundLore = state.loreList.find(l => 
