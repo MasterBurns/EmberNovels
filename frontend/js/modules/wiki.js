@@ -31,8 +31,11 @@ function renderLoreList(entries) {
         const el = document.createElement('div');
         el.className = 'list-item';
         el.style.padding = '10px 14px';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
         el.innerHTML = `
-            <div class="list-item-info">
+            <input type="checkbox" class="lore-bulk-chk" value="${entry.id}" style="margin-right: 12px; cursor: pointer;" title="Auswählen" onclick="event.stopPropagation(); window.toggleLoreBulkDeleteBtn()">
+            <div class="list-item-info" style="flex: 1;">
                 <div class="list-item-title" style="font-size: 14px; font-weight: 500;">${escapeHtml(entry.name)}</div>
                 <div class="list-item-meta" style="font-size: 11px;">${translateCategory(entry.category)}</div>
             </div>
@@ -40,6 +43,7 @@ function renderLoreList(entries) {
         el.addEventListener('click', () => showLoreDetail(entry.id));
         listContainer.appendChild(el);
     });
+    window.toggleLoreBulkDeleteBtn();
 }
 
 function filterLoreEntries() {
@@ -63,11 +67,12 @@ function openLoreModal(loreId = null, prefilledName = null) {
     state.editingLoreId = loreId;
     
     const titleEl = document.getElementById('lore-modal-title');
-    const nameEl = document.getElementById('lore-name');
-    const categoryEl = document.getElementById('lore-category');
-    const keywordsEl = document.getElementById('lore-keywords');
-    const shortDescEl = document.getElementById('lore-short-desc');
-    const descEl = document.getElementById('lore-desc');
+    document.getElementById('lore-name').value = '';
+    document.getElementById('lore-category').value = 'character';
+    document.getElementById('lore-keywords').value = '';
+    document.getElementById('lore-timeline-date').value = '';
+    document.getElementById('lore-short-desc').value = '';
+    document.getElementById('lore-desc').value = '';  
     
     // Render project assignment checkboxes
     renderLoreProjectCheckboxes(loreId);
@@ -77,20 +82,17 @@ function openLoreModal(loreId = null, prefilledName = null) {
         titleEl.textContent = 'Lore-Eintrag bearbeiten';
         const entry = state.loreList.find(e => e.id === loreId);
         if (entry) {
-            nameEl.value = entry.name;
-            categoryEl.value = entry.category;
-            keywordsEl.value = entry.keywords.join(', ');
-            shortDescEl.value = entry.short_description;
-            descEl.value = entry.description;
+            document.getElementById('lore-name').value = entry.name || '';
+            document.getElementById('lore-category').value = entry.category || 'lore';
+            document.getElementById('lore-keywords').value = (entry.keywords || []).join(', ');
+            document.getElementById('lore-timeline-date').value = entry.timeline_date || '';
+            document.getElementById('lore-short-desc').value = entry.short_description || '';
+            document.getElementById('lore-desc').value = entry.description || '';
         }
     } else {
         // Create mode
         titleEl.textContent = 'Neuer Lore-Eintrag';
-        nameEl.value = prefilledName || '';
-        categoryEl.value = 'character';
-        keywordsEl.value = prefilledName || '';
-        shortDescEl.value = '';
-        descEl.value = '';
+        document.getElementById('lore-name').value = prefilledName || '';
     }
     
     openModal('modal-lore');
@@ -130,6 +132,7 @@ async function handleSaveLore() {
     const name = document.getElementById('lore-name').value.trim();
     const category = document.getElementById('lore-category').value;
     const keywordsRaw = document.getElementById('lore-keywords').value;
+    const timeline_date = document.getElementById('lore-timeline-date').value.trim();
     const short_description = document.getElementById('lore-short-desc').value.trim();
     const description = document.getElementById('lore-desc').value;
     
@@ -156,7 +159,7 @@ async function handleSaveLore() {
         }
     });
     
-    const payload = { name, category, short_description, description, keywords, project_ids };
+    const payload = { name, category, short_description, description, keywords, timeline_date, project_ids };
     
     const isEdit = !!state.editingLoreId;
     const url = isEdit 
@@ -398,3 +401,40 @@ function highlightKeywords(node, regex, allKeywords) {
 window.openLoreModal = openLoreModal;
 window.deleteLoreEntry = deleteLoreEntry;
 
+window.toggleLoreBulkDeleteBtn = function() {
+    const btn = document.getElementById('btn-wiki-bulk-delete');
+    const anyChecked = document.querySelectorAll('.lore-bulk-chk:checked').length > 0;
+    if (btn) btn.style.display = anyChecked ? 'block' : 'none';
+};
+
+window.handleBulkDeleteLore = async function() {
+    if (!state.currentProject) return;
+    const checkboxes = document.querySelectorAll('.lore-bulk-chk:checked');
+    if (checkboxes.length === 0) return;
+    
+    if (!confirm(t('confirm_bulk_delete_lore', 'Möchtest du wirklich ' + checkboxes.length + ' ausgewählte Einträge löschen?'))) {
+        return;
+    }
+    
+    const lore_ids = Array.from(checkboxes).map(c => c.value);
+    try {
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/bulk`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lore_ids })
+        });
+        if (!response.ok) throw new Error("Could not delete multiple entries");
+        
+        showToast(t('bulk_delete_lore_success', checkboxes.length + ' Einträge gelöscht.'), "success");
+        state.editingLoreId = null;
+        document.getElementById('wiki-article-container').innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 48px; margin: auto;">
+                <span style="font-size: 48px; display: block; margin-bottom: 16px;">📖</span>
+                <p>${t('lore_empty_state_text', 'Wähle einen Lore-Eintrag aus...')}</p>
+            </div>
+        `;
+        await loadLoreEntries();
+    } catch (e) {
+        showToast(t('error_delete_lore', 'Fehler beim Löschen: ') + e.message, "danger");
+    }
+};

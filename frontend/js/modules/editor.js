@@ -99,9 +99,6 @@ async function openEditor(projectId, chapterId) {
                     clearTimeout(state.highlightTimeout);
                     state.highlightTimeout = setTimeout(highlightKeywordsInPreview, 300);
                     
-                    // Update detected keywords list in the side panel
-                    clearTimeout(state.detectTimeout);
-                    state.detectTimeout = setTimeout(updateDetectedLoreInSidebar, 500);
                 }
             });
             // Note: The onChange callback is already passed above, no need to call state.editor.on()

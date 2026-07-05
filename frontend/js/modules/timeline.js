@@ -137,7 +137,20 @@ function renderTimeline() {
     flow.innerHTML = '';
     if (chartContainer) chartContainer.innerHTML = '';
     
-    if (state.timelineEvents.length === 0) {
+    // Merge standard timeline events with Lore entries that have a timeline_date
+    const loreEvents = (state.loreList || []).filter(l => l.timeline_date).map(l => ({
+        id: l.id,
+        is_lore: true,
+        title: l.name,
+        date: l.timeline_date,
+        plotline: 'Lore / Weltenbau',
+        desc: l.short_description || 'Lore-Eintrag',
+        lore_id: l.id
+    }));
+    
+    const displayEvents = [...(state.timelineEvents || []), ...loreEvents];
+
+    if (displayEvents.length === 0) {
         list.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 13px;">Keine Ereignisse vorhanden.</div>`;
         flow.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">Die Zeitleiste ist noch leer. Füge links Ereignisse hinzu!</div>`;
         if (chartContainer) {
@@ -148,10 +161,10 @@ function renderTimeline() {
     
     // 1. Draw SVG Plotlines Chart
     if (chartContainer) {
-        const plotlines = Array.from(new Set(state.timelineEvents.map(e => e.plotline || 'Hauptplot')));
+        const plotlines = Array.from(new Set(displayEvents.map(e => e.plotline || 'Hauptplot')));
         const plotlineEvents = {};
         plotlines.forEach(pl => plotlineEvents[pl] = []);
-        state.timelineEvents.forEach(ev => {
+        displayEvents.forEach(ev => {
             const pl = ev.plotline || 'Hauptplot';
             plotlineEvents[pl].push(ev);
         });
@@ -272,7 +285,7 @@ function renderTimeline() {
     }
     
     // 2. Populate Sidebar List & Vertical Flow
-    state.timelineEvents.forEach(ev => {
+    displayEvents.forEach(ev => {
         // Sidebar list item
         const item = document.createElement('div');
         item.className = 'list-item';
@@ -280,11 +293,21 @@ function renderTimeline() {
         item.style.justifyContent = 'space-between';
         item.style.alignItems = 'center';
         item.style.padding = '8px 12px';
+        
+        let controlsHtml = '';
+        if (ev.is_lore) {
+            controlsHtml = `<button class="btn btn-secondary" style="padding: 2px 6px; font-size: 11px;" onclick="navigateTo('lore'); showLoreDetail('${ev.id}')" title="In der Lore-Ansicht bearbeiten">📖</button>`;
+        } else {
+            controlsHtml = `
+                <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 11px;" onclick="openTimelineEventForm('${ev.id}')">✏️</button>
+                <button class="btn btn-secondary btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteTimelineEvent('${ev.id}')">🗑️</button>
+            `;
+        }
+        
         item.innerHTML = `
             <div style="font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${escapeHtml(ev.title)}</div>
             <div style="display: flex; gap: 4px;">
-                <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 11px;" onclick="openTimelineEventForm('${ev.id}')">✏️</button>
-                <button class="btn btn-secondary btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteTimelineEvent('${ev.id}')">🗑️</button>
+                ${controlsHtml}
             </div>
         `;
         list.appendChild(item);

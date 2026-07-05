@@ -427,7 +427,10 @@
                                         <button id="btn-wiki-create" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" data-i18n="lore_btn_new">+ Neu</button>
                                     </div>
                                 </div>
-                                <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." style="margin-bottom: 12px;" data-i18n="lore_search_placeholder">
+                                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                    <input type="text" id="wiki-search" class="form-input" placeholder="Suchen..." data-i18n="lore_search_placeholder" style="flex: 1;">
+                                    <button id="btn-wiki-bulk-delete" class="btn btn-secondary btn-danger" style="display: none; padding: 6px 12px; font-size: 13px;" title="Ausgewählte löschen">🗑️</button>
+                                </div>
                                 <select id="wiki-filter-category" class="form-input" style="margin-bottom: 16px; height: auto;">
                                     <option value="all" data-i18n="lore_cat_all">Alle Kategorien</option>
                                     <option value="character" data-i18n="lore_cat_character">Charaktere</option>
@@ -1042,6 +1045,10 @@
                 <div class="form-group">
                     <label class="form-label" for="lore-keywords" data-i18n="lore_keywords_lbl">Schlüsselwörter (Kommagetrennt für Smart-Hover)</label>
                     <input type="text" id="lore-keywords" class="form-input" placeholder="z.B. Erzmagier, Konzil der Flamme" data-i18n="placeholder_lore_keywords">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="lore-timeline-date">Zeitstrahl-Datum (Optional)</label>
+                    <input type="text" id="lore-timeline-date" class="form-input" placeholder="z.B. Jahr 120 n.B.">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="lore-short-desc" data-i18n="lore_short_desc_lbl">Kurzbeschreibung (Tooltip)</label>

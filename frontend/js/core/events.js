@@ -147,6 +147,8 @@ function setupEventListeners() {
     document.getElementById('wiki-search').addEventListener('input', filterLoreEntries);
     document.getElementById('wiki-filter-category').addEventListener('change', filterLoreEntries);
     document.getElementById('btn-submit-lore').addEventListener('click', handleSaveLore);
+    const bulkBtn = document.getElementById('btn-wiki-bulk-delete');
+    if (bulkBtn) bulkBtn.addEventListener('click', window.handleBulkDeleteLore);
     
     document.getElementById('btn-editor-create-lore').addEventListener('click', () => {
         if (!state.editor) return;

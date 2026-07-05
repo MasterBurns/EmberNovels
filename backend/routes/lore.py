@@ -11,6 +11,7 @@ class LoreCreate(BaseModel):
     short_description: Optional[str] = ""
     description: Optional[str] = ""
     keywords: Optional[List[str]] = None
+    timeline_date: Optional[str] = ""
     project_ids: Optional[List[str]] = None
 
 class LoreUpdate(BaseModel):
@@ -19,7 +20,11 @@ class LoreUpdate(BaseModel):
     short_description: Optional[str] = None
     description: Optional[str] = None
     keywords: Optional[List[str]] = None
+    timeline_date: Optional[str] = None
     project_ids: Optional[List[str]] = None
+
+class LoreBulkDelete(BaseModel):
+    lore_ids: List[str]
 
 @router.get("")
 def list_lore(project_id: str):
@@ -49,7 +54,8 @@ def create_lore(project_id: str, lore: LoreCreate):
         lore.short_description, 
         lore.description, 
         lore.keywords,
-        lore.project_ids
+        lore.project_ids,
+        lore.timeline_date
     )
 
 @router.get("/{lore_id}")
@@ -73,6 +79,14 @@ def update_lore(project_id: str, lore_id: str, data: LoreUpdate):
     if not entry:
         raise HTTPException(status_code=404, detail="Lore entry not found")
     return entry
+
+@router.delete("/bulk")
+def bulk_delete_lore(project_id: str, payload: LoreBulkDelete):
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Project not found")
+    StorageService.bulk_delete_lore(project_id, payload.lore_ids)
+    return {"status": "success"}
 
 @router.delete("/{lore_id}")
 def delete_lore(project_id: str, lore_id: str):
@@ -129,9 +143,13 @@ def auto_scan_lore(project_id: str):
             continue
             
         prompt = (
-            "Du bist ein literarischer Analyst. Analysiere den folgenden Kapiteltext einer Geschichte. "
-            "Extrahiere alle wichtigen Charaktere (category: character), Orte (category: location) "
+            "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
+            "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
             "und Gegenstände (category: item), die im Text vorkommen.\n\n"
+            "REGELN:\n"
+            "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
+            "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
+            "- Bewerte die Wichtigkeit jedes Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
             "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
             "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
             "[\n"
@@ -140,7 +158,8 @@ def auto_scan_lore(project_id: str):
             "    \"category\": \"character\",\n"
             "    \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n"
             "    \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n"
-            "    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"]\n"
+            "    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n"
+            "    \"relevance_score\": 8\n"
             "  }\n"
             "]\n\n"
             f"Kapiteltext:\n{text}"
@@ -164,6 +183,12 @@ def auto_scan_lore(project_id: str):
                 category = ent.get("category", "lore").strip()
                 short_desc = ent.get("short_description", "").strip()
                 long_desc = ent.get("description", "").strip()
+                keywords = ent.get("keywords", [])
+                relevance_score = ent.get("relevance_score", 0)
+                
+                # Filter out unimportant entries
+                if not name or relevance_score < 5:
+                    continue
                 keywords = ent.get("keywords", [])
                 
                 if not name or category not in ["character", "location", "item", "lore"]:

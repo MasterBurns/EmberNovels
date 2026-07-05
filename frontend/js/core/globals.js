@@ -40,7 +40,8 @@ const state = {
     relationshipPanStart: { x: 0, y: 0 },
     loadingChapter: false,
     collapsedVolumes: {},
-    localVersion: "0.2.1.4"
+    localVersion: "0.2.1.4",
+    editorEngine: typeof localStorage !== 'undefined' ? (localStorage.getItem('ember_editor_engine') || 'toastui') : 'toastui'
 };
 
 const ModuleManager = {

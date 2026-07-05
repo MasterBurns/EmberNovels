@@ -609,7 +609,7 @@ class StorageService:
         return entries
 
     @classmethod
-    def create_lore(cls, project_id: str, name: str, category: str, short_description: str = "", description: str = "", keywords: List[str] = None, project_ids: List[str] = None) -> Dict[str, Any]:
+    def create_lore(cls, project_id: str, name: str, category: str, short_description: str = "", description: str = "", keywords: List[str] = None, project_ids: List[str] = None, timeline_date: str = "") -> Dict[str, Any]:
         """Create a new lore JSON entry and sync it to all selected projects."""
         if not project_ids:
             project_ids = [project_id]
@@ -634,6 +634,7 @@ class StorageService:
             "short_description": short_description,
             "description": description,
             "keywords": keywords or [name],
+            "timeline_date": timeline_date,
             "project_ids": project_ids,
             "created_at": now_str,
             "updated_at": now_str
@@ -711,6 +712,13 @@ class StorageService:
             destination.unlink()
             
         shutil.move(str(source), str(destination))
+        return True
+
+    @classmethod
+    def bulk_delete_lore(cls, project_id: str, lore_ids: List[str]) -> bool:
+        """Soft delete multiple lore entries."""
+        for lid in lore_ids:
+            cls.delete_lore(project_id, lid)
         return True
 
     @classmethod
