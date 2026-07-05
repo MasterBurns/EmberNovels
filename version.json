@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.7",
+    "version": "0.3.5.8",
     "release_notes": {
-        "de": "Version 0.3.5.7 - Updater & Logging.\n- 🚀 Update-Logik verbessert: Source-Code und kompilierte Versionen werden nun strikt getrennt behandelt.\n- 📝 Server-Logs werden nun persistent in embernovels_server.log gespeichert.",
-        "en": "Version 0.3.5.7 - Updater & Logging.\n- 🚀 Improved update logic: Source code and compiled versions are now handled correctly.\n- 📝 Server logs are now persistently saved to embernovels_server.log."
+        "de": "Version 0.3.5.8 - AI Tooltips & Bugfixes.\n- ✨ Neu: Hilfreiche Erklärtexte zu Ollama und Gemini in den Einstellungen hinzugefügt.\n- 🐛 Hotfix: Kopieren für Webnovels funktioniert wieder reibungslos.",
+        "en": "Version 0.3.5.8 - AI Tooltips & Bugfixes.\n- ✨ New: Helpful explanatory texts for Ollama and Gemini added to settings.\n- 🐛 Hotfix: Copying for webnovels works smoothly again."
     }
 }

@@ -343,5 +343,7 @@
     "models_loading_title": "Cargando Modelos",
     "btn_discard": "Descartar",
     "stylecheck_modal_title": "🔍 Revisión de Estilo",
-    "stylecheck_scan_desc": "Haz clic en \"Comprobar\" para escanear tu texto."
+    "stylecheck_scan_desc": "Haz clic en \"Comprobar\" para escanear tu texto.",
+    "settings_ollama_help": "💡 <b>Ollama (Local y Gratis):</b> Descarga <a href=\"https://ollama.com/\" target=\"_blank\" style=\"color: var(--accent-color);\">Ollama aquí</a> e instálalo. Luego abre una terminal (CMD) y escribe p. ej. <code>ollama run llama3</code>. ¡Una vez cargado el modelo, deja esta configuración así y EmberNovels usará tu IA local!",
+    "settings_gemini_help": "💡 <b>Gemini Free Tier:</b> ¡La API de Google Gemini es <b>totalmente gratis</b> para uso personal (hasta 15 peticiones por minuto)! Consigue una API Key en <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a>. No hay costes si no excedes el límite."
 }

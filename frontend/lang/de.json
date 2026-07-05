@@ -345,5 +345,7 @@
     "models_loading_title": "Modelle laden",
     "btn_discard": "Verwerfen",
     "stylecheck_modal_title": "🔍 Stil-Check",
-    "stylecheck_scan_desc": "Klicke auf \"Prüfen\", um deinen Text zu scannen."
+    "stylecheck_scan_desc": "Klicke auf \"Prüfen\", um deinen Text zu scannen.",
+    "settings_ollama_help": "💡 <b>Ollama (Lokal & Kostenlos):</b> Lade dir <a href=\"https://ollama.com/\" target=\"_blank\" style=\"color: var(--accent-color);\">Ollama hier herunter</a> und installiere es. Öffne danach ein Terminal (CMD) und tippe z.B. <code>ollama run llama3</code> ein. Sobald das Modell geladen ist, kannst du diese Einstellungen so lassen und EmberNovels nutzt deine lokale KI!",
+    "settings_gemini_help": "💡 <b>Gemini Free Tier:</b> Die Google Gemini API ist für Privatanwender (bis zu 15 Anfragen pro Minute) <b>komplett kostenlos</b>! Hol dir einfach einen API Key im <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a>. Es fallen keine Kosten an, solange du das Limit nicht überschreitest (es ist kein Zahlungsmittel nötig)."
 }

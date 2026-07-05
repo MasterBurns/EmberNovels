@@ -18,13 +18,18 @@ async function loadUiLanguage(lang) {
         state.translations = await response.json();
         
         // Translate elements with data-i18n
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
+        document.querySelectorAll('[data-i18n], [data-i18n-html]').forEach(el => {
+            const key = el.getAttribute('data-i18n') || el.getAttribute('data-i18n-html');
+            const isHtml = el.hasAttribute('data-i18n-html');
             if (state.translations[key]) {
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     el.placeholder = state.translations[key];
                 } else {
-                    el.textContent = state.translations[key];
+                    if (isHtml) {
+                        el.innerHTML = state.translations[key];
+                    } else {
+                        el.textContent = state.translations[key];
+                    }
                 }
             }
         });

@@ -343,5 +343,7 @@
     "models_loading_title": "正在加载模型",
     "btn_discard": "放弃",
     "stylecheck_modal_title": "🔍 风格检查",
-    "stylecheck_scan_desc": "点击\"检查\"扫描您的文本。"
+    "stylecheck_scan_desc": "点击\"检查\"扫描您的文本。",
+    "settings_ollama_help": "💡 <b>Ollama (本地 & 免费):</b> <a href=\"https://ollama.com/\" target=\"_blank\" style=\"color: var(--accent-color);\">在此下载 Ollama</a> 并安装。然后打开终端(CMD)并输入如 <code>ollama run llama3</code>。模型加载后，保持此设置，EmberNovels 即可使用本地 AI！",
+    "settings_gemini_help": "💡 <b>Gemini 免费套餐:</b> Google Gemini API 供个人使用(每分钟最多15次请求)是<b>完全免费的</b>！只需在 <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a> 获取 API 密钥。只要不超限即无任何费用。"
 }

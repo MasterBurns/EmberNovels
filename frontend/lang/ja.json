@@ -343,5 +343,7 @@
     "models_loading_title": "モデルをロード中",
     "btn_discard": "破棄",
     "stylecheck_modal_title": "🔍 スタイルチェック",
-    "stylecheck_scan_desc": "「チェック」をクリックしてテキストをスキャンします。"
+    "stylecheck_scan_desc": "「チェック」をクリックしてテキストをスキャンします。",
+    "settings_ollama_help": "💡 <b>Ollama (ローカル＆無料):</b> <a href=\"https://ollama.com/\" target=\"_blank\" style=\"color: var(--accent-color);\">ここからOllamaをダウンロード</a>してインストールします。次にターミナル(CMD)を開いて <code>ollama run llama3</code> 等を入力します。モデルが読み込まれたら設定はそのままでEmberNovelsがローカルAIを使用します！",
+    "settings_gemini_help": "💡 <b>Gemini Free Tier:</b> Google Gemini APIは個人利用(毎分15リクエストまで)なら<b>完全無料</b>です！<a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a>でAPIキーを取得するだけです。制限を超えない限り費用はかかりません。"
 }
