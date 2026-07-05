@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.9",
+    "version": "0.3.7.0",
     "release_notes": {
-        "de": "Version 0.3.6.9 - UI & Backend Patch.\n- ⚙️ Neu: Prozess-Manager (Task-Modul) in der linken Seitenleiste hinzugefügt, um Hintergrundaufgaben wie Backups oder Updates zu überwachen.\n- 💾 Fix: KI-Einstellungen und API-Keys werden nun beim Tippen via Auto-Save gesichert.\n- 🔒 Fix: SSL-Zertifikatsprüfung bei KI-Aufrufen intern deaktiviert, um 'Certificate Verify Failed'-Fehler zu beheben.\n- ✨ Fix: Das Lore-Klick-Event im Rich-Text-Editor zwingt nun den Klick durch (Capture Phase), sodass ProseMirror ihn nicht mehr schluckt.",
-        "en": "Version 0.3.6.9 - UI & Backend Patch.\n- ⚙️ New: Task Manager module added to the left sidebar to monitor background processes like backups and updates.\n- 💾 Fix: AI settings and API keys are now auto-saved immediately when typing.\n- 🔒 Fix: Disabled internal SSL certificate verification for AI calls to bypass 'Certificate Verify Failed' errors.\n- ✨ Fix: The Lore click event in the Rich-Text editor now uses the capture phase to prevent ProseMirror from swallowing it."
+        "de": "Version 0.3.7.0 - TipTap Editor Integration.\n- 📝 Neu: TipTap Editor (Beta) als alternative Editor-Engine integriert.\n- 🚀 Neu: Editor-Architektur refaktorisiert (EditorManager Plugin-System).\n- ✨ Neu: TipTap Lore-Highlighting Extension hinzugefügt (markiert Lore-Begriffe live in orange während des Tippens).\n- 🎨 Neu: Native Custom Toolbar für TipTap (Fett, Kursiv, Überschriften, Listen).",
+        "en": "Version 0.3.7.0 - TipTap Editor Integration.\n- 📝 New: TipTap Editor (Beta) integrated as an alternative editor engine.\n- 🚀 New: Refactored Editor Architecture using EditorManager plugin system.\n- ✨ New: Added TipTap Lore-Highlighting Extension (highlights lore keywords live in orange while typing).\n- 🎨 New: Native Custom Toolbar for TipTap (Bold, Italic, Headings, Lists)."
     }
 }
