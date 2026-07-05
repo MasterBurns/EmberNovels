@@ -740,6 +740,9 @@
                             
                             <!-- Provider specific sub-panels -->
                             <div id="panel-settings-ollama" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 0.85em; color: var(--text-muted); background: var(--surface-bg-alt); padding: 8px; border-radius: 4px;">
+                                    💡 <b>Ollama (Lokal & Kostenlos):</b> Lade dir <a href="https://ollama.com/" target="_blank" style="color: var(--accent-color);">Ollama hier herunter</a> und installiere es. Öffne danach ein Terminal (CMD) und tippe z.B. <code>ollama run llama3</code> ein. Sobald das Modell geladen ist, kannst du diese Einstellungen so lassen und EmberNovels nutzt deine lokale KI!
+                                </div>
                                 <div class="form-group">
                                     <label class="form-label" for="setting-ollama-url" data-i18n="settings_ollama_url">Ollama Server URL</label>
                                     <input type="text" id="setting-ollama-url" class="form-input" value="http://localhost:11434">
@@ -755,6 +758,9 @@
                             </div>
                             
                             <div id="panel-settings-gemini" style="display: none; flex-direction: column; gap: 12px; border-left: 2px solid var(--border-color); padding-left: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 0.85em; color: var(--text-muted); background: var(--surface-bg-alt); padding: 8px; border-radius: 4px;">
+                                    💡 <b>Gemini Free Tier:</b> Die Google Gemini API ist für Privatanwender (bis zu 15 Anfragen pro Minute) <b>komplett kostenlos</b>! Hol dir einfach einen API Key im <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--accent-color);">Google AI Studio</a>. Es fallen keine Kosten an, solange du das Limit nicht überschreitest (es ist kein Zahlungsmittel nötig).
+                                </div>
                                 <div class="form-group">
                                     <label class="form-label" for="setting-gemini-key" data-i18n="settings_gemini_key">Gemini API Key</label>
                                     <input type="password" id="setting-gemini-key" class="form-input" placeholder="AIzaSy...">
