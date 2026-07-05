@@ -1,7 +1,7 @@
 {
-    "version": "0.3.7.0",
+    "version": "0.3.7.1",
     "release_notes": {
-        "de": "Version 0.3.7.0 - TipTap Editor Integration.\n- 📝 Neu: TipTap Editor (Beta) als alternative Editor-Engine integriert.\n- 🚀 Neu: Editor-Architektur refaktorisiert (EditorManager Plugin-System).\n- ✨ Neu: TipTap Lore-Highlighting Extension hinzugefügt (markiert Lore-Begriffe live in orange während des Tippens).\n- 🎨 Neu: Native Custom Toolbar für TipTap (Fett, Kursiv, Überschriften, Listen).",
-        "en": "Version 0.3.7.0 - TipTap Editor Integration.\n- 📝 New: TipTap Editor (Beta) integrated as an alternative editor engine.\n- 🚀 New: Refactored Editor Architecture using EditorManager plugin system.\n- ✨ New: Added TipTap Lore-Highlighting Extension (highlights lore keywords live in orange while typing).\n- 🎨 New: Native Custom Toolbar for TipTap (Bold, Italic, Headings, Lists)."
+        "de": "Version 0.3.7.1 - TipTap Feature-Komplettierung.\n- 🖼 Neu: Bild-Upload in TipTap.\n- 📊 Neu: Tabellen-Unterstützung in TipTap.\n- 🔗 Neu: Links, Zitate, Tasklisten und Code-Blöcke in der TipTap Toolbar.",
+        "en": "Version 0.3.7.1 - TipTap Feature Completion.\n- 🖼 New: Image upload support in TipTap.\n- 📊 New: Table support in TipTap.\n- 🔗 New: Links, quotes, task lists, and code blocks in TipTap toolbar."
     }
 }
