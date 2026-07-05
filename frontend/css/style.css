@@ -1529,6 +1529,7 @@ button, input, textarea, select {
 .tiptap-content-area .ProseMirror {
     outline: none !important;
     min-height: 100%;
+    color: var(--text-base);
 }
 
 .tiptap-content-area .ProseMirror p {

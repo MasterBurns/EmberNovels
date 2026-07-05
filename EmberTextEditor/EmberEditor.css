@@ -1,0 +1,142 @@
+/* EmberTextEditor/EmberEditor.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  --ember-bg: #1e1e24;
+  --ember-bg-alt: #2b2b36;
+  --ember-text: #e0e0e0;
+  --ember-border: #3f3f4e;
+  --ember-accent: #ff8c00;
+  --ember-accent-hover: #ffaa44;
+  --ember-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --ember-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --ember-radius: 12px;
+  --ember-md-dim: #777788; /* Farbe für abgedunkelte Markdown-Steuerzeichen */
+}
+
+.ember-editor-container {
+  /* Zoom is controlled by this variable */
+  --editor-zoom: 1;
+  font-size: calc(18px * var(--editor-zoom));
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  background-color: var(--ember-bg);
+  border: 1px solid var(--ember-border);
+  border-radius: var(--ember-radius);
+  box-shadow: var(--ember-shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.ember-editor-content {
+  flex: 1;
+  padding: calc(24px * var(--editor-zoom)) calc(32px * var(--editor-zoom));
+  font-family: var(--ember-font);
+  color: var(--ember-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-y: auto;
+  outline: none;
+}
+
+/* Custom Scrollbar */
+.ember-editor-content::-webkit-scrollbar {
+  width: 12px;
+}
+.ember-editor-content::-webkit-scrollbar-track {
+  background: var(--ember-bg);
+  border-radius: 0 var(--ember-radius) var(--ember-radius) 0;
+}
+.ember-editor-content::-webkit-scrollbar-thumb {
+  background-color: var(--ember-border);
+  border-radius: 6px;
+  border: 3px solid var(--ember-bg);
+}
+.ember-editor-content::-webkit-scrollbar-thumb:hover {
+  background-color: #5a5a6e;
+}
+
+/* --- Hybrid Markdown Styling --- */
+.md-char {
+  color: var(--ember-md-dim);
+  user-select: auto;
+}
+
+.md-bold {
+  font-weight: 700;
+}
+
+.md-italic {
+  font-style: italic;
+}
+
+.md-h1 {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  display: block;
+}
+
+.md-h2 {
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  display: block;
+}
+
+.md-h3 {
+  font-size: 1.25em;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+  display: block;
+}
+
+/* Lore Keyword Highlight */
+.lore-keyword {
+  color: var(--ember-accent);
+  font-weight: 600;
+  cursor: help;
+  border-bottom: 1px dashed var(--ember-accent);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.lore-keyword:hover {
+  color: var(--ember-accent-hover);
+  border-bottom-color: var(--ember-accent-hover);
+  background-color: rgba(255, 140, 0, 0.1);
+  border-radius: 3px;
+}
+
+/* Default Tooltip */
+.ember-tooltip {
+  position: fixed;
+  background: var(--ember-bg-alt);
+  color: var(--ember-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: var(--ember-font);
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid var(--ember-border);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  transform: translateY(-10px);
+}
+.ember-tooltip.visible {
+  opacity: 1;
+}

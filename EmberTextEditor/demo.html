@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmberTextEditor V2 Demo</title>
+  <link rel="stylesheet" href="EmberEditor.css">
+  <style>
+    body {
+      background-color: #121215;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font-weight: 600;
+      color: #fff;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      background: #2b2b36;
+      padding: 10px;
+      border-radius: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #3f3f4e;
+      color: white;
+      border: 1px solid #4a4a5e;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #5a5a6e;
+    }
+    #editor-container {
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px;">
+    <div class="header">
+      <h1>EmberTextEditor V2 Demo</h1>
+      <div class="toolbar">
+        <button onclick="editor.setZoom(1)">Zoom 100%</button>
+        <button onclick="editor.setZoom(1.2)">Zoom 120%</button>
+        <button onclick="editor.setZoom(1.5)">Zoom 150%</button>
+        <div style="width: 10px;"></div>
+        <button onclick="alert(editor.getContent())">Get Markdown</button>
+      </div>
+    </div>
+
+    <div id="editor-container"></div>
+  </div>
+
+  <script src="EmberEditor.js"></script>
+  <script>
+    const container = document.getElementById('editor-container');
+    const editor = new EmberEditorCore(container, {
+      onLoreHover: (keyword, event) => {
+        // This is where EmberNovels would hook into the hover event
+        console.log('Hovered over:', keyword, 'at', event.clientX, event.clientY);
+      }
+    });
+
+    editor.setLoreHighlights(['Ember', 'Eldoria', 'Magic', 'Sword', 'Archi', 'Mallorca']);
+
+    editor.onContentChange((md) => {
+      console.log('Content changed, characters:', md.length);
+    });
+
+    editor.setContent(`# Kapitel 1: Die Rückkehr
+
+Willkommen im aktualisierten **EmberTextEditor V2**!
+
+Dies ist ein Test für die Hybrid-Markdown Funktionalität. Du kannst *kursiven* Text schreiben, und er wird sofort visuell hervorgehoben, während die Markdown-Zeichen erhalten bleiben.
+
+## Das Hover-Over System
+Die Welt von Eldoria ist voller Magic und Gefahren. Versuche einmal, mit der Maus über die Wörter Ember, Archi oder Mallorca zu fahren! Es erscheint sofort ein Tooltip und die Konsole loggt das Event.
+
+### Zoom-Funktion
+Teste die Buttons oben, um das Interface stufenlos zu vergrößern.
+`);
+  </script>
+</body>
+</html>

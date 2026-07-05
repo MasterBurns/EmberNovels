@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.3",
+    "version": "0.3.8.4",
     "release_notes": {
-        "de": "Version 0.3.8.3 - Lore & Timeline Update.\n- ✨ Feature: Neues 'Zeitstrahl-Datum' für Lore-Einträge, das automatisch mit der Zeitleiste synchronisiert wird.\n- ✨ Feature: Checkboxen und Button zum Löschen mehrerer Lore-Einträge auf einmal.\n- ✨ Feature: Intelligente KI-Lore Erkennung (Neuer Prompt & Relevanz-Score Filter >= 5).\n- 🐛 Fix: Editor-Ladefehler ('updateDetectedLoreInSidebar') behoben.\n- 🐛 Fix: EmberEditor & TipTap laden beim ersten Start jetzt korrekt.",
-        "en": "Version 0.3.8.3 - Lore & Timeline Update.\n- ✨ Feature: New 'Timeline Date' for Lore entries that automatically syncs with the timeline.\n- ✨ Feature: Checkboxes and button to bulk delete multiple Lore entries at once.\n- ✨ Feature: Smarter AI Lore extraction (New prompt & Relevance Score filter >= 5).\n- 🐛 Fix: Fixed Editor loading error ('updateDetectedLoreInSidebar').\n- 🐛 Fix: EmberEditor & TipTap now load correctly on initial boot."
+        "de": "Version 0.3.8.4 - Update Hotfix 3.\n- 🐛 Fix: Der Auto-Updater (Linux) startet die App nun interaktiv im selben Fenster neu, sodass das Kontrollzentrum / Terminal aktiv bleibt.",
+        "en": "Version 0.3.8.4 - Update Hotfix 3.\n- 🐛 Fix: The auto-updater (Linux) now restarts the app interactively in the same window, keeping the control center / terminal active."
     }
 }

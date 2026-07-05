@@ -129,38 +129,28 @@ def perform_hot_update(download_url: str):
                     f.write(f'else\n')
                     f.write(f'    echo "PyInstaller not found. Could not automatically rebuild the binary. Please rebuild manually." > update_error.log\n')
                     f.write(f'fi\n')
-                    f.write(f'nohup "{current_exe}" --no-browser > /dev/null 2>&1 &\n')
-                else:
-                    if is_frozen:
-                        f.write(f'nohup "{current_exe}" --no-browser > /dev/null 2>&1 &\n')
-                    else:
-                        python_exe = sys.executable
-                        main_script = os.path.abspath(sys.argv[0])
-                        f.write(f'nohup "{python_exe}" "{main_script}" --no-browser > /dev/null 2>&1 &\n')
                 
                 f.write(f'rm -rf "{temp_dir}"\n')
                 f.write(f'rm -f "$0"\n')
+
+                if is_frozen:
+                    f.write(f'exec "{current_exe}" --no-browser\n')
+                else:
+                    python_exe = sys.executable
+                    main_script = os.path.abspath(sys.argv[0])
+                    f.write(f'exec "{python_exe}" "{main_script}" --no-browser\n')
             
             os.chmod(update_script, 0o755)
-            print("Spawning update script...")
-            log_path = os.path.join(exe_dir, "update_trigger.log")
+            print("Exec-ing update script (replacing current process)...")
+            sys.stdout.flush()
+            sys.stderr.flush()
             
-            # Using simple list with bash and start_new_session, stripping LD_LIBRARY_PATH to prevent bash symbol errors
             clean_env = dict(os.environ)
             if 'LD_LIBRARY_PATH' in clean_env:
                 del clean_env['LD_LIBRARY_PATH']
                 
-            subprocess.Popen(
-                ["bash", update_script],
-                start_new_session=True,
-                stdin=subprocess.DEVNULL,
-                stdout=open(log_path, "w"),
-                stderr=subprocess.STDOUT,
-                env=clean_env
-            )
-        print("Shutting down current server process in 2 seconds...")
-        time.sleep(2.0)
-        os._exit(0)
+            os.execvpe("bash", ["bash", update_script], clean_env)
+            # os.execvpe does not return.
         
     except Exception as e:
         print(f"Hot update failed: {e}")

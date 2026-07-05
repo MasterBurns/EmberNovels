@@ -113,8 +113,10 @@ async function handleSaveSettings() {
     localStorage.setItem('ember_editor_engine', editorEngine);
     state.editorEngine = editorEngine;
     if (editorEngine !== oldEditorEngine) {
-        showToast('Editor-Engine wurde gewechselt. Bitte wechsle das Kapitel, um ihn neu zu laden.', 'info');
-        // If we want to dynamically reload, we would do it here, but reloading the chapter is fine.
+        showToast('Editor-Engine wurde gewechselt. Lade neu...', 'info');
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 800);
     }
     
     // Save to backend so the python app (Control Center) knows about it
