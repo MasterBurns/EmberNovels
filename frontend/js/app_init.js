@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
 
-    // Failsafe: hide bootloader after 15 seconds no matter what
+    // Failsafe: hide bootloader after 4 seconds no matter what
     setTimeout(() => {
         const bootloader = document.getElementById('app-bootloader');
         if (bootloader && bootloader.style.display !== 'none') {
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 navigateTo('projects');
             }
         }
-    }, 15000);
+    }, 4000);
 
     // Wait for backend to be ready before fetching data
     await waitForBackend();
@@ -49,7 +49,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render sidebar dynamically
     if (typeof ModuleManager !== 'undefined') ModuleManager.renderSidebar();
     
-    setupEventListeners();
+    try {
+        setupEventListeners();
+    } catch (e) {
+        console.error("Error in setupEventListeners:", e);
+    }
     
     // Check first run for Language OOBE
     if (!state.globalSettings.first_run_completed) {

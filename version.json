@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.4",
+    "version": "0.3.5.5",
     "release_notes": {
-        "de": "Version 0.3.5.4 - Fix für den Updater und Bootloader.\n- 🐛 Hotfix: Ein Fehler im Updater (tar.gz wurde fälschlicherweise als zip behandelt) wurde behoben.\n- 🛡️ Failsafe: Der Bootloader versteckt sich nun automatisch nach 15 Sekunden, sollte das Backend hängen bleiben.",
-        "en": "Version 0.3.5.4 - Updater & Bootloader Fixes.\n- 🐛 Hotfix: Fixed an issue where the updater treated tar.gz files as zip files.\n- 🛡️ Failsafe: Added a 15-second failsafe to the bootloader to prevent indefinite hanging."
+        "de": "Version 0.3.5.5 - JS Hotfix.\n- 🐛 Hotfix: Globales Error-Handling implementiert.\n- 🛡️ Failsafe: Robusteres Event-Listener Setup.",
+        "en": "Version 0.3.5.5 - JS Hotfix.\n- 🐛 Hotfix: Added global error handling.\n- 🛡️ Failsafe: More robust event listener setup."
     }
 }
