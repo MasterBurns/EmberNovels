@@ -1,5 +1,5 @@
 {
-    "version": "0.3.0.5",
+    "version": "0.3.0.6",
     "release_notes": {
         "de": "Version 0.3.0.1 - Full i18n Update.\n- 🌍 Vollständige Lokalisierung des Frontends für alle 7 unterstützten Sprachen.\n- 🌍 Das Kontrollzentrum (Server-Launcher) startet nun in der vom Nutzer im Frontend gewählten UI-Sprache.\n- ✨ Einführung eines globalen Settings-APIs zur App-übergreifenden Sprachsynchronisierung.",
         "en": "Version 0.3.0.1 - Full i18n Update.\n- 🌍 Full localization of the frontend for all 7 supported languages.\n- 🌍 The Control Center (server launcher) now starts in the UI language selected by the user in the frontend.\n- ✨ Introduction of a global settings API for app-wide language synchronization."
