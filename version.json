@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.5",
+    "version": "0.3.5.6",
     "release_notes": {
-        "de": "Version 0.3.5.5 - JS Hotfix.\n- 🐛 Hotfix: Globales Error-Handling implementiert.\n- 🛡️ Failsafe: Robusteres Event-Listener Setup.",
-        "en": "Version 0.3.5.5 - JS Hotfix.\n- 🐛 Hotfix: Added global error handling.\n- 🛡️ Failsafe: More robust event listener setup."
+        "de": "Version 0.3.5.6 - OOBE Hotfix.\n- 🐛 Hotfix: Der falsche 'Neuer Sprachzweig' Dialog beim Erststart wurde entfernt.",
+        "en": "Version 0.3.5.6 - OOBE Hotfix.\n- 🐛 Hotfix: Removed the incorrect 'New Language Branch' dialog on first start."
     }
 }

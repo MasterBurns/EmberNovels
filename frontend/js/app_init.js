@@ -53,10 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEventListeners();
     } catch (e) {
         console.error("Error in setupEventListeners:", e);
+        setTimeout(() => showToast("Setup-Error: " + e.message, "danger"), 1000);
     }
     
     // Check first run for Language OOBE
-    if (!state.globalSettings.first_run_completed) {
+    // If they already have a language saved in localStorage, they aren't a new user, skip OOBE.
+    if (!state.globalSettings.first_run_completed && !localStorage.getItem('ember_ui_language')) {
         document.getElementById('app-bootloader').style.display = 'none';
         runOobeLanguageSetup();
     } else {
@@ -81,27 +83,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function runOobeLanguageSetup() {
     // Show a modal to select language
-    const modal = document.getElementById('modal-language');
+    const modal = document.getElementById('modal-oobe-language');
     if (modal) {
         modal.style.display = 'flex';
-        // Add a special listener to save global settings when done
-        const btnSave = modal.querySelector('.btn-primary');
-        if (btnSave) {
-            const oldClick = btnSave.onclick;
-            btnSave.onclick = async (e) => {
-                if (oldClick) oldClick(e);
-                state.globalSettings.first_run_completed = true;
-                await fetch(`${API_URL}/settings`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        ui_language: state.uiLanguage,
-                        first_run_completed: true 
-                    })
-                });
-                navigateTo('projects');
-            };
+        // Add a backdrop blur directly to the app container
+        const appContainer = document.querySelector('.app-container');
+        if (appContainer) {
+            appContainer.style.filter = 'blur(5px)';
+            appContainer.style.pointerEvents = 'none';
         }
+    } else {
+        // Fallback if modal doesn't exist (not implemented in HTML yet)
+        state.globalSettings.first_run_completed = true;
+        fetch(`${API_URL}/settings`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                first_run_completed: true
+            })
+        });
+        loadProjects(0, true).then(() => {
+            navigateTo('projects');
+        }).catch(err => {
+            console.error("Bootloader: Fehler beim Laden der Projekte", err);
+            navigateTo('projects');
+        });
     }
 }
 
