@@ -210,9 +210,6 @@ class TipTapAdapter extends BaseEditor {
                     this.onChangeCallback();
                 }
             });
-                    this.onChangeCallback();
-                }
-            });
 
             // Bind Toolbar Events
             toolbar.addEventListener('click', (e) => {

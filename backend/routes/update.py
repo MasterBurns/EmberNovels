@@ -145,17 +145,16 @@ def perform_hot_update(download_url: str):
             print("Spawning update script...")
             log_path = os.path.join(exe_dir, "update_trigger.log")
             
-            # Using double decoupling: start_new_session (setsid) + nohup + < /dev/null
+            # Using simple list with bash and start_new_session
             subprocess.Popen(
-                f"nohup bash '{update_script}' > '{log_path}' 2>&1 < /dev/null &",
-                shell=True,
+                ["bash", update_script],
                 start_new_session=True,
                 stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=open(log_path, "w"),
+                stderr=subprocess.STDOUT
             )
-        print("Shutting down current server process...")
-        time.sleep(0.5)
+        print("Shutting down current server process in 2 seconds...")
+        time.sleep(2.0)
         os._exit(0)
         
     except Exception as e:

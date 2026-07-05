@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmberTextEditor Demo</title>
+  <link rel="stylesheet" href="EmberEditor.css">
+  <style>
+    body {
+      background-color: #121215;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font-weight: 600;
+      color: #fff;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      background: #2b2b36;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    button {
+      background: #3f3f4e;
+      color: white;
+      border: 1px solid #4a4a5e;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #5a5a6e;
+    }
+    #editor-container {
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    #preview-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #1e1e24;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #3f3f4e;
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 20px;">
+    <div class="header">
+      <h1>EmberTextEditor Demo</h1>
+      <div class="toolbar">
+        <button onclick="editor.insertText('**Bold Text**')">Bold</button>
+        <button onclick="alert(editor.getSelectedText() || 'No text selected')">Get Selected</button>
+        <button onclick="showHTML()">Preview HTML</button>
+        <button onclick="addKeyword()">Add Keyword</button>
+      </div>
+    </div>
+
+    <div id="editor-container"></div>
+    <div id="preview-container"></div>
+  </div>
+
+  <script src="EmberEditor.js"></script>
+  <script>
+    const container = document.getElementById('editor-container');
+    const editor = new EmberEditor(container, {
+      initialLoreKeywords: ['Ember', 'Eldoria', 'Magic', 'Sword'],
+      onChange: (md) => {
+        console.log('Text length updated:', md.length);
+      },
+      onLoreClick: (keyword) => {
+        alert('Lore Keyword Clicked: ' + keyword);
+      }
+    });
+
+    editor.setMarkdown(`Willkommen im EmberTextEditor!
+
+Dies ist ein Testtext für das Projekt **EmberNovels**. Der Editor unterstützt ein fantastisches "Lore-Highlighting", das speziell für Romanautoren entwickelt wurde. 
+
+Versuche einmal, die Wörter Ember, Eldoria, Magic oder Sword in den Text einzubauen. Sie werden sofort hervorgehoben und sind anklickbar! Das zugrundeliegende Markdown wird dabei *nicht* verändert, und die Cursor-Position bleibt beim Tippen perfekt erhalten.
+
+Die Welt von Eldoria ist voller Magic und Gefahren.`);
+
+    function showHTML() {
+      const preview = document.getElementById('preview-container');
+      const isVisible = preview.style.display === 'block';
+      if (isVisible) {
+        preview.style.display = 'none';
+      } else {
+        preview.style.display = 'block';
+        preview.innerHTML = '<h3 style="margin-top:0; color: #ff8c00;">HTML Preview:</h3>' + editor.getHTML();
+      }
+    }
+
+    function addKeyword() {
+      const kw = prompt('Enter a new Lore Keyword to highlight:');
+      if (kw) {
+        const currentKeywords = editor.loreKeywords;
+        editor.setLoreKeywords([...currentKeywords, kw]);
+      }
+    }
+  </script>
+</body>
+</html>
