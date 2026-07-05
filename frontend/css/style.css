@@ -1473,3 +1473,93 @@ button, input, textarea, select {
     line-height: 1.4;
     color: var(--text-muted);
 }
+
+/* ========================================================= */
+/* TipTap Editor Styles                                      */
+/* ========================================================= */
+
+.tiptap-toolbar {
+    background-color: var(--surface-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+}
+
+.tiptap-toolbar .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.tiptap-toolbar .btn-sm:hover {
+    background: var(--surface-bg-hover);
+    border-color: var(--border-color);
+    transform: translateY(-1px);
+}
+
+.tiptap-toolbar .btn-sm:active {
+    transform: translateY(1px);
+}
+
+.tiptap-content-area {
+    padding: 24px 32px;
+    background: var(--surface-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    height: 100%;
+    overflow-y: auto;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.tiptap-content-area .ProseMirror {
+    outline: none !important;
+    min-height: 100%;
+}
+
+.tiptap-content-area .ProseMirror p {
+    margin-bottom: 1.2em;
+}
+
+.tiptap-content-area .ProseMirror h1, 
+.tiptap-content-area .ProseMirror h2, 
+.tiptap-content-area .ProseMirror h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.tiptap-content-area .ProseMirror ul, 
+.tiptap-content-area .ProseMirror ol {
+    padding-left: 24px;
+    margin-bottom: 1.2em;
+}
+
+/* TipTap Lore Highlights */
+.tiptap-lore-highlight {
+    color: #f97316; /* Orange */
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 1px dashed #f97316;
+    transition: all 0.2s ease;
+}
+
+.tiptap-lore-highlight:hover {
+    background: rgba(249, 115, 22, 0.1);
+    border-bottom-style: solid;
+}

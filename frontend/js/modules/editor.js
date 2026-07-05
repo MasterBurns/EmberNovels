@@ -302,6 +302,36 @@ function toggleEditorSplit() {
     }
 }
 
+// Global function to trigger lore tooltip manually (used by TipTap)
+window.showLoreTooltipForKeyword = function(keyword, event) {
+    if (!state.loreList || state.loreList.length === 0) return;
+    const tooltip = document.getElementById('editor-lore-tooltip');
+    
+    const foundLore = state.loreList.find(l => 
+        l.keyword.toLowerCase() === keyword.toLowerCase() ||
+        (l.aliases && l.aliases.map(a => a.toLowerCase()).includes(keyword.toLowerCase()))
+    );
+
+    if (foundLore) {
+        tooltip.querySelector('.tooltip-title').textContent = foundLore.title;
+        tooltip.querySelector('.tooltip-category').textContent = foundLore.category || 'Lore';
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = foundLore.content || '';
+        let plainText = tempDiv.textContent || tempDiv.innerText || '';
+        if (plainText.length > 150) plainText = plainText.substring(0, 150) + '...';
+        
+        tooltip.querySelector('.tooltip-body').textContent = plainText;
+        
+        tooltip.style.left = `${event.pageX}px`;
+        tooltip.style.top = `${event.pageY + 20}px`;
+        tooltip.style.display = 'block';
+        tooltip.style.opacity = '1';
+    }
+};
+
+window.toggleEditorLoreSidebar = toggleEditorLoreSidebar;
+window.handleCopyForWebnovel = handleCopyForWebnovel;
 async function handleCopyForWebnovel() {
     if (!state.currentChapter) return;
     try {
