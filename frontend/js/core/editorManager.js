@@ -91,6 +91,15 @@ class TipTapAdapter extends BaseEditor {
             const { Markdown } = await import('https://esm.sh/tiptap-markdown@0.8.9');
             const { Plugin, PluginKey } = await import('https://esm.sh/@tiptap/pm@2.2.4/state');
             const { Decoration, DecorationSet } = await import('https://esm.sh/@tiptap/pm@2.2.4/view');
+            
+            const Image = (await import('https://esm.sh/@tiptap/extension-image@2.2.4')).default;
+            const Link = (await import('https://esm.sh/@tiptap/extension-link@2.2.4')).default;
+            const TaskList = (await import('https://esm.sh/@tiptap/extension-task-list@2.2.4')).default;
+            const TaskItem = (await import('https://esm.sh/@tiptap/extension-task-item@2.2.4')).default;
+            const Table = (await import('https://esm.sh/@tiptap/extension-table@2.2.4')).default;
+            const TableRow = (await import('https://esm.sh/@tiptap/extension-table-row@2.2.4')).default;
+            const TableCell = (await import('https://esm.sh/@tiptap/extension-table-cell@2.2.4')).default;
+            const TableHeader = (await import('https://esm.sh/@tiptap/extension-table-header@2.2.4')).default;
 
             // --- Lore Extension Logic ---
             function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -150,34 +159,57 @@ class TipTapAdapter extends BaseEditor {
 
             // Build UI
             this.container.innerHTML = `
-                <div class="tiptap-toolbar" style="padding: 8px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; gap: 8px; align-items: center;">
-                    <button class="btn btn-secondary btn-sm" data-command="bold"><b>B</b></button>
-                    <button class="btn btn-secondary btn-sm" data-command="italic"><i>I</i></button>
-                    <button class="btn btn-secondary btn-sm" data-command="strike"><strike>S</strike></button>
+                <div class="tiptap-toolbar" style="padding: 8px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-sm" data-command="bold" title="Fett"><b>B</b></button>
+                    <button class="btn btn-secondary btn-sm" data-command="italic" title="Kursiv"><i>I</i></button>
+                    <button class="btn btn-secondary btn-sm" data-command="strike" title="Durchgestrichen"><strike>S</strike></button>
                     <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
                     <button class="btn btn-secondary btn-sm" data-command="h1">H1</button>
                     <button class="btn btn-secondary btn-sm" data-command="h2">H2</button>
                     <button class="btn btn-secondary btn-sm" data-command="h3">H3</button>
                     <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
-                    <button class="btn btn-secondary btn-sm" data-command="bulletList">• Liste</button>
-                    <button class="btn btn-secondary btn-sm" data-command="orderedList">1. Liste</button>
+                    <button class="btn btn-secondary btn-sm" data-command="bulletList" title="Aufzählung">• Liste</button>
+                    <button class="btn btn-secondary btn-sm" data-command="orderedList" title="Nummerierte Liste">1. Liste</button>
+                    <button class="btn btn-secondary btn-sm" data-command="taskList" title="Aufgabenliste">☑ Task</button>
+                    <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
+                    <button class="btn btn-secondary btn-sm" data-command="quote" title="Zitat">" Zitat</button>
+                    <button class="btn btn-secondary btn-sm" data-command="code" title="Code">\`Code\`</button>
+                    <button class="btn btn-secondary btn-sm" data-command="codeBlock" title="Code-Block">{ }</button>
+                    <button class="btn btn-secondary btn-sm" data-command="hr" title="Trennlinie">---</button>
+                    <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
+                    <button class="btn btn-secondary btn-sm" data-command="link" title="Link">🔗 Link</button>
+                    <button class="btn btn-secondary btn-sm" data-command="image" title="Bild einfügen">🖼 Bild</button>
+                    <button class="btn btn-secondary btn-sm" data-command="table" title="Tabelle einfügen">📊 Tabelle</button>
+                    <input type="file" class="tiptap-image-upload" accept="image/*" style="display: none;">
                 </div>
                 <div class="tiptap-content-area" style="padding: 16px; overflow-y: auto; height: calc(100% - 45px); cursor: text;"></div>
             `;
 
             const contentArea = this.container.querySelector('.tiptap-content-area');
             const toolbar = this.container.querySelector('.tiptap-toolbar');
+            const imageInput = this.container.querySelector('.tiptap-image-upload');
 
             // Initialize TipTap
             this.tiptapEditor = new Editor({
                 element: contentArea,
                 extensions: [
                     StarterKit,
+                    Image,
+                    Link.configure({ openOnClick: false }),
+                    TaskList,
+                    TaskItem.configure({ nested: true }),
+                    Table.configure({ resizable: true }),
+                    TableRow,
+                    TableHeader,
+                    TableCell,
                     Markdown,
                     LoreHighlightExtension
                 ],
                 content: this.content,
                 onUpdate: () => {
+                    this.onChangeCallback();
+                }
+            });
                     this.onChangeCallback();
                 }
             });
@@ -196,6 +228,43 @@ class TipTapAdapter extends BaseEditor {
                 if (cmd === 'h3') this.tiptapEditor.chain().focus().toggleHeading({ level: 3 }).run();
                 if (cmd === 'bulletList') this.tiptapEditor.chain().focus().toggleBulletList().run();
                 if (cmd === 'orderedList') this.tiptapEditor.chain().focus().toggleOrderedList().run();
+                if (cmd === 'taskList') this.tiptapEditor.chain().focus().toggleTaskList().run();
+                if (cmd === 'quote') this.tiptapEditor.chain().focus().toggleBlockquote().run();
+                if (cmd === 'code') this.tiptapEditor.chain().focus().toggleCode().run();
+                if (cmd === 'codeBlock') this.tiptapEditor.chain().focus().toggleCodeBlock().run();
+                if (cmd === 'hr') this.tiptapEditor.chain().focus().setHorizontalRule().run();
+                if (cmd === 'link') {
+                    const previousUrl = this.tiptapEditor.getAttributes('link').href;
+                    const url = window.prompt('Link URL', previousUrl || '');
+                    if (url === null) return; // cancelled
+                    if (url === '') {
+                        this.tiptapEditor.chain().focus().extendMarkRange('link').unsetLink().run();
+                    } else {
+                        this.tiptapEditor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                    }
+                }
+                if (cmd === 'table') {
+                    this.tiptapEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                }
+                if (cmd === 'image') {
+                    imageInput.click();
+                }
+            });
+
+            // Handle Image Upload
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (this.options.hooks && typeof this.options.hooks.addImageBlobHook === 'function') {
+                    this.options.hooks.addImageBlobHook(file, (url, altText) => {
+                        this.tiptapEditor.chain().focus().setImage({ src: url, alt: altText }).run();
+                    });
+                } else {
+                    console.warn('No image upload hook provided');
+                }
+                // Reset input
+                imageInput.value = '';
             });
 
         } catch (e) {

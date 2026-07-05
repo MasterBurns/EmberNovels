@@ -1563,3 +1563,108 @@ button, input, textarea, select {
     background: rgba(249, 115, 22, 0.1);
     border-bottom-style: solid;
 }
+
+/* TipTap Tables */
+.tiptap-content-area .ProseMirror table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.tiptap-content-area .ProseMirror table td,
+.tiptap-content-area .ProseMirror table th {
+    min-width: 1em;
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    vertical-align: top;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.tiptap-content-area .ProseMirror table th {
+    font-weight: bold;
+    text-align: left;
+    background-color: var(--surface-bg-alt);
+}
+
+.tiptap-content-area .ProseMirror table .selectedCell:after {
+    z-index: 2;
+    position: absolute;
+    content: "";
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(200, 200, 255, 0.4);
+    pointer-events: none;
+}
+
+.tiptap-content-area .ProseMirror table .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: -2px;
+    width: 4px;
+    background-color: var(--color-primary);
+    pointer-events: none;
+}
+
+/* TipTap Task Lists */
+.tiptap-content-area .ProseMirror ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+}
+
+.tiptap-content-area .ProseMirror ul[data-type="taskList"] li {
+    display: flex;
+    align-items: center;
+}
+
+.tiptap-content-area .ProseMirror ul[data-type="taskList"] li > label {
+    margin-right: 8px;
+    user-select: none;
+}
+
+/* TipTap Blockquote */
+.tiptap-content-area .ProseMirror blockquote {
+    border-left: 4px solid var(--border-color);
+    padding-left: 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+/* TipTap Code */
+.tiptap-content-area .ProseMirror code {
+    background-color: var(--surface-bg-alt);
+    color: var(--color-primary);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.tiptap-content-area .ProseMirror pre {
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: monospace;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.tiptap-content-area .ProseMirror pre code {
+    color: inherit;
+    padding: 0;
+    background: none;
+    font-size: 0.9em;
+}
+
+/* TipTap Images */
+.tiptap-content-area .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 1.5em 0;
+}
