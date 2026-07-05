@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.2",
+    "version": "0.3.5.3",
     "release_notes": {
-        "de": "Version 0.3.5.2 - Bootloader Update.\n- 🏗️ Neuer Bootloader: Die App zeigt nun einen schicken Ladescreen und rendert erst, wenn alle Projekte und Daten sicher geladen sind.\n- 🐛 Zuverlässigeres Laden: Striktere Start-Reihenfolge verhindert leere Projektübersichten.\n- 🐛 Leere Ansichten: Es gibt nun einen Hinweis, wenn wirklich 0 Projekte vorhanden sind.",
-        "en": "Version 0.3.5.2 - Bootloader Update.\n- 🏗️ New Bootloader: The app now shows an elegant loading screen and waits until all projects and data are fully loaded before rendering.\n- 🐛 Reliable Loading: Stricter boot sequence prevents empty project overviews.\n- 🐛 Empty States: A message is now displayed when you actually have 0 projects."
+        "de": "Version 0.3.5.3 - Updater Fix.\n- 🐛 Fehler beim Entpacken von .tar.gz Updates unter Linux/Mac behoben.",
+        "en": "Version 0.3.5.3 - Updater Fix.\n- 🐛 Fixed decompression error for .tar.gz updates on Linux/Mac."
     }
 }
