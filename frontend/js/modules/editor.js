@@ -423,11 +423,11 @@ function setupLoreTooltip() {
                 }
             }
         }, 250);
-    });
+    }, true);
     
     editorContainer.addEventListener('mouseleave', () => {
         clearTimeout(debounceTimer);
         tooltip.classList.remove('visible');
-    });
+    }, true);
 }
 
