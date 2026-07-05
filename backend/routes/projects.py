@@ -1,5 +1,6 @@
 import re
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Body, UploadFile, File
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Any, Dict
 from backend.services.storage import StorageService
@@ -16,6 +17,7 @@ class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     author: Optional[str] = None
+    imprint: Optional[str] = None
     word_count_goal: Optional[int] = None
     daily_word_count_goal: Optional[int] = None
     deadline_date: Optional[str] = None
@@ -202,3 +204,64 @@ def search_replace_in_project(project_id: str, data: SearchReplaceRequest):
         "replaced_count": replaced_count,
         "modified_files": modified_files
     }
+
+@router.get("/{project_id}/cover")
+def get_project_cover(project_id: str):
+    cover_path = StorageService.get_projects_dir() / project_id / "cover.jpg"
+    if not cover_path.exists():
+        raise HTTPException(status_code=404, detail="Cover not found")
+    return FileResponse(cover_path)
+
+@router.post("/{project_id}/cover")
+def upload_project_cover(project_id: str, file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images are allowed")
+    
+    project_dir = StorageService.get_projects_dir() / project_id
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    cover_path = project_dir / "cover.jpg"
+    
+    # Save the file
+    import shutil
+    with open(cover_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Update metadata to indicate cover exists
+    StorageService.update_project_metadata(project_id, {"has_cover": True})
+    
+    return {"status": "success", "message": "Cover uploaded"}
+@router.post("/{project_id}/images")
+def upload_project_image(project_id: str, file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images are allowed")
+    
+    project_dir = StorageService.get_projects_dir() / project_id
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    images_dir = project_dir / "images"
+    images_dir.mkdir(exist_ok=True)
+    
+    import time
+    
+    # Generate a safe filename with timestamp to avoid collisions
+    original_filename = file.filename or "image.png"
+    safe_name = "".join([c for c in original_filename if c.isalpha() or c.isdigit() or c in ' ._-']).rstrip()
+    filename = f"{int(time.time())}_{safe_name}"
+    
+    file_path = images_dir / filename
+    
+    import shutil
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"url": f"/api/projects/{project_id}/images/{filename}"}
+
+@router.get("/{project_id}/images/{filename}")
+def get_project_image(project_id: str, filename: str):
+    image_path = StorageService.get_projects_dir() / project_id / "images" / filename
+    if not image_path.exists():
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(image_path)

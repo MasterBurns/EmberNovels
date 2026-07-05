@@ -50,33 +50,6 @@ function switchSidePanelTab(tabName) {
     }
 }
 
-// Save Project Synopsis (Description)
-async function handleSaveProjectDescription() {
-    if (!state.currentProject) return;
-    const synopsis = document.getElementById('project-details-description').value;
-    
-    const saveBtn = document.getElementById('btn-save-project-description');
-    saveBtn.disabled = true;
-    saveBtn.textContent = t('saving_lbl', 'Speichert...');
-    
-    try {
-        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description: synopsis })
-        });
-        
-        if (!response.ok) throw new Error("Failed to save project synopsis");
-        
-        state.currentProject.description = synopsis;
-        showToast(t('synopsis_saved_toast', 'Projekt-Zusammenfassung erfolgreich gespeichert!'), 'success');
-    } catch (e) {
-        showToast(t('error_save_synopsis', 'Fehler beim Speichern: ') + e.message, 'danger');
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = t('btn_save_synopsis', 'Zusammenfassung speichern');
-    }
-}
 
 // AI Chat Clear
 function handleAIChatClear() {

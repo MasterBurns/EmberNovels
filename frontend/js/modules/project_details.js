@@ -19,10 +19,24 @@ async function loadProjectDetails(projectId) {
             console.error("Could not preload lore entries for state", e);
         }
         
-        // Populate Project synopsis
+        // Populate Project Metadata
         const synopsisEl = document.getElementById('project-details-description');
-        if (synopsisEl) {
-            synopsisEl.value = project.description || '';
+        if (synopsisEl) synopsisEl.value = project.description || '';
+        
+        const authorInputEl = document.getElementById('project-details-author');
+        if (authorInputEl) authorInputEl.value = project.author || '';
+        
+        const imprintEl = document.getElementById('project-details-imprint');
+        if (imprintEl) imprintEl.value = project.imprint || '';
+        
+        const coverPreview = document.getElementById('project-details-cover-preview');
+        const coverImg = document.getElementById('project-details-cover-img');
+        if (project.has_cover && coverPreview && coverImg) {
+            // Add timestamp to prevent caching
+            coverImg.src = `${API_URL}/projects/${project.id}/cover?t=${new Date().getTime()}`;
+            coverPreview.style.display = 'block';
+        } else if (coverPreview) {
+            coverPreview.style.display = 'none';
         }
         
         // Update header
@@ -149,7 +163,8 @@ async function loadProjectDetails(projectId) {
             item.innerHTML = `
                 <div class="list-item-info">
                     <div class="list-item-title">
-                        <strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong> ${escapeHtml(c.title)} 
+                        ${c.chapter_type && c.chapter_type !== 'standard' ? `<span style="background-color: var(--bg-surface-hover); border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-right: 6px;">${{prologue: 'Prolog', epilogue: 'Epilog', map: 'Karte', index: 'Verzeichnis', frontmatter: 'Sonderseite'}[c.chapter_type] || c.chapter_type}</span>` : `<strong style="color: var(--text-secondary); margin-right: 6px;">${displayIndex}.</strong>`}
+                        ${escapeHtml(c.title)} 
                         ${state.activeLanguage !== 'original' ? `<span style="background-color: var(--color-primary-light); color: var(--color-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 8px;">${t('branch_badge', 'Branch')}: ${state.activeLanguage.toUpperCase()}</span>` : ''}
                         ${c.has_recovery && state.activeLanguage === 'original' ? `<span style="color: var(--color-warning); font-size: 11px; font-weight: bold; margin-left: 8px;">⚠️ ${t('recovery_available', 'Wiederherstellung verfügbar')}</span>` : ''}
                     </div>
@@ -283,8 +298,10 @@ async function loadProjectDetails(projectId) {
                 if (grouped[vol.id].length === 0) {
                     volBody.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 12px;">Keine Kapitel in diesem Band.</div>`;
                 } else {
-                    grouped[vol.id].forEach((c, idx) => {
-                        const item = renderChapterItem(c, idx + 1);
+                    let standardCounter = 0;
+                    grouped[vol.id].forEach((c) => {
+                        if (!c.chapter_type || c.chapter_type === 'standard') standardCounter++;
+                        const item = renderChapterItem(c, standardCounter);
                         volBody.appendChild(item);
                     });
                 }
@@ -371,8 +388,10 @@ async function loadProjectDetails(projectId) {
                 if (grouped.unassigned.length === 0) {
                     volBody.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 12px;">Keine ungruppierten Kapitel.</div>`;
                 } else {
-                    grouped.unassigned.forEach((c, idx) => {
-                        const item = renderChapterItem(c, idx + 1);
+                    let standardCounter = 0;
+                    grouped.unassigned.forEach((c) => {
+                        if (!c.chapter_type || c.chapter_type === 'standard') standardCounter++;
+                        const item = renderChapterItem(c, standardCounter);
                         volBody.appendChild(item);
                     });
                 }
@@ -382,8 +401,11 @@ async function loadProjectDetails(projectId) {
                 list.appendChild(volContainer);
             } else {
                 // No volumes, render flat list
+                let standardCounter = 0;
+                let totalStandard = chaptersCopy.filter(c => !c.chapter_type || c.chapter_type === 'standard').length;
                 chaptersCopy.forEach((c, index) => {
-                    const displayIndex = state.chapterSortOrder === 'desc' ? chaptersCopy.length - index : index + 1;
+                    if (!c.chapter_type || c.chapter_type === 'standard') standardCounter++;
+                    const displayIndex = state.chapterSortOrder === 'desc' ? totalStandard - standardCounter + 1 : standardCounter;
                     const item = renderChapterItem(c, displayIndex);
                     list.appendChild(item);
                 });
@@ -434,6 +456,69 @@ async function handleCreateChapter() {
         navigateTo('editor', { projectId: state.currentProject.id, chapterId: chapter.id });
     } catch (e) {
         showToast(e.message, 'danger');
+    }
+}
+
+async function handleSaveProjectDetails() {
+    if (!state.currentProject) return;
+    
+    const author = document.getElementById('project-details-author').value;
+    const description = document.getElementById('project-details-description').value;
+    const imprint = document.getElementById('project-details-imprint').value;
+    
+    const saveBtn = document.getElementById('btn-save-project-details');
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving_lbl', 'Speichert...');
+    
+    try {
+        // Save metadata
+        const response = await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ author, description, imprint })
+        });
+        
+        if (!response.ok) throw new Error("Failed to save project details");
+        
+        state.currentProject.author = author;
+        state.currentProject.description = description;
+        state.currentProject.imprint = imprint;
+        
+        // Upload cover if provided
+        const coverInput = document.getElementById('project-details-cover');
+        if (coverInput && coverInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('file', coverInput.files[0]);
+            
+            const coverRes = await fetch(`${API_URL}/projects/${state.currentProject.id}/cover`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!coverRes.ok) throw new Error("Failed to upload cover");
+            state.currentProject.has_cover = true;
+            
+            // Update preview
+            const coverPreview = document.getElementById('project-details-cover-preview');
+            const coverImg = document.getElementById('project-details-cover-img');
+            coverImg.src = `${API_URL}/projects/${state.currentProject.id}/cover?t=${new Date().getTime()}`;
+            coverPreview.style.display = 'block';
+            coverInput.value = ''; // Reset input
+        }
+        
+        showToast(t('details_saved_toast', 'Projekt-Details erfolgreich gespeichert!'), 'success');
+        
+        // Update the display of the author stat
+        const authorEl = document.getElementById('stat-author');
+        if (authorEl) {
+            authorEl.textContent = author || '-';
+        }
+        
+    } catch (e) {
+        showToast(t('error_save_details', 'Fehler beim Speichern: ') + e.message, 'danger');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = t('btn_save_details', 'Metadaten speichern');
     }
 }
 

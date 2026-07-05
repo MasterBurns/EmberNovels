@@ -538,6 +538,11 @@ function openChapterSettingsModal() {
     const mapping = state.currentProject.chapters_volume_mapping || {};
     select.value = mapping[state.currentChapter.id] || "";
     
+    const selectType = document.getElementById('chapter-settings-type');
+    if (selectType) {
+        selectType.value = state.currentChapter.chapter_type || "standard";
+    }
+    
     openModal('modal-chapter-settings');
 }
 
@@ -555,6 +560,21 @@ async function saveChapterSettings() {
     }
     
     await updateProjectMetadataDirectly({ chapters_volume_mapping: mapping });
+    
+    const selectType = document.getElementById('chapter-settings-type');
+    if (selectType) {
+        try {
+            await fetch(`${API_URL}/projects/${state.currentProject.id}/chapters/${state.currentChapter.id}/metadata`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: selectType.value })
+            });
+            state.currentChapter.chapter_type = selectType.value;
+        } catch (e) {
+            console.error("Failed to update chapter type", e);
+        }
+    }
+    
     closeModal('modal-chapter-settings');
     showToast("Kapitel-Einstellungen gespeichert!", "success");
     loadProjectDetails(state.currentProject.id);

@@ -11,6 +11,9 @@ class ChapterCreate(BaseModel):
 class ChapterSave(BaseModel):
     content: str
 
+class ChapterMetadataUpdate(BaseModel):
+    type: str
+
 class RecoveryResolve(BaseModel):
     keep_recovery: bool
 
@@ -54,6 +57,18 @@ def autosave_chapter(project_id: str, chapter_id: str, data: ChapterSave):
     if not success:
         raise HTTPException(status_code=404, detail="Chapter not found or autosave failed")
     return {"message": "Autosaved successfully to temp file"}
+
+@router.patch("/{chapter_id}/metadata")
+def update_chapter_metadata(project_id: str, chapter_id: str, update: ChapterMetadataUpdate):
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    success = StorageService.update_chapter_metadata(project_id, chapter_id, {"type": update.type})
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update metadata")
+        
+    return {"status": "success"}
 
 @router.post("/{chapter_id}/save")
 def save_chapter(project_id: str, chapter_id: str, data: ChapterSave, background_tasks: BackgroundTasks):

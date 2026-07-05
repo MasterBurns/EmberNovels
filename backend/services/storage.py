@@ -249,6 +249,10 @@ class StorageService:
                 except Exception:
                     pass
                 
+                chapters_metadata = project_meta.get("chapters_metadata", {})
+                ch_meta = chapters_metadata.get(chapter_id, {})
+                chapter_type = ch_meta.get("type", "standard")
+                
                 chapters.append({
                     "id": chapter_id,
                     "title": chapter_id.replace('_', ' ').title(),
@@ -256,7 +260,8 @@ class StorageService:
                     "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
                     "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
                     "has_recovery": has_recovery,
-                    "scanned_for_lore": chapter_id in scanned_chapters
+                    "scanned_for_lore": chapter_id in scanned_chapters,
+                    "chapter_type": chapter_type
                 })
                 
         # Sort based on chapters_order in project.json if available
@@ -420,6 +425,30 @@ class StorageService:
             "recovery_content": tmp_content if has_recovery else None,
             "recovery_timestamp": datetime.fromtimestamp(tmp_mtime).isoformat() if has_recovery else None
         }
+
+    @classmethod
+    def update_chapter_metadata(cls, project_id: str, chapter_id: str, data: Dict[str, Any]) -> bool:
+        """Update metadata for a specific chapter in project.json."""
+        meta_path = cls.get_projects_dir() / project_id / "project.json"
+        if not meta_path.exists():
+            return False
+            
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
+            
+        if "chapters_metadata" not in meta:
+            meta["chapters_metadata"] = {}
+            
+        if chapter_id not in meta["chapters_metadata"]:
+            meta["chapters_metadata"][chapter_id] = {}
+            
+        for k, v in data.items():
+            meta["chapters_metadata"][chapter_id][k] = v
+            
+        with open(meta_path, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=4, ensure_ascii=False)
+            
+        return True
 
     @classmethod
     def autosave_chapter(cls, project_id: str, chapter_id: str, content: str) -> bool:

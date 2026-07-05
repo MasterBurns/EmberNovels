@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.9",
+    "version": "0.3.6.0",
     "release_notes": {
-        "de": "Version 0.3.5.9 - Hover-Lore & Installer-Fixes.\n- ✨ Neu: Lore-Tooltips beim Darüberfahren im Editor (auch im Zen-Modus).\n- 🐛 Fix: Das Linux-Installationsskript und der Auto-Updater wurden für saubere Pfade überarbeitet.\n- 🐛 Fix: Logs werden nun sauber unter ~/.local/share/EmberNovels abgelegt.",
-        "en": "Version 0.3.5.9 - Hover-Lore & Installer Fixes.\n- ✨ New: Inline Lore Tooltips on hover in the editor (incl. Zen Mode).\n- 🐛 Fix: The Linux installation script and auto-updater were overhauled for clean paths.\n- 🐛 Fix: Logs are now cleanly stored under ~/.local/share/EmberNovels."
+        "de": "Version 0.3.6.0 - Rundum-Sorglos-Export & Kapitel-Metadaten.\n- ✨ Neu: Vollwertige ePub & PDF Exporte (mit Cover, Titelseite, Impressum und Buch-Typografie).\n- ✨ Neu: Einstellbare Kapiteltypen (Prolog, Karte, Epilog) die nicht in die Standard-Nummerierung zählen.\n- ✨ Neu: Unterstützung für das Hochladen von Karten und Bildern im Editor.\n- ✨ Neu: PDF-Querformat für Karten-Kapitel.",
+        "en": "Version 0.3.6.0 - Pro Exports & Chapter Metadata.\n- ✨ New: Full-featured ePub & PDF exports (including cover, title page, imprint, and book typography).\n- ✨ New: Adjustable chapter types (Prologue, Map, Epilogue) that do not increment standard numbering.\n- ✨ New: Image upload support in the editor for maps and sketches.\n- ✨ New: PDF Landscape mode for map chapters."
     }
 }

@@ -79,7 +79,27 @@ async function openEditor(projectId, chapterId) {
                     ['ul', 'ol', 'task', 'indent', 'outdent'],
                     ['table', 'image', 'link'],
                     ['code', 'codeblock']
-                ]
+                ],
+                hooks: {
+                    addImageBlobHook: async (blob, callback) => {
+                        const formData = new FormData();
+                        formData.append('file', blob);
+                        try {
+                            const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/images`, {
+                                method: 'POST',
+                                body: formData
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                callback(data.url, blob.name || 'image');
+                            } else {
+                                showToast('Bild-Upload fehlgeschlagen.', 'danger');
+                            }
+                        } catch (e) {
+                            showToast('Fehler beim Hochladen des Bildes.', 'danger');
+                        }
+                    }
+                }
             });
             
             // Set up change listener

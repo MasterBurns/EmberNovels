@@ -321,9 +321,9 @@ function setupEventListeners() {
     const btnAiChatClear = document.getElementById('btn-ai-chat-clear');
     if (btnAiChatClear) btnAiChatClear.addEventListener('click', handleAIChatClear);
 
-    // Project Synopsis save button trigger
-    const btnSaveSynopsis = document.getElementById('btn-save-project-description');
-    if (btnSaveSynopsis) btnSaveSynopsis.addEventListener('click', handleSaveProjectDescription);
+    // Project Details save button trigger
+    const btnSaveDetails = document.getElementById('btn-save-project-details');
+    if (btnSaveDetails) btnSaveDetails.addEventListener('click', handleSaveProjectDetails);
 
     // Hover popup trigger initialization
     setupLoreTooltip();

@@ -211,12 +211,24 @@
                             </div>
 
                             <div class="list-container" style="margin-top: 16px;">
-                                <h3 class="list-title" style="margin-bottom: 12px;" data-i18n="project_synopsis_title">Projekt-Zusammenfassung (Synopsis)</h3>
-                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;" data-i18n="project_synopsis_desc">
-                                    Eine grobe Übersicht der Geschichte für dich und die KI.
-                                </p>
-                                <textarea id="project-details-description" class="form-textarea" rows="5" style="width: 100%; font-size: 13px; padding: 10px; resize: vertical; border-radius: 8px; margin-bottom: 12px;" placeholder="z.B. Ein Magierlehrling entdeckt ein uraltes Geheimnis..."></textarea>
-                                <button id="btn-save-project-description" class="btn btn-secondary" style="width: 100%; font-size: 13px;" data-i18n="btn_save_synopsis">Zusammenfassung speichern</button>
+                                <h3 class="list-title" style="margin-bottom: 12px;" data-i18n="project_synopsis_title">Projekt-Details (Metadaten)</h3>
+                                
+                                <label class="form-label" style="margin-top: 8px;">Autor / Autorin</label>
+                                <input type="text" id="project-details-author" class="form-input" style="font-size: 13px; margin-bottom: 12px;">
+
+                                <label class="form-label">Zusammenfassung (Synopsis)</label>
+                                <textarea id="project-details-description" class="form-textarea" rows="3" style="width: 100%; font-size: 13px; padding: 10px; resize: vertical; border-radius: 8px; margin-bottom: 12px;" placeholder="z.B. Ein Magierlehrling entdeckt ein uraltes Geheimnis..."></textarea>
+                                
+                                <label class="form-label">Impressum / Copyright (Optional)</label>
+                                <textarea id="project-details-imprint" class="form-textarea" rows="2" style="width: 100%; font-size: 13px; padding: 10px; resize: vertical; border-radius: 8px; margin-bottom: 12px;" placeholder="© 2026 Alle Rechte vorbehalten."></textarea>
+                                
+                                <label class="form-label">Buchcover (Optional)</label>
+                                <input type="file" id="project-details-cover" class="form-input" accept="image/png, image/jpeg" style="padding: 0.5rem; background: var(--bg-surface); font-size: 12px; margin-bottom: 8px;">
+                                <div id="project-details-cover-preview" style="margin-bottom: 12px; max-width: 150px; display: none;">
+                                    <img id="project-details-cover-img" src="" alt="Cover Preview" style="width: 100%; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                </div>
+
+                                <button id="btn-save-project-details" class="btn btn-secondary" style="width: 100%; font-size: 13px;">Metadaten speichern</button>
                             </div>
 
                             <div class="list-container">
@@ -909,6 +921,17 @@
                     <label class="form-label" for="project-description" data-i18n="modal_project_desc_lbl">Kurzbeschreibung (Optional)</label>
                     <textarea id="project-description" class="form-textarea" rows="3" placeholder="Ein epischer Fantasyroman über..." data-i18n="placeholder_project_desc"></textarea>
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="project-imprint" data-i18n="modal_project_imprint_lbl">Impressum / Copyright-Hinweis (Optional)</label>
+                    <textarea id="project-imprint" class="form-textarea" rows="2" placeholder="© 2026 Alle Rechte vorbehalten."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="project-cover" data-i18n="modal_project_cover_lbl">Buchcover (Optional)</label>
+                    <input type="file" id="project-cover" class="form-input" accept="image/png, image/jpeg" style="padding: 0.5rem; background: var(--bg-surface);">
+                    <div id="project-cover-preview" style="margin-top: 10px; max-width: 150px; display: none;">
+                        <img id="project-cover-img" src="" alt="Cover Preview" style="width: 100%; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-project')" data-i18n="btn_cancel">Abbrechen</button>
@@ -1321,6 +1344,17 @@
                 <div class="form-group">
                     <label class="form-label" for="chapter-settings-volume">Zugehöriger Band</label>
                     <select id="chapter-settings-volume" class="form-input" style="height: auto;"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="chapter-settings-type">Kapiteltyp</label>
+                    <select id="chapter-settings-type" class="form-input" style="height: auto;">
+                        <option value="standard">Standard (zählt in Nummerierung)</option>
+                        <option value="prologue">Prolog / Vorwort</option>
+                        <option value="epilogue">Epilog / Nachwort</option>
+                        <option value="map">Karte / Skizze</option>
+                        <option value="index">Stichwortverzeichnis / Glossar</option>
+                        <option value="frontmatter">Sonderseite / Frontmatter</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
