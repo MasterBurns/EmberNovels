@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.7",
+    "version": "0.3.6.8",
     "release_notes": {
-        "de": "Version 0.3.6.7 - UI-Polishing & Bugfixes.\n- ✨ Neu: Die Toolbar-Dropdowns im Editor sehen nun deutlich moderner und ansprechender aus (inklusive sanfter Animationen und Schatten).\n- 🐛 Fix: Das Dropdown für die KI-Modelle zeigt nun den Text der Modelle wieder korrekt an.\n- 🐛 Fix: Der Hover-Effekt für Lore-Einträge wurde im WYSIWYG-Editor nochmal deutlich robuster gemacht, um Probleme mit Zero-Width-Spaces und verschachtelten HTML-Elementen zu umgehen.",
-        "en": "Version 0.3.6.7 - UI Polishing & Bugfixes.\n- ✨ New: The editor toolbar dropdowns now have a much more modern and appealing look (including smooth animations and shadows).\n- 🐛 Fix: The AI models dropdown now correctly displays the text of the loaded models.\n- 🐛 Fix: The hover tooltip for Lore entries has been made much more robust in the WYSIWYG editor to handle zero-width spaces and nested HTML elements."
+        "de": "Version 0.3.6.8 - Stabilitäts-Patch.\n- 🐛 Fix: Der automatische Linux-Updater wurde komplett als Dämon vom Hauptprozess entkoppelt, damit er nicht beim Schließen von EmberNovels mitgerissen wird.\n- ✨ Neu: Das Anzeigen von Lore-Einträgen im Rich-Text-Editor (linke Seite) funktioniert nun, indem man einfach in ein Wort klickt. Das ist wesentlich robuster als der Hover-Effekt, da der Rich-Text-Editor extrem verschachtelt ist.",
+        "en": "Version 0.3.6.8 - Stability Patch.\n- 🐛 Fix: The automatic Linux updater is now completely decoupled as a daemon so it isn't killed when EmberNovels closes.\n- ✨ New: Lore tooltips in the Rich-Text editor (left side) are now triggered by clicking on a word. This is much more robust than hovering, due to the editor's nested structure."
     }
 }

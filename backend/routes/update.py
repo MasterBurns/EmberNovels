@@ -144,10 +144,15 @@ def perform_hot_update(download_url: str):
             os.chmod(update_script, 0o755)
             print("Spawning update script...")
             log_path = os.path.join(exe_dir, "update_trigger.log")
+            
+            # Using double decoupling: start_new_session (setsid) + nohup + < /dev/null
             subprocess.Popen(
-                f"nohup bash '{update_script}' > '{log_path}' 2>&1 &",
+                f"nohup bash '{update_script}' > '{log_path}' 2>&1 < /dev/null &",
                 shell=True,
-                start_new_session=True
+                start_new_session=True,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
             )
         print("Shutting down current server process...")
         time.sleep(0.5)
