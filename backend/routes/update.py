@@ -143,9 +143,11 @@ def perform_hot_update(download_url: str):
             
             os.chmod(update_script, 0o755)
             print("Spawning update script...")
-            subprocess.Popen([update_script], preexec_fn=os.setsid, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(["bash", update_script], start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
         print("Shutting down current server process...")
+        import time
+        time.sleep(0.5)
         os._exit(0)
         
     except Exception as e:

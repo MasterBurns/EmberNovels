@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.0",
+    "version": "0.3.6.1",
     "release_notes": {
-        "de": "Version 0.3.6.0 - Rundum-Sorglos-Export & Kapitel-Metadaten.\n- ✨ Neu: Vollwertige ePub & PDF Exporte (mit Cover, Titelseite, Impressum und Buch-Typografie).\n- ✨ Neu: Einstellbare Kapiteltypen (Prolog, Karte, Epilog) die nicht in die Standard-Nummerierung zählen.\n- ✨ Neu: Unterstützung für das Hochladen von Karten und Bildern im Editor.\n- ✨ Neu: PDF-Querformat für Karten-Kapitel.",
-        "en": "Version 0.3.6.0 - Pro Exports & Chapter Metadata.\n- ✨ New: Full-featured ePub & PDF exports (including cover, title page, imprint, and book typography).\n- ✨ New: Adjustable chapter types (Prologue, Map, Epilogue) that do not increment standard numbering.\n- ✨ New: Image upload support in the editor for maps and sketches.\n- ✨ New: PDF Landscape mode for map chapters."
+        "de": "Version 0.3.6.1 - Hotfix für den Auto-Updater.\n- 🐛 Fix: Ein Bug wurde behoben, bei dem das Linux-Update-Skript beim automatischen Herunterladen nicht sauber getriggert wurde.",
+        "en": "Version 0.3.6.1 - Auto-Updater Hotfix.\n- 🐛 Fix: Fixed a bug where the Linux update script wasn't triggered cleanly after an automatic download."
     }
 }
