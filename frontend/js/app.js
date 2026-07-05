@@ -877,15 +877,26 @@ function setupEventListeners() {
 // 1. PROJECTS LOGIC
 async function loadProjects(retryCount = 0) {
     const grid = document.getElementById('projects-grid');
-    // Clear dynamic cards except the creation one
-    const createCard = document.getElementById('card-create-project');
-    grid.innerHTML = '';
-    grid.appendChild(createCard);
+    if (!grid) return;
     
     try {
         const response = await fetch(`${API_URL}/projects`);
         if (!response.ok) throw new Error("Could not load projects");
-        state.projects = await response.json();
+        const data = await response.json();
+        
+        // Sometimes on very first boot, OS hasn't fully propagated the directory contents
+        if (Array.isArray(data) && data.length === 0 && retryCount === 0) {
+            console.warn("No projects found on first try, retrying once...");
+            setTimeout(() => loadProjects(1), 600);
+            return;
+        }
+        
+        state.projects = Array.isArray(data) ? data : [];
+        
+        // Safely clear only project cards, keep the create card
+        const createCard = document.getElementById('card-create-project');
+        grid.innerHTML = '';
+        if (createCard) grid.appendChild(createCard);
         
         state.projects.forEach(p => {
             const card = document.createElement('div');
@@ -895,7 +906,7 @@ async function loadProjects(retryCount = 0) {
                 <div class="card-desc">${escapeHtml(p.description || "Keine Beschreibung.")}</div>
                 <div class="card-meta">
                     <span>Autor: ${escapeHtml(p.author || "Unbekannt")}</span>
-                    <span>Ziel: ${p.word_count_goal} W</span>
+                    <span>Ziel: ${p.word_count_goal || 0} W</span>
                 </div>
                 <div class="card-actions">
                     <button class="card-action-btn btn-delete" title="In den Papierkorb verschieben">🗑️</button>
@@ -903,12 +914,15 @@ async function loadProjects(retryCount = 0) {
             `;
             
             // Delete listener
-            card.querySelector('.btn-delete').addEventListener('click', (e) => {
-                e.stopPropagation();
-                showConfirm(t('delete_project_title', 'Projekt löschen'), `${t('delete_project_body', 'Möchtest du das Projekt wirklich in den Papierkorb verschieben?')} "${p.title}"`, () => {
-                    deleteProject(p.id);
+            const deleteBtn = card.querySelector('.btn-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showConfirm(t('delete_project_title', 'Projekt löschen'), `${t('delete_project_body', 'Möchtest du das Projekt wirklich in den Papierkorb verschieben?')} "${p.title}"`, () => {
+                        deleteProject(p.id);
+                    });
                 });
-            });
+            }
             
             // View details listener
             card.addEventListener('click', () => {
@@ -6574,11 +6588,11 @@ async function autoGenerateMindmap() {
         const newEdges = [];
         
         // Add characters
-        const chars = loreData.filter(l => l.type === 'character');
+        const chars = loreData.filter(l => l.category === 'character');
         chars.forEach(c => {
             newNodes.push({
                 id: c.id,
-                label: c.title,
+                label: c.name || "Unbekannt",
                 group: 'character',
                 shape: 'dot',
                 color: '#3b82f6',
@@ -6600,11 +6614,11 @@ async function autoGenerateMindmap() {
         });
         
         // Add locations
-        const locs = loreData.filter(l => l.type === 'location');
+        const locs = loreData.filter(l => l.category === 'location');
         locs.forEach(l => {
             newNodes.push({
                 id: l.id,
-                label: l.title,
+                label: l.name || "Unbekannt",
                 group: 'location',
                 shape: 'square',
                 color: '#10b981',
@@ -6613,11 +6627,11 @@ async function autoGenerateMindmap() {
         });
         
         // Add items
-        const items = loreData.filter(l => l.type === 'item');
+        const items = loreData.filter(l => l.category === 'item');
         items.forEach(i => {
             newNodes.push({
                 id: i.id,
-                label: i.title,
+                label: i.name || "Unbekannt",
                 group: 'item',
                 shape: 'triangle',
                 color: '#f59e0b',
