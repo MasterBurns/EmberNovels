@@ -169,6 +169,7 @@ async function handleCloudBackup() {
     await saveAISettings();
     
     showToast("Cloud-Backup wird gestartet... Bitte warten.", "success");
+    if (window.addTask) window.addTask('backup', 'Cloud-Backup', 'Lade Projekt in die Cloud hoch...');
     
     try {
         const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/cloud-backup`, {
@@ -180,9 +181,12 @@ async function handleCloudBackup() {
             throw new Error(errData.detail || "Cloud-Backup fehlgeschlagen");
         }
         
-        showToast("Cloud-Backup erfolgreich hochgeladen!", "success");
-    } catch(err) {
-        showToast(err.message, "danger");
+        showToast(t('backup_success', 'Cloud-Backup erfolgreich abgeschlossen!'), 'success');
+        
+    } catch (e) {
+        showToast("Fehler beim Cloud-Backup: " + e.message, "danger");
+    } finally {
+        if (window.removeTask) window.removeTask('backup');
     }
 }
 

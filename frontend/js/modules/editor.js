@@ -497,7 +497,7 @@ function setupLoreTooltip() {
                 }
             }
         }, 10);
-    });
+    }, true); // Use capture phase so ProseMirror doesn't swallow it!
     
     editorContainer.addEventListener('mouseleave', () => {
         clearTimeout(debounceTimer);

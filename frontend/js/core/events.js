@@ -21,9 +21,16 @@ function setupEventListeners() {
     document.getElementById('btn-submit-project').addEventListener('click', handleCreateProject);
     document.getElementById('btn-submit-chapter').addEventListener('click', handleCreateChapter);
     
-    // Settings save
+    // Settings auto-save
     document.getElementById('btn-save-settings').addEventListener('click', handleSaveSettings);
-    
+    const viewSettings = document.getElementById('view-settings');
+    if (viewSettings) {
+        viewSettings.addEventListener('change', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                handleSaveSettings();
+            }
+        });
+    }
     // Bind AI model fetch buttons
     document.querySelectorAll('.btn-load-models').forEach(btn => {
         btn.addEventListener('click', async () => {

@@ -147,6 +147,7 @@ async function checkAppUpdates() {
                             }
 
                             statusText.textContent = `Lade ${targetAsset.name} herunter...`;
+                            if (window.addTask) window.addTask('updater', 'System-Update', `Lade ${targetAsset.name} herunter...`);
 
                             const triggerRes = await fetch(`${API_URL}/update`, {
                                 method: 'POST',
@@ -183,12 +184,14 @@ async function checkAppUpdates() {
                                 if (pollCount > 80) {
                                     clearInterval(pollInterval);
                                     overlay.remove();
+                                    if (window.removeTask) window.removeTask('updater');
                                     showToast("Update-Verbindungstimeout. Bitte starte die Anwendung manuell neu.", "danger");
                                 }
                             }, 1500);
 
                         } catch (err) {
                             overlay.remove();
+                            if (window.removeTask) window.removeTask('updater');
                             showToast("Update fehlgeschlagen: " + err.message, "danger");
                         }
                     }

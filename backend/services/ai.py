@@ -50,14 +50,12 @@ class AIService:
     def _safe_urlopen(cls, req: urllib.request.Request, timeout: int = 30) -> Any:
         import ssl
         import urllib.error
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
         try:
-            return urllib.request.urlopen(req, timeout=timeout)
+            return urllib.request.urlopen(req, timeout=timeout, context=ctx)
         except urllib.error.URLError as e:
-            reason_str = str(e.reason)
-            if "CERTIFICATE_VERIFY_FAILED" in reason_str or "certificate verify failed" in reason_str:
-                print("SSL certificate verification failed. Retrying with unverified context...")
-                ctx = ssl._create_unverified_context()
-                return urllib.request.urlopen(req, timeout=timeout, context=ctx)
             raise e
 
     @classmethod

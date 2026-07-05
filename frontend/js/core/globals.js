@@ -52,6 +52,7 @@ const ModuleManager = {
         { id: 'corkboard', icon: '📋', labelKey: 'nav_corkboard' },
         { id: 'relationships', icon: '👥', labelKey: 'nav_relationships' },
         { id: 'mindmap', icon: '🧠', labelKey: 'nav_mindmap' },
+        { id: 'tasks', icon: '⚙️', labelKey: 'nav_tasks', alwaysProject: true },
         { id: 'search', icon: '🔍', labelKey: 'nav_search', alwaysProject: true },
         { id: 'trash', icon: '🗑️', labelKey: 'nav_trash', alwaysProject: true }
     ],
