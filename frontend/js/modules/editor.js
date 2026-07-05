@@ -330,7 +330,7 @@ window.showLoreTooltipForKeyword = function(keyword, event) {
     }
 };
 
-window.toggleEditorLoreSidebar = toggleEditorLoreSidebar;
+
 window.handleCopyForWebnovel = handleCopyForWebnovel;
 async function handleCopyForWebnovel() {
     if (!state.currentChapter) return;

@@ -326,26 +326,6 @@ class TipTapAdapter extends BaseEditor {
     }
 }
 
-// ------------------------------------------------------------------
-// 3. Custom Adapter (Future / Editor 3)
-// ------------------------------------------------------------------
-class CustomAdapter extends BaseEditor {
-    constructor(container, options) {
-        super(container, options);
-        container.innerHTML = '<div style="padding: 24px; color: var(--text-muted); text-align: center;">Eigener Editor 3 (Platzhalter)</div>';
-        this.content = '';
-    }
-    getMarkdown() { return this.content; }
-    setMarkdown(md) { this.content = md; }
-    insertText(text) {}
-    replaceSelection(text) {}
-    getSelectedText() { return ''; }
-    setSelection(start, end) {}
-    changeMode(mode) {}
-    focus() {}
-    destroy() { this.container.innerHTML = ''; }
-}
-
 
 // ------------------------------------------------------------------
 // 3. Custom Adapter (EmberEditor)
