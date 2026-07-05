@@ -65,7 +65,7 @@ async function checkAppUpdates() {
     
     try {
         // Fetch raw version.json from MasterBurns/EmberNovels raw endpoint
-        const response = await fetch('https://raw.githubusercontent.com/MasterBurns/EmberNovels/master/version.json');
+        const response = await fetch('https://raw.githubusercontent.com/MasterBurns/EmberNovels/master/version.json', { cache: 'no-store' });
         if (!response.ok) throw new Error("Could not download updates list");
         const data = await response.json();
         
@@ -121,7 +121,7 @@ async function checkAppUpdates() {
                         const statusText = document.getElementById('update-overlay-status');
 
                         try {
-                            const releasesRes = await fetch('https://api.github.com/repos/MasterBurns/EmberNovels/releases/latest');
+                            const releasesRes = await fetch('https://api.github.com/repos/MasterBurns/EmberNovels/releases/latest', { cache: 'no-store' });
                             if (!releasesRes.ok) throw new Error("Konnte Release-Assets von GitHub nicht abfragen.");
                             const releaseData = await releasesRes.json();
 

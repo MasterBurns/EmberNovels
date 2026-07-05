@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.7",
+    "version": "0.3.8.8",
     "release_notes": {
-        "de": "Version 0.3.8.7 - Bugfix Release.\n- 🐛 Fix: Ansicht 'Prozesse & Aufgaben' zeigt nun den korrekten Titel im Header anstatt 'Mindmap Manager'.\n- 🐛 Fix: Ein Skript-Absturz beim Öffnen der Prozess-Ansicht wurde behoben.",
-        "en": "Version 0.3.8.7 - Bugfix Release.\n- 🐛 Fix: 'Tasks & Processes' view now displays the correct header title instead of 'Mindmap Manager'.\n- 🐛 Fix: Fixed a script crash when opening the process view."
+        "de": "Version 0.3.8.8 - Bugfix Release.\n- 🐛 Fix: Der Updater kopiert Dateien nun erzwungen (`/bin/cp -rf`), um Timing/Berechtigungsprobleme (Teil-Updates) zu vermeiden.\n- 🐛 Fix: Der Browser-Cache für Update-Abfragen wurde deaktiviert, damit immer die korrekte neue Version geladen wird.\n- 🐛 Fix: Der Updater schreibt nun ein lokales `update_debug.log`, falls zukünftig noch Fehler auftreten.",
+        "en": "Version 0.3.8.8 - Bugfix Release.\n- 🐛 Fix: The updater now force-copies files (`/bin/cp -rf`) to prevent timing/permission issues (partial updates).\n- 🐛 Fix: Browser cache for update checks has been disabled to ensure the correct new version is always downloaded.\n- 🐛 Fix: The updater now writes a local `update_debug.log` for troubleshooting."
     }
 }

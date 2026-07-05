@@ -106,14 +106,16 @@ def perform_hot_update(download_url: str):
             update_script = os.path.join(exe_dir, "update.sh")
             with open(update_script, "w") as f:
                 f.write("#!/bin/bash\n")
+                f.write("exec > >(tee -a update_debug.log) 2>&1\n")
+                f.write("echo 'Starting update script...'\n")
                 f.write("sleep 2\n")
                 if is_archive:
                     if is_binary_update:
                         f.write(f'rm -f "{current_exe}"\n')
-                        f.write(f'cp -r "{source_root}"/* "{exe_dir}"/\n')
+                        f.write(f'/bin/cp -rf "{source_root}"/* "{exe_dir}"/\n')
                         f.write(f'chmod +x "{current_exe}"\n')
                     else:
-                        f.write(f'cp -r "{source_root}"/* "{exe_dir}"/\n')
+                        f.write(f'/bin/cp -rf "{source_root}"/* "{exe_dir}"/\n')
                 else:
                     f.write(f'rm -f "{current_exe}"\n')
                     f.write(f'mv "{archive_path}" "{current_exe}"\n')
@@ -130,14 +132,17 @@ def perform_hot_update(download_url: str):
                     f.write(f'    echo "PyInstaller not found. Could not automatically rebuild the binary. Please rebuild manually." > update_error.log\n')
                     f.write(f'fi\n')
                 
+                f.write(f'echo "Update copy complete. Cleaning up..."\n')
                 f.write(f'rm -rf "{temp_dir}"\n')
                 f.write(f'rm -f "$0"\n')
 
                 if is_frozen:
+                    f.write(f'echo "Starting new binary..."\n')
                     f.write(f'exec "{current_exe}" --no-browser\n')
                 else:
                     python_exe = sys.executable
                     main_script = os.path.abspath(sys.argv[0])
+                    f.write(f'echo "Starting new python script..."\n')
                     f.write(f'exec "{python_exe}" "{main_script}" --no-browser\n')
             
             os.chmod(update_script, 0o755)
