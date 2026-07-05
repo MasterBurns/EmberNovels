@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.6",
+    "version": "0.3.8.7",
     "release_notes": {
-        "de": "Version 0.3.8.6 - Bugfix Release.\n- 🐛 Fix: Ladefehler für den neuen EmberTextEditor behoben (Pfad-Anpassung).\n- 🐛 Fix: Lore-Scan JavaScript-Fehler (loadWikiData vs loadLoreEntries) behoben.\n- 🐛 Fix: Version-Tagging synchronisiert, damit der Auto-Updater die korrekten Dateien lädt.",
-        "en": "Version 0.3.8.6 - Bugfix Release.\n- 🐛 Fix: Fixed loading error for the new EmberTextEditor (path adjustment).\n- 🐛 Fix: Fixed Lore-Scan JavaScript error (loadWikiData vs loadLoreEntries).\n- 🐛 Fix: Synchronized version tagging so the auto-updater loads the correct files."
+        "de": "Version 0.3.8.7 - Bugfix Release.\n- 🐛 Fix: Ansicht 'Prozesse & Aufgaben' zeigt nun den korrekten Titel im Header anstatt 'Mindmap Manager'.\n- 🐛 Fix: Ein Skript-Absturz beim Öffnen der Prozess-Ansicht wurde behoben.",
+        "en": "Version 0.3.8.7 - Bugfix Release.\n- 🐛 Fix: 'Tasks & Processes' view now displays the correct header title instead of 'Mindmap Manager'.\n- 🐛 Fix: Fixed a script crash when opening the process view."
     }
 }

@@ -164,6 +164,14 @@ function navigateTo(view, params = {}) {
             headerTitle.textContent = `📌 Korkwand: ${state.currentProject.title}`;
             renderCorkboard();
             break;
+
+        case 'tasks':
+            const navTasks = document.getElementById('nav-tasks');
+            if (navTasks) navTasks.classList.add('active');
+            btnBackProjects.style.display = 'inline-flex';
+            headerAction.style.display = 'none';
+            headerTitle.textContent = t('title_tasks', 'Prozesse & Aufgaben');
+            break;
     }
 }
 
