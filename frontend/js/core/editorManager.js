@@ -348,6 +348,49 @@ class CustomAdapter extends BaseEditor {
 
 
 // ------------------------------------------------------------------
+// 3. Custom Adapter (EmberEditor)
+// ------------------------------------------------------------------
+class CustomAdapter extends BaseEditor {
+    constructor(container, options) {
+        super(container, options);
+        if (typeof window.EmberEditor !== 'undefined') {
+            this.emberEditor = new window.EmberEditor(this.container, {
+                onChange: () => this.onChangeCallback(),
+                onLoreClick: (keyword) => {
+                    if (window.showLoreTooltipForKeyword) {
+                        // Find the span that was clicked to pass as target
+                        const span = this.container.querySelector(`span[data-keyword="${keyword}"]`);
+                        window.showLoreTooltipForKeyword(keyword, { target: span });
+                    }
+                },
+                initialLoreKeywords: window.state?.loreList || []
+            });
+            this.emberEditor.setMarkdown(this.content);
+        } else {
+            this.container.innerHTML = '<div style="padding: 24px; color: var(--color-danger);">Fehler: EmberEditor.js wurde nicht geladen.</div>';
+        }
+    }
+
+    getMarkdown() { return this.emberEditor ? this.emberEditor.getMarkdown() : this.content; }
+    getHTML() { return this.emberEditor ? this.emberEditor.getHTML() : ''; }
+    setMarkdown(md) { if (this.emberEditor) this.emberEditor.setMarkdown(md); }
+    insertText(text) { if (this.emberEditor) this.emberEditor.insertText(text); }
+    replaceSelection(text) { if (this.emberEditor) this.emberEditor.replaceSelection(text); }
+    getSelectedText() { return this.emberEditor ? this.emberEditor.getSelectedText() : ''; }
+    setSelection(start, end) { if (this.emberEditor) this.emberEditor.setSelection(start, end); }
+    focus() { if (this.emberEditor) this.emberEditor.focus(); }
+    destroy() { if (this.emberEditor) this.emberEditor.destroy(); }
+    
+    // Custom method to update lore keywords when state changes
+    updateLoreList(loreList) {
+        if (this.emberEditor) {
+            this.emberEditor.setLoreKeywords(loreList);
+        }
+    }
+}
+
+
+// ------------------------------------------------------------------
 // Editor Manager (Factory)
 // ------------------------------------------------------------------
 window.EditorManager = {

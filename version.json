@@ -1,7 +1,7 @@
 {
-    "version": "0.3.7.1",
+    "version": "0.3.8.0",
     "release_notes": {
-        "de": "Version 0.3.7.1 - TipTap Feature-Komplettierung.\n- 🖼 Neu: Bild-Upload in TipTap.\n- 📊 Neu: Tabellen-Unterstützung in TipTap.\n- 🔗 Neu: Links, Zitate, Tasklisten und Code-Blöcke in der TipTap Toolbar.",
-        "en": "Version 0.3.7.1 - TipTap Feature Completion.\n- 🖼 New: Image upload support in TipTap.\n- 📊 New: Table support in TipTap.\n- 🔗 New: Links, quotes, task lists, and code blocks in TipTap toolbar."
+        "de": "Version 0.3.8.0 - Custom Editor Integration.\n- 📝 Neu: Eigenen, leichtgewichtigen EmberEditor integriert (als Beta in den Einstellungen verfügbar).\n- 🚀 Fix: EditorManager lädt dynamisch EmberEditor mit nativem Lore-Highlighting.",
+        "en": "Version 0.3.8.0 - Custom Editor Integration.\n- 📝 New: Integrated a lightweight, custom built EmberEditor (available as Beta in settings).\n- 🚀 Fix: EditorManager dynamically loads EmberEditor with native Lore Highlighting."
     }
 }
