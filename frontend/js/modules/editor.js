@@ -290,3 +290,27 @@ function toggleEditorSplit() {
     }
 }
 
+async function handleCopyForWebnovel() {
+    if (!state.currentChapter) return;
+    try {
+        let content = '';
+        if (state.editorMode === 'wysiwyg' && window.toastEditor) {
+            content = window.toastEditor.getHTML();
+            content = content.replace(/<p><\/p>/g, '<br>');
+        } else if (state.editorMode === 'markdown' && window.toastEditor) {
+            content = window.toastEditor.getMarkdown();
+        } else {
+            content = state.currentChapter.content || '';
+        }
+        
+        await navigator.clipboard.writeText(content);
+        if (typeof showToast === 'function') {
+            showToast(typeof t === 'function' ? t('copy_success', 'Text in die Zwischenablage kopiert!') : 'Kopiert!', 'success');
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') {
+            showToast('Fehler beim Kopieren: ' + e.message, 'danger');
+        }
+    }
+}
+
