@@ -30,6 +30,8 @@
     "settings_auto_translate_hint": "*Note: Using external paid APIs (Gemini, OpenAI, Anthropic) may incur additional costs.*",
     "settings_ui_language": "🌐 UI Language",
     "settings_ui_language_select": "EmberNovels Interface Language",
+    "settings_editor_engine": "Editor Engine (Experimental)",
+    "label_api_provider": "AI Provider",
     "about_title": "ℹ️ About EmberNovels",
     "about_version": "Version",
     "about_update_check": "Check for Updates",

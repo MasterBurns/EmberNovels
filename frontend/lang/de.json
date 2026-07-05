@@ -30,6 +30,7 @@
     "settings_auto_translate_hint": "*Achtung: Bei Nutzung von kostenpflichtigen APIs (Gemini, OpenAI, Anthropic) kann dies zusätzliche Kosten verursachen.*",
     "settings_ui_language": "🌐 UI-Sprache (Oberfläche)",
     "settings_ui_language_select": "Sprache der EmberNovels-Benutzeroberfläche",
+    "settings_editor_engine": "Editor-Engine (Experimentell)",
     "about_title": "ℹ️ Über EmberNovels",
     "about_version": "Version",
     "about_update_check": "Nach Updates suchen",

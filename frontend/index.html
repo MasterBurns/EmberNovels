@@ -738,6 +738,13 @@
                                     <option value="ja" data-i18n="lang_ja_native">🇯🇵 日本語 (Japanese)</option>
                                     <option value="zh" data-i18n="lang_zh_native">🇨🇳 简体中文 (Simplified Chinese)</option>
                                 </select>
+                                
+                                <label class="form-label" for="setting-editor-engine" style="margin-top: 16px;" data-i18n="settings_editor_engine">Editor-Engine (Experimentell)</label>
+                                <select id="setting-editor-engine" class="form-input" style="height: auto;">
+                                    <option value="toastui">ToastUI (Standard)</option>
+                                    <option value="tiptap">TipTap (Beta)</option>
+                                    <option value="custom">Eigener Editor 3 (Platzhalter)</option>
+                                </select>
                             </div>
                         </div>
 
@@ -1494,6 +1501,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Application Core Scripts -->
     <script src="js/core/globals.js"></script>
+    <script src="js/core/editorManager.js"></script>
     <script src="js/core/theme.js"></script>
     <script src="js/core/router.js"></script>
     <script src="js/core/events.js"></script>

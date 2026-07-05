@@ -31,6 +31,10 @@ async function loadAISettingsInForm() {
         const savedUiLang = localStorage.getItem('ember_ui_language') || 'de';
         document.getElementById('setting-ui-language').value = savedUiLang;
         
+        const savedEditorEngine = localStorage.getItem('ember_editor_engine') || 'toastui';
+        document.getElementById('setting-editor-engine').value = savedEditorEngine;
+        state.editorEngine = savedEditorEngine;
+        
         // AI Provider Select
         const providerSelect = document.getElementById('setting-ai-provider');
         providerSelect.value = settings.ai_provider || 'none';
@@ -101,8 +105,17 @@ async function handleSaveSettings() {
     // Save UI language to localStorage and reload it
     const uiLang = document.getElementById('setting-ui-language').value;
     const oldUiLang = localStorage.getItem('ember_ui_language') || 'de';
-
     localStorage.setItem('ember_ui_language', uiLang);
+    
+    // Save Editor Engine
+    const editorEngine = document.getElementById('setting-editor-engine').value;
+    const oldEditorEngine = localStorage.getItem('ember_editor_engine') || 'toastui';
+    localStorage.setItem('ember_editor_engine', editorEngine);
+    state.editorEngine = editorEngine;
+    if (editorEngine !== oldEditorEngine) {
+        showToast('Editor-Engine wurde gewechselt. Bitte wechsle das Kapitel, um ihn neu zu laden.', 'info');
+        // If we want to dynamically reload, we would do it here, but reloading the chapter is fine.
+    }
     
     // Save to backend so the python app (Control Center) knows about it
     try {

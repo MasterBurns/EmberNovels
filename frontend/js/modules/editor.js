@@ -64,22 +64,12 @@ async function openEditor(projectId, chapterId) {
     }
     
     try {
-        // Initialize Toast UI Editor if not done yet
+        // Initialize Editor via EditorManager if not done yet
         if (!state.editor) {
-            state.editor = new toastui.Editor({
-                el: document.getElementById('editor-container'),
-                height: '100%',
-                initialEditType: 'wysiwyg',
-                previewStyle: 'vertical',
-                theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-                hideModeSwitch: true,
-                toolbarItems: [
-                    ['heading', 'bold', 'italic', 'strike'],
-                    ['hr', 'quote'],
-                    ['ul', 'ol', 'task', 'indent', 'outdent'],
-                    ['table', 'image', 'link'],
-                    ['code', 'codeblock']
-                ],
+            const container = document.getElementById('editor-container');
+            const engine = state.editorEngine || 'toastui';
+            
+            state.editor = await window.EditorManager.createEditor(container, engine, {
                 hooks: {
                     addImageBlobHook: async (blob, callback) => {
                         const formData = new FormData();
@@ -99,23 +89,22 @@ async function openEditor(projectId, chapterId) {
                             showToast('Fehler beim Hochladen des Bildes.', 'danger');
                         }
                     }
+                },
+                onChange: () => {
+                    if (state.loadingChapter) return;
+                    const content = state.editor.getMarkdown();
+                    handleEditorInput(content);
+                    
+                    // Highlight keywords in preview pane
+                    clearTimeout(state.highlightTimeout);
+                    state.highlightTimeout = setTimeout(highlightKeywordsInPreview, 300);
+                    
+                    // Update detected keywords list in the side panel
+                    clearTimeout(state.detectTimeout);
+                    state.detectTimeout = setTimeout(updateDetectedLoreInSidebar, 500);
                 }
             });
-            
-            // Set up change listener
-            state.editor.on('change', () => {
-                if (state.loadingChapter) return;
-                const content = state.editor.getMarkdown();
-                handleEditorInput(content);
-                
-                // Highlight keywords in preview pane
-                clearTimeout(state.highlightTimeout);
-                state.highlightTimeout = setTimeout(highlightKeywordsInPreview, 300);
-                
-                // Update detected keywords list in the side panel
-                clearTimeout(state.detectedKeywordsTimeout);
-                state.detectedKeywordsTimeout = setTimeout(updateDetectedKeywords, 400);
-            });
+            // Note: The onChange callback is already passed above, no need to call state.editor.on()
             
             // Setup the mousemove event for inline lore tooltips
             setupLoreTooltip();
@@ -317,11 +306,11 @@ async function handleCopyForWebnovel() {
     if (!state.currentChapter) return;
     try {
         let content = '';
-        if (state.editorMode === 'wysiwyg' && window.toastEditor) {
-            content = window.toastEditor.getHTML();
+        if (state.editorMode === 'wysiwyg' && state.editor && typeof state.editor.getHTML === 'function') {
+            content = state.editor.getHTML();
             content = content.replace(/<p><\/p>/g, '<br>');
-        } else if (state.editorMode === 'markdown' && window.toastEditor) {
-            content = window.toastEditor.getMarkdown();
+        } else if (state.editorMode === 'markdown' && state.editor) {
+            content = state.editor.getMarkdown();
         } else {
             content = state.currentChapter.content || '';
         }
