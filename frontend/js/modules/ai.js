@@ -2,6 +2,20 @@
 // D. AI SETTINGS, ASSISTANT & TRANSLATIONS
 // ==========================================
 
+function setSelectValue(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT' && val) {
+        if (!Array.from(el.options).some(o => o.value === val)) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            el.appendChild(opt);
+        }
+    }
+    el.value = val;
+}
+
 async function loadAISettingsInForm() {
     try {
         const response = await fetch(`${API_URL}/ai/settings`);
@@ -23,17 +37,41 @@ async function loadAISettingsInForm() {
         
         // Fill Provider Sub-panels
         document.getElementById('setting-ollama-url').value = settings.ollama_url || 'http://localhost:11434';
-        document.getElementById('setting-ollama-model').value = settings.ollama_model || 'llama3';
+        setSelectValue('setting-ollama-model', settings.ollama_model || 'llama3');
         
         document.getElementById('setting-gemini-key').value = settings.gemini_api_key || '';
-        document.getElementById('setting-gemini-model').value = settings.gemini_model || 'gemini-1.5-flash';
+        setSelectValue('setting-gemini-model', settings.gemini_model || 'gemini-1.5-flash');
         
         document.getElementById('setting-openai-key').value = settings.openai_api_key || '';
-        document.getElementById('setting-openai-model').value = settings.openai_model || 'gpt-4o-mini';
+        setSelectValue('setting-openai-model', settings.openai_model || 'gpt-4o-mini');
         
         document.getElementById('setting-anthropic-key').value = settings.anthropic_api_key || '';
-        document.getElementById('setting-anthropic-model').value = settings.anthropic_model || 'claude-3-5-sonnet';
+        setSelectValue('setting-anthropic-model', settings.anthropic_model || 'claude-3-5-sonnet');
         
+        
+        // Update Gemini usage Tracker
+        const geminiUsageDate = settings.gemini_usage_date || '';
+        const todayStr = new Date().toISOString().split('T')[0];
+        let usageCount = 0;
+        if (geminiUsageDate === todayStr) {
+            usageCount = settings.gemini_usage_count || 0;
+        }
+        
+        const usageTextEl = document.getElementById('gemini-usage-text');
+        const usageBarEl = document.getElementById('gemini-usage-bar');
+        if (usageTextEl && usageBarEl) {
+            usageTextEl.textContent = `${usageCount} / 1500`;
+            const pct = Math.min(100, Math.max(0, (usageCount / 1500) * 100));
+            usageBarEl.style.width = `${pct}%`;
+            if (pct > 90) {
+                usageBarEl.style.backgroundColor = 'var(--color-danger)';
+            } else if (pct > 75) {
+                usageBarEl.style.backgroundColor = 'var(--color-warning)';
+            } else {
+                usageBarEl.style.backgroundColor = 'var(--color-primary)';
+            }
+        }
+
         // Auto translate check
         document.getElementById('setting-auto-translate').checked = settings.auto_translate_on_save !== false;
         

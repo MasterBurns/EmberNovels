@@ -347,5 +347,7 @@
     "stylecheck_modal_title": "🔍 Style Check",
     "stylecheck_scan_desc": "Click \"Check\" to scan your text.",
     "settings_ollama_help": "💡 <b>Ollama (Local & Free):</b> Download <a href=\"https://ollama.com/\" target=\"_blank\" style=\"color: var(--accent-color);\">Ollama here</a> and install it. Then open a terminal (CMD) and type e.g. <code>ollama run llama3</code>. Once the model is loaded, you can leave these settings as they are and EmberNovels will use your local AI!",
-    "settings_gemini_help": "💡 <b>Gemini Free Tier:</b> The Google Gemini API is <b>completely free</b> for personal use (up to 15 requests per minute)! Just get an API Key from <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a>. There are no costs as long as you do not exceed the limit (no payment method required)."
+    "settings_gemini_help": "💡 <b>Gemini Free Tier:</b> The Google Gemini API is <b>completely free</b> for personal use (up to 1500 requests/day, 15/min)! Just get an API Key from <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\" style=\"color: var(--accent-color);\">Google AI Studio</a>. If you hit the limit, the API simply blocks further requests with an error. There are no automatic charges or hidden costs!",
+    "settings_gemini_usage_title": "Free Tier Usage (Today)",
+    "settings_gemini_usage_hint": "API will block requests with Error 429 upon reaching 1500. No hidden costs."
 }

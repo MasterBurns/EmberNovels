@@ -127,6 +127,20 @@ class AIService:
         if not api_key:
             raise ValueError("Gemini API-Key fehlt.")
             
+        import datetime
+        today_str = datetime.date.today().isoformat()
+        current_date = settings.get("gemini_usage_date")
+        usage_count = settings.get("gemini_usage_count", 0)
+
+        if current_date != today_str:
+            current_date = today_str
+            usage_count = 0
+            
+        usage_count += 1
+        settings["gemini_usage_date"] = current_date
+        settings["gemini_usage_count"] = usage_count
+        cls.save_settings(settings)
+            
         model = settings.get("gemini_model", "gemini-1.5-flash")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         

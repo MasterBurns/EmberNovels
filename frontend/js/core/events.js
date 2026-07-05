@@ -50,13 +50,13 @@ function setupEventListeners() {
                 if (!response.ok) throw new Error("Konnte Modelle nicht laden");
                 const models = await response.json();
                 
-                const datalist = document.getElementById(`${provider}-models-datalist`);
+                const datalist = document.getElementById(`setting-${provider}-model`);
                 if (datalist) {
-                    datalist.innerHTML = '';
+                    const currentVal = datalist.value; datalist.innerHTML = ''; if (currentVal) { const opt = document.createElement('option'); opt.value = currentVal; opt.textContent = currentVal; datalist.appendChild(opt); datalist.value = currentVal; }
                     models.forEach(model => {
                         const opt = document.createElement('option');
                         opt.value = model;
-                        datalist.appendChild(opt);
+                        if (!Array.from(datalist.options).some(o => o.value === model)) datalist.appendChild(opt);
                     });
                     showToast(`${models.length} Modelle geladen!`, "success");
                 }
