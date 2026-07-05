@@ -285,18 +285,33 @@
                             </div>
                             <div class="editor-toolbar" style="flex-wrap: wrap; gap: 8px;">
                                 <div class="toolbar-group">
-                                    <button id="btn-editor-view-wysiwyg" class="toolbar-btn active" data-i18n="editor_view_wysiwyg">📝 Rich-Text</button>
-                                    <button id="btn-editor-view-markdown" class="toolbar-btn" data-i18n="editor_view_markdown">💻 Markdown</button>
-                                    <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
-                                    <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
-                                    <button id="btn-editor-history" class="toolbar-btn">🕒 Versionsverlauf</button>
-                                    <button id="btn-editor-copy-webnovel" class="toolbar-btn" title="Kopiert den Text im HTML Format für Webnovel">📋 Kopieren (Webnovel)</button>
-                                    <button id="btn-editor-typography" class="toolbar-btn" title="Bereinigt Typografie (z.B. einfache Anführungszeichen in typografische)">✨ Typografie bereinigen</button>
-                                    <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
-                                </div>
-                                <div class="toolbar-group" style="gap: 6px;">
-                                    <button id="btn-ai-correct" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Markierten Text lektorieren/korrigieren" data-i18n="editor_ai_proofread">✍️ Lektorat</button>
-                                    <button id="btn-ai-continue" class="toolbar-btn" style="padding: 4px 10px; font-size: 12px;" title="Text an Cursorposition weiterschreiben" data-i18n="editor_ai_continue">🤖 Weiterschreiben</button>
+                                    <div class="toolbar-dropdown">
+                                        <button class="toolbar-dropdown-btn">🖥️ Oberfläche ▼</button>
+                                        <div class="toolbar-dropdown-content">
+                                            <button id="btn-editor-view-wysiwyg" class="toolbar-btn active" data-i18n="editor_view_wysiwyg">📝 Rich-Text</button>
+                                            <button id="btn-editor-view-markdown" class="toolbar-btn" data-i18n="editor_view_markdown">💻 Markdown</button>
+                                            <button id="btn-editor-split" class="toolbar-btn" data-i18n="editor_view_splitscreen">⚡ Split-Screen</button>
+                                            <button id="btn-editor-zen" class="toolbar-btn" data-i18n="editor_view_zen">👁️ Zen-Modus</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="toolbar-dropdown">
+                                        <button class="toolbar-dropdown-btn">🤖 KI & Lore ▼</button>
+                                        <div class="toolbar-dropdown-content">
+                                            <button id="btn-ai-correct" class="toolbar-btn" title="Markierten Text lektorieren/korrigieren" data-i18n="editor_ai_proofread">✍️ Lektorat</button>
+                                            <button id="btn-ai-continue" class="toolbar-btn" title="Text an Cursorposition weiterschreiben" data-i18n="editor_ai_continue">🤖 Weiterschreiben</button>
+                                            <button id="btn-editor-create-lore" class="toolbar-btn" data-i18n="editor_create_lore">📖 Aus Auswahl Lore erstellen</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="toolbar-dropdown">
+                                        <button class="toolbar-dropdown-btn">🛠️ Werkzeuge ▼</button>
+                                        <div class="toolbar-dropdown-content">
+                                            <button id="btn-editor-history" class="toolbar-btn">🕒 Versionsverlauf</button>
+                                            <button id="btn-editor-copy-webnovel" class="toolbar-btn" title="Kopiert den Text im HTML Format für Webnovel">📋 Kopieren (Webnovel)</button>
+                                            <button id="btn-editor-typography" class="toolbar-btn" title="Bereinigt Typografie (z.B. einfache Anführungszeichen in typografische)">✨ Typografie bereinigen</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="toolbar-group" style="align-items: center; margin-left: auto;">
                                     <span id="editor-word-count" style="font-size: 13px; color: var(--text-muted); margin-right: 12px;">Wörter: 0</span>

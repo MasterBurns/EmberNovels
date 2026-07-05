@@ -672,6 +672,63 @@ button, input, textarea, select {
     border-color: var(--border-color);
 }
 
+.toolbar-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.toolbar-dropdown-btn {
+    background: none;
+    border: 1px solid transparent;
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toolbar-dropdown-btn:hover {
+    background-color: var(--bg-surface);
+    color: var(--color-primary);
+    border-color: var(--border-color);
+}
+
+.toolbar-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-surface);
+    min-width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1000;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 0;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+}
+
+.toolbar-dropdown:hover .toolbar-dropdown-content {
+    display: block;
+}
+
+.toolbar-dropdown-content .toolbar-btn {
+    width: 100%;
+    text-align: left;
+    border: none;
+    border-radius: 0;
+    padding: 8px 16px;
+    background-color: transparent;
+    justify-content: flex-start;
+}
+
+.toolbar-dropdown-content .toolbar-btn:hover {
+    background-color: var(--bg-surface-hover);
+}
+
 .editor-dual-view {
     display: grid;
     grid-template-columns: 1fr 1fr;

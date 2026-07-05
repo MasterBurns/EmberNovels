@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.1",
+    "version": "0.3.6.2",
     "release_notes": {
-        "de": "Version 0.3.6.1 - Hotfix für den Auto-Updater.\n- 🐛 Fix: Ein Bug wurde behoben, bei dem das Linux-Update-Skript beim automatischen Herunterladen nicht sauber getriggert wurde.",
-        "en": "Version 0.3.6.1 - Auto-Updater Hotfix.\n- 🐛 Fix: Fixed a bug where the Linux update script wasn't triggered cleanly after an automatic download."
+        "de": "Version 0.3.6.2 - UI-Verbesserungen im Editor.\n- ✨ Neu: Die Toolbar im Editor wurde in übersichtliche Dropdowns (Oberfläche, KI & Lore, Werkzeuge) gegliedert, um Platz zu sparen und Überlappungen auf kleineren Bildschirmen zu verhindern.",
+        "en": "Version 0.3.6.2 - Editor UI Improvements.\n- ✨ New: The editor toolbar is now organized into neat dropdowns (View, AI & Lore, Tools) to save space and prevent overlap on smaller screens."
     }
 }
