@@ -532,7 +532,7 @@ function setupEventListeners() {
                 }
                 const result = await response.json();
                 showToast(result.message, "success");
-                await loadWikiData();
+                await loadLoreEntries();
                 
                 let allSuggestions = [];
                 if (result.created_entries && result.created_entries.length > 0) {

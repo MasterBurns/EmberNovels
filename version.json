@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.5",
+    "version": "0.3.8.6",
     "release_notes": {
-        "de": "Version 0.3.8.5 - Bugfix Release.\n- 🐛 Fix: Das Tutorial-Fenster merkt sich nun verlässlich, ob es bereits geschlossen wurde.\n- 🐛 Fix: Die KI-Schnittstellen-Einstellungen werden nun dauerhaft über Neustarts hinweg gespeichert.\n- ✨ Feature: Neues Hintergrund-Prozess-System für KI Lore-Scans (mit konfigurierbaren Rate- und Batch-Limits zur Vermeidung von Fehlern).",
-        "en": "Version 0.3.8.5 - Bugfix Release.\n- 🐛 Fix: The tutorial window now reliably remembers if it has been closed.\n- 🐛 Fix: AI interface settings are now persistently saved across restarts.\n- ✨ Feature: New background task system for AI Lore Scans (with configurable rate and batch limits to prevent errors)."
+        "de": "Version 0.3.8.6 - Bugfix Release.\n- 🐛 Fix: Ladefehler für den neuen EmberTextEditor behoben (Pfad-Anpassung).\n- 🐛 Fix: Lore-Scan JavaScript-Fehler (loadWikiData vs loadLoreEntries) behoben.\n- 🐛 Fix: Version-Tagging synchronisiert, damit der Auto-Updater die korrekten Dateien lädt.",
+        "en": "Version 0.3.8.6 - Bugfix Release.\n- 🐛 Fix: Fixed loading error for the new EmberTextEditor (path adjustment).\n- 🐛 Fix: Fixed Lore-Scan JavaScript error (loadWikiData vs loadLoreEntries).\n- 🐛 Fix: Synchronized version tagging so the auto-updater loads the correct files."
     }
 }
