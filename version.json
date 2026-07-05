@@ -1,7 +1,7 @@
 {
-    "version": "0.3.5.8",
+    "version": "0.3.5.9",
     "release_notes": {
-        "de": "Version 0.3.5.8 - AI Tooltips & Bugfixes.\n- ✨ Neu: Hilfreiche Erklärtexte zu Ollama und Gemini in den Einstellungen hinzugefügt.\n- 🐛 Hotfix: Kopieren für Webnovels funktioniert wieder reibungslos.",
-        "en": "Version 0.3.5.8 - AI Tooltips & Bugfixes.\n- ✨ New: Helpful explanatory texts for Ollama and Gemini added to settings.\n- 🐛 Hotfix: Copying for webnovels works smoothly again."
+        "de": "Version 0.3.5.9 - Hover-Lore & Installer-Fixes.\n- ✨ Neu: Lore-Tooltips beim Darüberfahren im Editor (auch im Zen-Modus).\n- 🐛 Fix: Das Linux-Installationsskript und der Auto-Updater wurden für saubere Pfade überarbeitet.\n- 🐛 Fix: Logs werden nun sauber unter ~/.local/share/EmberNovels abgelegt.",
+        "en": "Version 0.3.5.9 - Hover-Lore & Installer Fixes.\n- ✨ New: Inline Lore Tooltips on hover in the editor (incl. Zen Mode).\n- 🐛 Fix: The Linux installation script and auto-updater were overhauled for clean paths.\n- 🐛 Fix: Logs are now cleanly stored under ~/.local/share/EmberNovels."
     }
 }
