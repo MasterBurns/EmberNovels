@@ -232,7 +232,13 @@ def main():
     log_handler.setFormatter(formatter)
     
     # Also add a file handler so we have a persistent log
-    log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "embernovels_server.log")
+    if sys.platform == "win32":
+        app_dir = os.path.join(os.getenv("APPDATA"), "EmberNovels", "logs")
+    else:
+        app_dir = os.path.join(os.path.expanduser("~"), ".local", "share", "EmberNovels", "logs")
+    os.makedirs(app_dir, exist_ok=True)
+    log_file_path = os.path.join(app_dir, "embernovels_server.log")
+    
     file_handler = logging.FileHandler(log_file_path, mode="w", encoding="utf-8")
     file_handler.setFormatter(formatter)
     

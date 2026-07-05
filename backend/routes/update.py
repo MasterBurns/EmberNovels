@@ -71,6 +71,14 @@ def perform_hot_update(download_url: str):
             else:
                 source_root = extract_dir
                 
+        is_binary_update = False
+        if is_archive:
+            # Check if there is an executable in the source root
+            for item in os.listdir(source_root):
+                if item.lower() in ("embernovels", "embernovels.exe"):
+                    is_binary_update = True
+                    break
+        
         if sys.platform == "win32":
             update_script = os.path.join(exe_dir, "update.bat")
             with open(update_script, "w") as f:
@@ -100,12 +108,18 @@ def perform_hot_update(download_url: str):
                 f.write("#!/bin/bash\n")
                 f.write("sleep 2\n")
                 if is_archive:
-                    f.write(f'cp -r "{source_root}"/* "{exe_dir}"/\n')
+                    if is_binary_update:
+                        f.write(f'rm -f "{current_exe}"\n')
+                        f.write(f'cp -r "{source_root}"/* "{exe_dir}"/\n')
+                        f.write(f'chmod +x "{current_exe}"\n')
+                    else:
+                        f.write(f'cp -r "{source_root}"/* "{exe_dir}"/\n')
                 else:
+                    f.write(f'rm -f "{current_exe}"\n')
                     f.write(f'mv "{archive_path}" "{current_exe}"\n')
                     f.write(f'chmod +x "{current_exe}"\n')
                     
-                if is_frozen and is_archive:
+                if is_frozen and is_archive and not is_binary_update:
                     # User is on a compiled Linux binary, but we only gave them source. 
                     # Try to rebuild if pyinstaller is available
                     f.write(f'cd "{exe_dir}"\n')
