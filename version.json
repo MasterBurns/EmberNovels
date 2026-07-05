@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.3",
+    "version": "0.3.6.4",
     "release_notes": {
-        "de": "Version 0.3.6.3 - Hotfix für den Auto-Updater.\n- 🐛 Fix: Ein Python-Scope-Fehler (UnboundLocalError) im Update-Skript wurde behoben.",
-        "en": "Version 0.3.6.3 - Auto-Updater Hotfix.\n- 🐛 Fix: Fixed a Python scope error (UnboundLocalError) in the update script."
+        "de": "Version 0.3.6.4 - UI-Verbesserungen.\n- ✨ Neu: Der 'Metadaten speichern' Button erstrahlt nun im markanten EmberNovels-Orange.",
+        "en": "Version 0.3.6.4 - UI Improvements.\n- ✨ New: The 'Save Metadata' button is now styled in the signature EmberNovels orange."
     }
 }
