@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.4",
+    "version": "0.3.8.5",
     "release_notes": {
-        "de": "Version 0.3.8.4 - Update Hotfix 3.\n- 🐛 Fix: Der Auto-Updater (Linux) startet die App nun interaktiv im selben Fenster neu, sodass das Kontrollzentrum / Terminal aktiv bleibt.",
-        "en": "Version 0.3.8.4 - Update Hotfix 3.\n- 🐛 Fix: The auto-updater (Linux) now restarts the app interactively in the same window, keeping the control center / terminal active."
+        "de": "Version 0.3.8.5 - Bugfix Release.\n- 🐛 Fix: Das Tutorial-Fenster merkt sich nun verlässlich, ob es bereits geschlossen wurde.\n- 🐛 Fix: Die KI-Schnittstellen-Einstellungen werden nun dauerhaft über Neustarts hinweg gespeichert.\n- ✨ Feature: Neues Hintergrund-Prozess-System für KI Lore-Scans (mit konfigurierbaren Rate- und Batch-Limits zur Vermeidung von Fehlern).",
+        "en": "Version 0.3.8.5 - Bugfix Release.\n- 🐛 Fix: The tutorial window now reliably remembers if it has been closed.\n- 🐛 Fix: AI interface settings are now persistently saved across restarts.\n- ✨ Feature: New background task system for AI Lore Scans (with configurable rate and batch limits to prevent errors)."
     }
 }
