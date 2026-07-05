@@ -1,7 +1,7 @@
 {
-    "version": "0.3.6.2",
+    "version": "0.3.6.3",
     "release_notes": {
-        "de": "Version 0.3.6.2 - UI-Verbesserungen im Editor.\n- ✨ Neu: Die Toolbar im Editor wurde in übersichtliche Dropdowns (Oberfläche, KI & Lore, Werkzeuge) gegliedert, um Platz zu sparen und Überlappungen auf kleineren Bildschirmen zu verhindern.",
-        "en": "Version 0.3.6.2 - Editor UI Improvements.\n- ✨ New: The editor toolbar is now organized into neat dropdowns (View, AI & Lore, Tools) to save space and prevent overlap on smaller screens."
+        "de": "Version 0.3.6.3 - Hotfix für den Auto-Updater.\n- 🐛 Fix: Ein Python-Scope-Fehler (UnboundLocalError) im Update-Skript wurde behoben.",
+        "en": "Version 0.3.6.3 - Auto-Updater Hotfix.\n- 🐛 Fix: Fixed a Python scope error (UnboundLocalError) in the update script."
     }
 }
