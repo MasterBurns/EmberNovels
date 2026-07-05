@@ -112,6 +112,77 @@ def permanent_delete_lore(project_id: str, lore_id: str):
 import json
 import re
 
+from backend.services.tasks import TaskManager, BackgroundTask
+
+def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned_chapters: list, settings: dict):
+    from backend.services.ai import AIService
+    from backend.services.storage import StorageService
+    import json, re
+
+    for idx, ch in enumerate(to_scan):
+        task.wait_if_paused()
+        if task.is_cancelled():
+            break
+
+        task.update_progress(idx + 1, f"Analysiere Kapitel: {ch.get('title', 'Unbekannt')}")
+        
+        content_data = StorageService.get_chapter_content(project_id, ch["id"])
+        text = content_data.get("content", "").strip()
+        if not text:
+            scanned_chapters.append(ch["id"])
+            continue
+
+        prompt = (
+            "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
+            "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
+            "und Gegenstände (category: item), die im Text vorkommen.\n\n"
+            "REGELN:\n"
+            "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
+            "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
+            "- Bewerte die Wichtigkeit jedes Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
+            "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
+            "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
+            "[\n  {\n    \"name\": \"Name der Entität\",\n    \"category\": \"character\",\n    \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n    \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n    \"relevance_score\": 8\n  }\n]\n\n"
+            f"Kapiteltext:\n{text}"
+        )
+
+        try:
+            raw_res = AIService.generate_completion(prompt)
+            cleaned = raw_res.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
+                cleaned = re.sub(r"\n```$", "", cleaned)
+                cleaned = cleaned.strip()
+
+            entities = json.loads(cleaned)
+            existing_lore = {e["name"].lower(): e for e in StorageService.list_lore(project_id)}
+
+            for ent in entities:
+                # Nur relevante Einträge übernehmen
+                score = ent.get("relevance_score", 0)
+                if score < 5:
+                    continue
+                name_key = ent["name"].lower()
+                if name_key not in existing_lore:
+                    ent["id"] = f"lore_{int(time.time()*1000)}_{uuid.uuid4().hex[:6]}"
+                    StorageService.save_lore(project_id, ent["id"], ent)
+                    existing_lore[name_key] = ent
+
+        except Exception as e:
+            # Continue with next chapter on error
+            pass
+
+        scanned_chapters.append(ch["id"])
+        
+        # Save project metadata progress after every chapter
+        meta = StorageService.get_project_metadata(project_id)
+        if meta:
+            meta["scanned_chapters"] = scanned_chapters
+            StorageService.save_project_metadata(project_id, meta)
+            
+        task.sleep_delay() # Rate limit
+
+
 @router.post("/auto-scan")
 def auto_scan_lore(project_id: str):
     meta = StorageService.get_project_metadata(project_id)
@@ -132,87 +203,15 @@ def auto_scan_lore(project_id: str):
     
     if not to_scan:
         return {"message": "Keine neuen Kapitel zum Scannen vorhanden.", "scanned_chapters_count": 0, "created_entries": []}
-        
-    created_entries = []
+
+    task = TaskManager.create_task("KI Lore Scan", len(to_scan), _lore_scan_job, (project_id, to_scan, scanned_chapters, settings))
     
-    for ch in to_scan:
-        content_data = StorageService.get_chapter_content(project_id, ch["id"])
-        text = content_data.get("content", "").strip()
-        if not text:
-            scanned_chapters.append(ch["id"])
-            continue
-            
-        prompt = (
-            "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
-            "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
-            "und Gegenstände (category: item), die im Text vorkommen.\n\n"
-            "REGELN:\n"
-            "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
-            "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
-            "- Bewerte die Wichtigkeit jedes Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
-            "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
-            "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
-            "[\n"
-            "  {\n"
-            "    \"name\": \"Name der Entität\",\n"
-            "    \"category\": \"character\",\n"
-            "    \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n"
-            "    \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n"
-            "    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n"
-            "    \"relevance_score\": 8\n"
-            "  }\n"
-            "]\n\n"
-            f"Kapiteltext:\n{text}"
-        )
-        
-        try:
-            raw_res = AIService.generate_completion(prompt)
-            cleaned = raw_res.strip()
-            if cleaned.startswith("```"):
-                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
-                cleaned = re.sub(r"\n```$", "", cleaned)
-                cleaned = cleaned.strip()
-                
-            entities = json.loads(cleaned)
-            
-            # Load existing lore to prevent duplicates
-            existing_lore = {e["name"].lower(): e for e in StorageService.list_lore(project_id)}
-            
-            for ent in entities:
-                name = ent.get("name", "").strip()
-                category = ent.get("category", "lore").strip()
-                short_desc = ent.get("short_description", "").strip()
-                long_desc = ent.get("description", "").strip()
-                keywords = ent.get("keywords", [])
-                relevance_score = ent.get("relevance_score", 0)
-                
-                # Filter out unimportant entries
-                if not name or relevance_score < 5:
-                    continue
-                keywords = ent.get("keywords", [])
-                
-                if not name or category not in ["character", "location", "item", "lore"]:
-                    continue
-                    
-                if name.lower() not in existing_lore:
-                    created = StorageService.create_lore(
-                        project_id=project_id,
-                        name=name,
-                        category=category,
-                        short_description=short_desc,
-                        description=long_desc,
-                        keywords=keywords
-                    )
-                    created_entries.append(created)
-                    
-            scanned_chapters.append(ch["id"])
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Fehler beim KI-Scan für Kapitel {ch['title']}: {str(e)}")
-            
-    StorageService.update_project_metadata(project_id, {"scanned_chapters": scanned_chapters})
+    # Optional: fetch user limits from settings
+    ai_batch_limit = int(settings.get("ai_batch_limit", 10))
+    ai_rate_limit = float(settings.get("ai_rate_limit", 2.0))
+    task.batch_limit = ai_batch_limit
+    task.delay_between_steps = ai_rate_limit
     
-    return {
-        "message": f"{len(to_scan)} Kapitel erfolgreich gescannt. {len(created_entries)} neue Einträge erstellt.",
-        "scanned_chapters_count": len(to_scan),
-        "created_entries": created_entries
-    }
+    task.start()
+    
+    return {"message": f"Scan gestartet. {len(to_scan)} Kapitel werden im Hintergrund verarbeitet.", "task_id": task.id}

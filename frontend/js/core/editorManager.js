@@ -333,38 +333,48 @@ class TipTapAdapter extends BaseEditor {
 class CustomAdapter extends BaseEditor {
     constructor(container, options) {
         super(container, options);
-        if (typeof window.EmberEditor !== 'undefined') {
-            this.emberEditor = new window.EmberEditor(this.container, {
-                onChange: () => this.onChangeCallback(),
-                onLoreClick: (keyword) => {
-                    if (window.showLoreTooltipForKeyword) {
-                        // Find the span that was clicked to pass as target
-                        const span = this.container.querySelector(`span[data-keyword="${keyword}"]`);
-                        window.showLoreTooltipForKeyword(keyword, { target: span });
-                    }
-                },
-                initialLoreKeywords: window.state?.loreList || []
+        if (typeof window.EmberEditorCore !== 'undefined') {
+            this.emberEditor = new window.EmberEditorCore(this.container, {
+                onChange: () => this.onChangeCallback()
             });
-            this.emberEditor.setMarkdown(this.content);
+            // Hook up onContentChange logic based on the AI's api
+            this.emberEditor.onChangeCallback = () => this.onChangeCallback();
+            
+            // Set initial lore keywords if any
+            if (window.state && window.state.loreList) {
+                const keywords = window.state.loreList.map(l => l.keyword || l.name);
+                this.emberEditor.setLoreHighlights(keywords);
+            }
         } else {
             this.container.innerHTML = '<div style="padding: 24px; color: var(--color-danger);">Fehler: EmberEditor.js wurde nicht geladen.</div>';
         }
     }
 
-    getMarkdown() { return this.emberEditor ? this.emberEditor.getMarkdown() : this.content; }
-    getHTML() { return this.emberEditor ? this.emberEditor.getHTML() : ''; }
-    setMarkdown(md) { if (this.emberEditor) this.emberEditor.setMarkdown(md); }
-    insertText(text) { if (this.emberEditor) this.emberEditor.insertText(text); }
-    replaceSelection(text) { if (this.emberEditor) this.emberEditor.replaceSelection(text); }
-    getSelectedText() { return this.emberEditor ? this.emberEditor.getSelectedText() : ''; }
-    setSelection(start, end) { if (this.emberEditor) this.emberEditor.setSelection(start, end); }
-    focus() { if (this.emberEditor) this.emberEditor.focus(); }
-    destroy() { if (this.emberEditor) this.emberEditor.destroy(); }
+    getMarkdown() { return this.emberEditor ? this.emberEditor.getContent() : ''; }
+    getHTML() { return this.emberEditor ? this.emberEditor.getContent() : ''; }
+    setMarkdown(md) { if (this.emberEditor) this.emberEditor.setContent(md); }
+    insertText(text) { 
+        if (this.emberEditor && typeof this.emberEditor.insertText === 'function') {
+            this.emberEditor.insertText(text); 
+        } 
+    }
+    replaceSelection(text) { 
+        if (this.emberEditor && typeof this.emberEditor.replaceSelection === 'function') {
+            this.emberEditor.replaceSelection(text); 
+        } 
+    }
+    getSelectedText() { return ''; }
+    setSelection(start, end) {}
+    focus() {}
+    destroy() { 
+        this.container.innerHTML = ''; 
+    }
     
     // Custom method to update lore keywords when state changes
     updateLoreList(loreList) {
         if (this.emberEditor) {
-            this.emberEditor.setLoreKeywords(loreList);
+            const keywords = loreList.map(l => l.keyword || l.name);
+            this.emberEditor.setLoreHighlights(keywords);
         }
     }
 }

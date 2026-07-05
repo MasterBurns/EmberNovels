@@ -18,8 +18,8 @@ def get_settings_path():
 from typing import Optional
 class GlobalSettings(BaseModel):
     ui_language: str
-    first_run_completed: Optional[bool] = False
-    tutorial_modules_seen: Optional[bool] = False
+    first_run_completed: Optional[bool] = None
+    tutorial_modules_seen: Optional[bool] = None
 
 @router.get("/settings")
 def get_global_settings():

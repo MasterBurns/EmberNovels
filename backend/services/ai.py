@@ -8,7 +8,11 @@ from typing import Dict, Any, Optional, List
 class AIService:
     @classmethod
     def get_settings_file(cls) -> Path:
-        config_dir = Path("projects")
+        import sys
+        if getattr(sys, 'frozen', False):
+            config_dir = Path.home() / "EmberNovels"
+        else:
+            config_dir = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) / "projects"
         config_dir.mkdir(parents=True, exist_ok=True)
         return config_dir / "ai_settings.json"
 
