@@ -1,14 +1,6 @@
 // Event Listeners setup
 function setupEventListeners() {
-    // Nav sidebar clicks
-    document.getElementById('nav-projects').addEventListener('click', () => navigateTo('projects'));
-    document.getElementById('nav-trash').addEventListener('click', () => navigateTo('projects')); // will trigger trash if active, see below
-    document.getElementById('nav-trash').addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateTo('trash');
-    });
-    document.getElementById('nav-settings').addEventListener('click', () => navigateTo('settings'));
-    
+    // Nav sidebar clicks are handled dynamically by ModuleManager
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -140,15 +132,7 @@ function setupEventListeners() {
     
     document.getElementById('btn-merge-submit').addEventListener('click', applyMerge);
 
-    // Lore Database triggers
-    document.getElementById('nav-lore').addEventListener('click', () => {
-        if (state.currentProject) {
-            navigateTo('lore');
-        } else {
-            showToast(t('toast_select_project_first', 'Bitte wähle zuerst ein Projekt aus, um auf seine Lore-Datenbank zuzugreifen.'), 'warning');
-            navigateTo('projects');
-        }
-    });
+    // Lore Database triggers (nav-lore handled by ModuleManager)
     
     document.getElementById('btn-wiki-create').addEventListener('click', () => openLoreModal());
     document.getElementById('btn-view-lore').addEventListener('click', () => navigateTo('lore'));

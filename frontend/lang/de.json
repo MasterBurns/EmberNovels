@@ -1,6 +1,8 @@
 {
     "nav_projects": "Projekte",
     "nav_lore": "Lore-Datenbank",
+    "nav_search": "Globale Suche",
+    "nav_relationships": "Beziehungsnetzwerk",
     "nav_trash": "Papierkorb",
     "nav_settings": "Einstellungen",
     "btn_new_project": "+ Neues Projekt",

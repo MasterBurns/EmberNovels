@@ -2,6 +2,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
 
+    // Wait for backend to be ready before fetching data
+    await waitForBackend();
+
     // Fetch global settings from backend
     try {
         const res = await fetch(`${API_URL}/settings`);
@@ -30,9 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadUiLanguage(state.uiLanguage);
-    
-    // Wait for backend to be ready before fetching data
-    await waitForBackend();
     
     // Render sidebar dynamically
     if (typeof ModuleManager !== 'undefined') ModuleManager.renderSidebar();
@@ -88,7 +88,7 @@ function runSidebarTutorial() {
     const overlay = document.createElement('div');
     overlay.className = 'tutorial-overlay';
     overlay.innerHTML = `
-        <div class="tutorial-box" style="position: absolute; top: 100px; left: 260px; background: var(--bg-color); border: 2px solid var(--accent-color); padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10000; width: 300px;">
+        <div class="tutorial-box" style="position: absolute; top: 100px; left: 260px; background: var(--bg-sidebar); border: 2px solid var(--color-primary); padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10000; width: 300px;">
             <h3 style="margin-top: 0;" data-i18n="tutorial_modules_title">Projekte anpassen</h3>
             <p data-i18n="tutorial_modules_desc">Du kannst in jedem Projekt unter <b>Einstellungen &gt; Projekt-Module</b> genau festlegen, welche Werkzeuge in der Seitenleiste angezeigt werden sollen!</p>
             <button class="btn btn-primary" id="btn-tutorial-close" style="width: 100%;" data-i18n="btn_understood">Verstanden</button>

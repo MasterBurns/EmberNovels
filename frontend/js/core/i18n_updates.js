@@ -138,7 +138,7 @@ async function checkAppUpdates() {
 
                             statusText.textContent = `Lade ${targetAsset.name} herunter...`;
 
-                            const triggerRes = await fetch(`${API_URL}/update/trigger`, {
+                            const triggerRes = await fetch(`${API_URL}/update`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ download_url: targetAsset.browser_download_url })
