@@ -41,8 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Check first run for Language OOBE
     if (!state.globalSettings.first_run_completed) {
+        document.getElementById('app-bootloader').style.display = 'none';
         runOobeLanguageSetup();
     } else {
+        // Strictly await projects loading before unlocking the UI
+        try {
+            await loadProjects(0, true); // true = called from boot
+        } catch (err) {
+            console.error("Bootloader: Fehler beim Laden der Projekte", err);
+        }
+        document.getElementById('app-bootloader').style.display = 'none';
         navigateTo('projects');
     }
 

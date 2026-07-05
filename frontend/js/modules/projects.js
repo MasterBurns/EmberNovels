@@ -1,5 +1,5 @@
 // 1. PROJECTS LOGIC
-async function loadProjects(retryCount = 0) {
+async function loadProjects(retryCount = 0, isBoot = false) {
     const grid = document.getElementById('projects-grid');
     if (!grid) return;
     
@@ -11,8 +11,8 @@ async function loadProjects(retryCount = 0) {
         // Sometimes on very first boot, OS hasn't fully propagated the directory contents
         if (Array.isArray(data) && data.length === 0 && retryCount === 0) {
             console.warn("No projects found on first try, retrying once...");
-            setTimeout(() => loadProjects(1), 600);
-            return;
+            await new Promise(r => setTimeout(r, 600));
+            return await loadProjects(1, isBoot);
         }
         
         state.projects = Array.isArray(data) ? data : [];
@@ -24,6 +24,18 @@ async function loadProjects(retryCount = 0) {
             }
         });
         
+        // If really no projects, show an empty state message if not booting
+        if (state.projects.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.style.gridColumn = '1 / -1';
+            emptyMsg.style.textAlign = 'center';
+            emptyMsg.style.padding = '40px';
+            emptyMsg.style.color = 'var(--text-muted)';
+            emptyMsg.innerHTML = `<em>Keine Projekte gefunden. Erstelle dein erstes Projekt!</em>`;
+            grid.appendChild(emptyMsg);
+            return;
+        }
+
         state.projects.forEach(p => {
             const card = document.createElement('div');
             card.className = 'card';
@@ -61,10 +73,14 @@ async function loadProjects(retryCount = 0) {
     } catch (e) {
         if (retryCount < 3) {
             console.warn(`Retry ${retryCount+1}/3: Waiting for backend...`);
-            setTimeout(() => loadProjects(retryCount + 1), 1000);
-            return;
+            await new Promise(r => setTimeout(r, 1000));
+            return await loadProjects(retryCount + 1, isBoot);
         }
-        showToast(t('error_load_projects', 'Fehler beim Laden der Projekte: ') + e.message, "danger");
+        if (!isBoot) {
+            showToast(t('error_load_projects', 'Fehler beim Laden der Projekte: ') + e.message, "danger");
+        } else {
+            throw e; // Let app_init catch it
+        }
     }
 }
 

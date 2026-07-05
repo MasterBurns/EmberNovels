@@ -13,6 +13,15 @@
     <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css">
 </head>
 <body>
+    <!-- App Bootloader -->
+    <div id="app-bootloader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h1 style="color: var(--color-primary); font-size: 32px; margin-bottom: 24px; font-weight: 700; letter-spacing: 1px;">EmberNovels</h1>
+        <div class="loader-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <div id="bootloader-status" style="margin-top: 16px; color: var(--text-secondary); font-size: 14px;">Wird gestartet...</div>
+    </div>
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
