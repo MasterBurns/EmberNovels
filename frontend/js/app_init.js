@@ -2,6 +2,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
 
+    // Failsafe: hide bootloader after 15 seconds no matter what
+    setTimeout(() => {
+        const bootloader = document.getElementById('app-bootloader');
+        if (bootloader && bootloader.style.display !== 'none') {
+            console.warn("Bootloader war zu lange sichtbar - Failsafe aktiviert!");
+            bootloader.style.display = 'none';
+            if (!document.querySelector('.active-view')) {
+                navigateTo('projects');
+            }
+        }
+    }, 15000);
+
     // Wait for backend to be ready before fetching data
     await waitForBackend();
 

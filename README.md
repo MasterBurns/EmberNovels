@@ -16,7 +16,7 @@ Select your language below / Wähle deine Sprache:
 ### Über EmberNovels
 EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft. Deine Manuskripte werden in offenen Textformaten gespeichert (Markdown/JSON) - maximale Datensicherheit ohne Cloud-Zwang.
 
-### Aktuelle Features (v0.3.5.3)
+### Aktuelle Features (v0.3.5.4)
 1. **Dynamische & Einklappbare Sidebars**: Wähle in den Projekteinstellungen individuell, welche Tools (wie Mindmap oder Timeline) in der Seitenleiste angezeigt werden sollen. Passe die App exakt an dein aktuelles Schreibprojekt an. Sidebars lassen sich einklappen und bei Bedarf über ein Pinning-System (`📌`/`📍`) anheften, um permanent sichtbar zu bleiben.
 2. **Lore-Wiki (Weltenbau)**: Lege Charaktere, Orte, Gegenstände und historische Ereignisse an. EmberNovels erkennt Lore-Keywords automatisch im Text und blendet beim Hovern ein elegantes schwebendes Infofenster mit Details ein.
 3. **Zeitleisten-Editor (Timeline)**: Organisiere die Chronologie deiner Geschichte. Verknüpfe Ereignisse direkt mit Lore-Einträgen für ein interaktives Planungserlebnis.
@@ -46,7 +46,7 @@ EmberNovels ist ein umfassendes Autoren-Werkzeug, das lokal auf deinem PC läuft
 ### About EmberNovels
 EmberNovels is a feature-rich desktop application for authors and novel writers. It runs entirely locally, storing your manuscripts in open file formats (Markdown/JSON) - providing maximum data privacy.
 
-### Existing Features (v0.3.5.3)
+### Existing Features (v0.3.5.4)
 1. **Dynamic & Collapsible Sidebars**: Customize which tools (like Mindmap or Timeline) are displayed in the sidebar on a per-project basis via settings. Tailor the app exactly to your current writing project. Collapse both sidebars to focus on your writing, or pin them using the pinning system (`📌`/`📍`) to keep them visible.
 2. **Lore Wiki (Worldbuilding)**: Create entries for characters, locations, items, and historical events. EmberNovels automatically detects these keywords in your manuscript and displays detailed facts in glassmorphic hover tooltips.
 3. **Timeline Editor**: Plan your novel's chronology. Link historical events directly to Lore Wiki entries for interactive planning.

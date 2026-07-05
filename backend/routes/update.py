@@ -26,13 +26,12 @@ def perform_hot_update(download_url: str):
         
         is_zip = download_url.lower().endswith(".zip") or "zipball" in download_url.lower()
         is_tar = download_url.lower().endswith(".tar.gz") or download_url.lower().endswith(".tgz")
+        
+        archive_name = "update_archive.tar.gz" if is_tar else "update_archive.zip"
+        archive_path = os.path.join(temp_dir, archive_name)
         is_archive = is_zip or is_tar
 
-        if is_zip:
-            archive_path = os.path.join(temp_dir, "update_archive.zip")
-        elif is_tar:
-            archive_path = os.path.join(temp_dir, "update_archive.tar.gz")
-        else:
+        if not is_archive:
             archive_path = os.path.join(temp_dir, "EmberNovels_new" + (".exe" if sys.platform == "win32" else ""))
         
         print(f"Downloading update from {download_url} to {archive_path}...")
