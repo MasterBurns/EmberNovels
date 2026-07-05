@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.0",
+    "version": "0.3.8.1",
     "release_notes": {
-        "de": "Version 0.3.8.0 - Custom Editor Integration.\n- 📝 Neu: Eigenen, leichtgewichtigen EmberEditor integriert (als Beta in den Einstellungen verfügbar).\n- 🚀 Fix: EditorManager lädt dynamisch EmberEditor mit nativem Lore-Highlighting.",
-        "en": "Version 0.3.8.0 - Custom Editor Integration.\n- 📝 New: Integrated a lightweight, custom built EmberEditor (available as Beta in settings).\n- 🚀 Fix: EditorManager dynamically loads EmberEditor with native Lore Highlighting."
+        "de": "Version 0.3.8.1 - Hotfix Patch.\n- 🐛 Fix: Syntax- und Referenz-Fehler beim Laden von Editor-Modulen behoben.\n- ⚙️ Fix: Überarbeitung des Auto-Updater-Triggers (Unterstützung für Hintergrund-Prozessablösung verbessert).",
+        "en": "Version 0.3.8.1 - Hotfix Patch.\n- 🐛 Fix: Resolved syntax and reference errors during editor module loading.\n- ⚙️ Fix: Reworked the auto-updater trigger logic for better background process detachment."
     }
 }
