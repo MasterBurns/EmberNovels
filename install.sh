@@ -5,12 +5,14 @@ set -e
 if [ "$EUID" -eq 0 ]; then
     echo "Installing EmberNovels system-wide (Global)..."
     BIN_DIR="/usr/bin"
+    APP_SHARE_DIR="/opt/EmberNovels"
     APP_DIR="/usr/share/applications"
     ICON_DIR="/usr/share/pixmaps"
     ICON_PATH="$ICON_DIR/EmberNovels.jpg"
 else
     echo "Installing EmberNovels for current user (Local)..."
     BIN_DIR="$HOME/.local/bin"
+    APP_SHARE_DIR="$HOME/.local/share/EmberNovels"
     APP_DIR="$HOME/.local/share/applications"
     ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
     ICON_PATH="$ICON_DIR/EmberNovels.jpg"
@@ -18,6 +20,7 @@ fi
 
 # Create directories
 mkdir -p "$BIN_DIR"
+mkdir -p "$APP_SHARE_DIR"
 mkdir -p "$APP_DIR"
 mkdir -p "$ICON_DIR"
 
@@ -33,11 +36,11 @@ else
 fi
 
 # Install primary binary
-cp "$SRC_BIN" "$BIN_DIR/EmberNovels"
-chmod +x "$BIN_DIR/EmberNovels"
+cp "$SRC_BIN" "$APP_SHARE_DIR/EmberNovels"
+chmod +x "$APP_SHARE_DIR/EmberNovels"
 
 # Create lowercase symlink
-ln -sf "$BIN_DIR/EmberNovels" "$BIN_DIR/embernovels"
+ln -sf "$APP_SHARE_DIR/EmberNovels" "$BIN_DIR/embernovels"
 
 # Install icon
 if [ -f "icon.jpg" ]; then
