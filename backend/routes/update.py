@@ -145,13 +145,18 @@ def perform_hot_update(download_url: str):
             print("Spawning update script...")
             log_path = os.path.join(exe_dir, "update_trigger.log")
             
-            # Using simple list with bash and start_new_session
+            # Using simple list with bash and start_new_session, stripping LD_LIBRARY_PATH to prevent bash symbol errors
+            clean_env = dict(os.environ)
+            if 'LD_LIBRARY_PATH' in clean_env:
+                del clean_env['LD_LIBRARY_PATH']
+                
             subprocess.Popen(
                 ["bash", update_script],
                 start_new_session=True,
                 stdin=subprocess.DEVNULL,
                 stdout=open(log_path, "w"),
-                stderr=subprocess.STDOUT
+                stderr=subprocess.STDOUT,
+                env=clean_env
             )
         print("Shutting down current server process in 2 seconds...")
         time.sleep(2.0)

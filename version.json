@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.1",
+    "version": "0.3.8.2",
     "release_notes": {
-        "de": "Version 0.3.8.1 - Hotfix Patch.\n- 🐛 Fix: Syntax- und Referenz-Fehler beim Laden von Editor-Modulen behoben.\n- ⚙️ Fix: Überarbeitung des Auto-Updater-Triggers (Unterstützung für Hintergrund-Prozessablösung verbessert).",
-        "en": "Version 0.3.8.1 - Hotfix Patch.\n- 🐛 Fix: Resolved syntax and reference errors during editor module loading.\n- ⚙️ Fix: Reworked the auto-updater trigger logic for better background process detachment."
+        "de": "Version 0.3.8.2 - Update Hotfix 2.\n- 🐛 Fix: Behebt einen 'bash: undefined symbol: rl_print_keybinding' Fehler beim Auto-Updater auf Linux (Entfernen des Python LD_LIBRARY_PATH aus dem Subprocess).",
+        "en": "Version 0.3.8.2 - Update Hotfix 2.\n- 🐛 Fix: Resolves 'bash: undefined symbol: rl_print_keybinding' error during auto-update on Linux by clearing Python LD_LIBRARY_PATH."
     }
 }
