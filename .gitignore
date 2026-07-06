@@ -20,3 +20,13 @@ projects/
 .idea/
 .vscode/
 *.swp
+
+# Build artifacts and archives
+build/
+dist/
+debian-pkg/
+*.tar.gz
+*.zip
+*.deb
+*.pkg
+*.exe
