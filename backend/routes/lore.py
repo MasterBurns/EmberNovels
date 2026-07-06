@@ -118,10 +118,16 @@ import re
 
 from backend.services.tasks import TaskManager, BackgroundTask
 
-def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned_chapters: list, settings: dict):
+def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned_chapters: list, settings: dict, project_settings: dict = None):
     from backend.services.ai import AIService
     from backend.services.storage import StorageService
-    import json, re
+    import json, re, time, uuid
+    
+    if project_settings is None:
+        project_settings = {}
+        
+    extract_timeline = project_settings.get("lore_extract_timeline", True)
+    auto_translate_lore = project_settings.get("lore_auto_translate", False)
 
     task.sub_tasks = [{"name": ch.get("title", "Unbekannt"), "status": "pending"} for ch in to_scan]
 
@@ -131,7 +137,6 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             break
 
         task.sub_tasks[idx]["status"] = "running"
-
         task.update_progress(idx + 1, f"Analysiere Kapitel: {ch.get('title', 'Unbekannt')}")
         
         content_data = StorageService.get_chapter_content(project_id, ch["id"])
@@ -144,13 +149,44 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
             "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
             "und Gegenstände (category: item), die im Text vorkommen.\n\n"
+        )
+        if extract_timeline:
+            prompt += (
+                "ZUSÄTZLICH extrahiere alle wichtigen chronologischen Ereignisse (timeline_events). Versuche bei Zeitangaben "
+                "erst grob zu schätzen (z.B. '3 Wochen nach Kapitel 1', 'Tag 1') und, falls möglich, ein genaueres "
+                "relatives oder absolutes Datum abzugeben.\n\n"
+            )
+            
+        prompt += (
             "REGELN:\n"
             "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
             "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
-            "- Bewerte die Wichtigkeit jedes Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
+            "- Bewerte die Wichtigkeit jedes Lore-Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
             "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
             "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
-            "[\n  {\n    \"name\": \"Name der Entität\",\n    \"category\": \"character\",\n    \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n    \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n    \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n    \"relevance_score\": 8\n  }\n]\n\n"
+            "{\n"
+            "  \"entities\": [\n"
+            "    {\n"
+            "      \"name\": \"Name der Entität\",\n"
+            "      \"category\": \"character\",\n"
+            "      \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n"
+            "      \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n"
+            "      \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n"
+            "      \"relevance_score\": 8\n"
+            "    }\n"
+            "  ]"
+        )
+        if extract_timeline:
+            prompt += (
+                ",\n  \"timeline_events\": [\n"
+                "    {\n"
+                "      \"date\": \"Geschätzter Zeitpunkt (z.B. 'Tag 1', '3 Wochen später', '2018-08-01')\",\n"
+                "      \"description\": \"Kurze Beschreibung des Ereignisses im Kapitel\"\n"
+                "    }\n"
+                "  ]\n"
+            )
+        prompt += (
+            "}\n\n"
             f"Kapiteltext:\n{text}"
         )
 
@@ -158,31 +194,28 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             raw_res = AIService.generate_completion(prompt)
             cleaned = raw_res.strip()
             
-            # Robust JSON extraction: Find the first [ or { and the last ] or }
-            start_idx = -1
-            end_idx = -1
-            
-            # Look for JSON array or object
-            match_array = re.search(r'\[.*\]', cleaned, re.DOTALL)
             match_obj = re.search(r'\{.*\}', cleaned, re.DOTALL)
+            match_array = re.search(r'\[.*\]', cleaned, re.DOTALL)
             
-            if match_array:
+            if match_obj:
+                cleaned = match_obj.group(0)
+            elif match_array:
                 cleaned = match_array.group(0)
-            elif match_obj:
-                cleaned = f"[{match_obj.group(0)}]"
             
-            entities = json.loads(cleaned)
+            parsed = json.loads(cleaned)
             
-            # If it's a dict with an 'entities' key (common fallback)
-            if isinstance(entities, dict) and "entities" in entities:
-                entities = entities["entities"]
-            elif isinstance(entities, dict):
-                entities = [entities]
+            entities = []
+            timeline_events = []
+            
+            if isinstance(parsed, list):
+                entities = parsed
+            elif isinstance(parsed, dict):
+                entities = parsed.get("entities", [])
+                timeline_events = parsed.get("timeline_events", [])
 
-            existing_lore = {e["name"].lower(): e for e in StorageService.list_lore(project_id)}
+            existing_lore_map = StorageService.get_all_lore_names_mapping(project_id)
 
             for ent in entities:
-                # Nur relevante Einträge übernehmen
                 score = ent.get("relevance_score", 0)
                 if score < 5:
                     continue
@@ -190,7 +223,7 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                 if not name_key:
                     continue
                     
-                if name_key not in existing_lore:
+                if name_key not in existing_lore_map:
                     new_ent = StorageService.create_lore(
                         project_id=project_id,
                         name=ent.get("name", ""),
@@ -199,7 +232,20 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                         description=ent.get("description", ""),
                         keywords=ent.get("keywords", [])
                     )
-                    existing_lore[name_key] = new_ent
+                    existing_lore_map[name_key] = new_ent["id"]
+                    
+                    if auto_translate_lore:
+                        _auto_translate_lore_sync(project_id, new_ent, settings)
+
+            if extract_timeline and timeline_events:
+                current_timeline = StorageService.load_timeline(project_id)
+                for event in timeline_events:
+                    event["id"] = str(uuid.uuid4())
+                    event["chapter_id"] = ch["id"]
+                    event["created_at"] = time.time()
+                    event["title"] = event.get("description", "Ereignis")[:50] + "..."
+                    current_timeline.append(event)
+                StorageService.save_timeline(project_id, current_timeline)
 
             task.sub_tasks[idx]["status"] = "completed"
         except json.JSONDecodeError as e:
@@ -213,7 +259,6 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
 
         scanned_chapters.append(ch["id"])
         
-        # Save project metadata progress after every chapter
         meta = StorageService.get_project_metadata(project_id)
         if meta:
             meta["scanned_chapters"] = scanned_chapters
@@ -240,10 +285,14 @@ def auto_scan_lore(project_id: str):
     chapters = StorageService.list_chapters(project_id)
     to_scan = [ch for ch in chapters if ch["id"] not in scanned_chapters]
     
+    project_settings = meta.get("settings", {})
+    if project_settings.get("lore_scan_standard_only", True):
+        to_scan = [ch for ch in to_scan if ch.get("chapter_type", "standard") == "standard"]
+    
     if not to_scan:
         return {"message": "Keine neuen Kapitel zum Scannen vorhanden.", "scanned_chapters_count": 0, "created_entries": []}
 
-    task = TaskManager.create_task("KI Lore Scan", len(to_scan), _lore_scan_job, (project_id, to_scan, scanned_chapters, settings))
+    task = TaskManager.create_task("KI Lore Scan", len(to_scan), _lore_scan_job, (project_id, to_scan, scanned_chapters, settings, project_settings))
     
     # Optional: fetch user limits from settings
     ai_batch_limit = int(settings.get("ai_batch_limit", 10))
@@ -283,7 +332,41 @@ def scan_single_chapter(project_id: str, chapter_id: str):
             detail="Kein aktiver KI-Anbieter konfiguriert."
         )
 
+    project_settings = meta.get("settings", {})
     scanned_chapters = meta.get("scanned_chapters", [])
-    task = TaskManager.create_task(f"KI Scan: {ch.get('title', chapter_id)}", 1, _lore_scan_job, (project_id, [ch], scanned_chapters, settings))
+    task = TaskManager.create_task(f"KI Scan: {ch.get('title', chapter_id)}", 1, _lore_scan_job, (project_id, [ch], scanned_chapters, settings, project_settings))
     task.start()
     return {"message": f"Scan für {ch.get('title', chapter_id)} gestartet.", "task_id": task.id}
+
+
+def _auto_translate_lore_sync(project_id: str, base_ent: dict, settings: dict):
+    from backend.services.ai import AIService
+    from backend.services.storage import StorageService
+    import json, re
+    
+    supported_langs = ["en", "de", "fr", "es", "it", "ja", "zh"]
+    # We don't know the base language of the project here explicitly unless we fetch it, 
+    # but we can just translate to all 7 and let the UI pick. 
+    # Actually, translating to all 7 is what the user requested: "in alle 7 versionennmit _Sprache"
+    
+    for lang in supported_langs:
+        prompt = (
+            f"Translate the following lore entry into the language with code '{lang}'. "
+            "Return ONLY valid JSON with the exact same keys but translated values for "
+            "'name', 'short_description', 'description', and 'keywords'. Do not translate 'category' or 'relevance_score'.\n\n"
+            f"Lore Entry: {json.dumps(base_ent, ensure_ascii=False)}"
+        )
+        try:
+            raw_res = AIService.generate_completion(prompt)
+            match_obj = re.search(r'\{.*\}', raw_res.strip(), re.DOTALL)
+            if match_obj:
+                translated_ent = json.loads(match_obj.group(0))
+                
+                # Merge original non-translatable fields just in case
+                final_ent = base_ent.copy()
+                final_ent.update(translated_ent)
+                final_ent["id"] = base_ent["id"]
+                
+                StorageService.save_translated_lore(project_id, lang, base_ent["id"], final_ent)
+        except Exception as e:
+            print(f"Failed to translate lore entry {base_ent['id']} to {lang}: {e}")

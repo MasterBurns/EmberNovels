@@ -577,6 +577,62 @@ class StorageService:
         return l_dir
 
     @classmethod
+    def get_translated_lore_dir(cls, project_id: str, lang_code: str) -> Path:
+        p_dir = cls.get_projects_dir() / project_id
+        l_dir = p_dir / "translations" / lang_code / "lore"
+        l_dir.mkdir(parents=True, exist_ok=True)
+        return l_dir
+
+    @classmethod
+    def save_translated_lore(cls, project_id: str, lang_code: str, lore_id: str, data: Dict[str, Any]) -> bool:
+        try:
+            l_dir = cls.get_translated_lore_dir(project_id, lang_code)
+            with open(l_dir / f"{lore_id}.json", 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception as e:
+            print(f"Error saving translated lore: {e}")
+            return False
+
+    @classmethod
+    def get_all_lore_names_mapping(cls, project_id: str) -> Dict[str, str]:
+        """Returns a mapping of lowercase lore names (from all languages) to their base lore_id."""
+        mapping = {}
+        
+        # 1. Base language
+        lore_dir = cls.get_lore_dir(project_id)
+        if lore_dir.exists():
+            for file in lore_dir.iterdir():
+                if file.is_file() and file.suffix == '.json' and not file.name.startswith('.'):
+                    try:
+                        with open(file, 'r', encoding='utf-8') as f:
+                            entry = json.load(f)
+                            if 'name' in entry:
+                                mapping[entry['name'].lower()] = file.stem
+                    except Exception:
+                        pass
+                        
+        # 2. Translations
+        translations_dir = cls.get_projects_dir() / project_id / "translations"
+        if translations_dir.exists():
+            for lang_dir in translations_dir.iterdir():
+                if lang_dir.is_dir():
+                    trans_lore_dir = lang_dir / "lore"
+                    if trans_lore_dir.exists():
+                        for file in trans_lore_dir.iterdir():
+                            if file.is_file() and file.suffix == '.json' and not file.name.startswith('.'):
+                                try:
+                                    with open(file, 'r', encoding='utf-8') as f:
+                                        entry = json.load(f)
+                                        if 'name' in entry:
+                                            mapping[entry['name'].lower()] = file.stem
+                                except Exception:
+                                    pass
+                                    
+        return mapping
+
+
+    @classmethod
     def list_lore(cls, project_id: str) -> List[Dict[str, Any]]:
         """List active lore entries in a project."""
         lore_dir = cls.get_lore_dir(project_id)

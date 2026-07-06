@@ -23,6 +23,15 @@ async function loadProjectDetails(projectId) {
         const synopsisEl = document.getElementById('project-details-description');
         if (synopsisEl) synopsisEl.value = project.description || '';
         
+        // Populate Lore Scanner Settings
+        const ps = project.settings || {};
+        const stStd = document.getElementById('setting-lore-standard');
+        const stTime = document.getElementById('setting-lore-timeline');
+        const stTrans = document.getElementById('setting-lore-translate');
+        if (stStd) stStd.checked = ps.lore_scan_standard_only !== false;
+        if (stTime) stTime.checked = ps.lore_extract_timeline !== false;
+        if (stTrans) stTrans.checked = ps.lore_auto_translate === true;
+        
         const authorInputEl = document.getElementById('project-details-author');
         if (authorInputEl) authorInputEl.value = project.author || '';
         

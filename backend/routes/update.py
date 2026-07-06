@@ -3,6 +3,7 @@ import sys
 import requests
 import subprocess
 import time
+import signal
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 
@@ -83,7 +84,7 @@ def perform_hot_update(download_url: str):
             update_script = os.path.join(exe_dir, "update.bat")
             with open(update_script, "w") as f:
                 f.write("@echo off\n")
-                f.write("timeout /t 2 /nobreak > nul\n")
+                f.write("timeout /t 4 /nobreak > nul\n")
                 if is_archive:
                     f.write(f'xcopy /E /Y /C /Q "{source_root}\\*" "{exe_dir}\\"\n')
                 else:
@@ -101,6 +102,8 @@ def perform_hot_update(download_url: str):
             
             print("Spawning update script...")
             subprocess.Popen(["cmd.exe", "/c", update_script], creationflags=subprocess.DETACHED_PROCESS)
+            print("Shutting down gracefully...")
+            os.kill(os.getpid(), signal.SIGTERM)
             
         else:
             update_script = os.path.join(exe_dir, "update.sh")
@@ -108,7 +111,7 @@ def perform_hot_update(download_url: str):
                 f.write("#!/bin/bash\n")
                 f.write("exec > >(tee -a update_debug.log) 2>&1\n")
                 f.write("echo 'Starting update script...'\n")
-                f.write("sleep 2\n")
+                f.write("sleep 4\n")
                 if is_archive:
                     if is_binary_update:
                         f.write(f'rm -f "{current_exe}"\n')
@@ -157,8 +160,9 @@ def perform_hot_update(download_url: str):
                 if key.startswith('_MEIPASS') or key == 'LD_LIBRARY_PATH':
                     del clean_env[key]
                 
-            os.execvpe("bash", ["bash", update_script], clean_env)
-            # os.execvpe does not return.
+            subprocess.Popen(["bash", update_script], env=clean_env, start_new_session=True)
+            print("Shutting down gracefully...")
+            os.kill(os.getpid(), signal.SIGTERM)
         
     except Exception as e:
         print(f"Hot update failed: {e}")

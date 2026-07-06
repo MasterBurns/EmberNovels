@@ -158,6 +158,23 @@ async function handleSaveSettings() {
     state.backupEnabled = payload.backup_enabled;
     state.backupDir = payload.backup_dir;
     
+    if (state.currentProject) {
+        state.currentProject.settings = state.currentProject.settings || {};
+        state.currentProject.settings.lore_scan_standard_only = document.getElementById('setting-lore-standard').checked;
+        state.currentProject.settings.lore_extract_timeline = document.getElementById('setting-lore-timeline').checked;
+        state.currentProject.settings.lore_auto_translate = document.getElementById('setting-lore-translate').checked;
+        
+        try {
+            await fetch(`${API_URL}/projects/${state.currentProject.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ settings: state.currentProject.settings })
+            });
+        } catch (e) {
+            console.error("Failed to save project settings", e);
+        }
+    }
+    
     try {
         const response = await fetch(`${API_URL}/ai/settings`, {
             method: 'POST',

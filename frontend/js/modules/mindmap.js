@@ -306,16 +306,20 @@ async function autoGenerateMindmap() {
 
 function loadProjectModulesInForm() {
     const card = document.getElementById('settings-project-modules-card');
+    const loreCard = document.getElementById('settings-lore-scanner-card');
     const container = document.getElementById('project-modules-list');
     
     if (!card || !container) return;
     
     if (!state.currentProject) {
         card.style.display = 'none';
+        if (loreCard) loreCard.style.display = 'none';
         return;
     }
     
     card.style.display = 'flex';
+    if (loreCard) loreCard.style.display = 'flex';
+    
     container.innerHTML = '';
     
     const activeMods = state.currentProject.active_modules || [];

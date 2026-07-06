@@ -773,6 +773,36 @@
                             </div>
                         </div>
 
+                        <!-- CARD 1.6: LORE SCANNER -->
+                        <div id="settings-lore-scanner-card" class="list-container" style="padding: 24px; border-radius: 12px; display: none; flex-direction: column; gap: 16px;">
+                            <h3 class="list-title" style="margin-bottom: 8px;">🤖 Projekt: Lore Scanner</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Erweiterte Einstellungen für den automatisierten Lore Scanner in diesem Projekt.</p>
+                            
+                            <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                                <label class="form-label" style="margin-bottom: 0;">Nur normale Kapitel scannen (überspringt Prolog/Epilog)</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-lore-standard" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                                <label class="form-label" style="margin-bottom: 0;">Zeitleisten-Ereignisse automatisch extrahieren</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-lore-timeline" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                                <label class="form-label" style="margin-bottom: 0;">Neue Lore-Einträge in alle Sprachen übersetzen</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-lore-translate">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- CARD 2: KI-SCHNITTSTELLEN -->
                         <div class="list-container" style="padding: 24px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
                             <h3 class="list-title" style="margin-bottom: 8px;" data-i18n="settings_ai">🤖 KI-Schnittstellen (Lektorat & Übersetzungen)</h3>
@@ -1000,6 +1030,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-project')" data-i18n="btn_cancel">Abbrechen</button>
                 <button id="btn-submit-project" class="btn" data-i18n="btn_create">Erstellen</button>
