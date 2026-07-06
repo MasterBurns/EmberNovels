@@ -125,7 +125,7 @@ class AIService:
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with cls._safe_urlopen(req, timeout=120) as response:
+        with cls._safe_urlopen(req, timeout=600) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res["choices"][0]["message"]["content"].strip()
 
@@ -163,7 +163,7 @@ class AIService:
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with cls._safe_urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=120) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['candidates'][0]['content']['parts'][0]['text'].strip()
 
@@ -192,7 +192,7 @@ class AIService:
                 'Authorization': f'Bearer {api_key}'
             }
         )
-        with cls._safe_urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=120) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['choices'][0]['message']['content'].strip()
 
@@ -222,7 +222,7 @@ class AIService:
                 'anthropic-version': '2023-06-01'
             }
         )
-        with cls._safe_urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=120) as response:
             res = json.loads(response.read().decode('utf-8'))
             return res['content'][0]['text'].strip()
 
