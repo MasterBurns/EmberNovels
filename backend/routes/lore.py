@@ -131,6 +131,9 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
 
     task.sub_tasks = [{"name": ch.get("title", "Unbekannt"), "status": "pending"} for ch in to_scan]
 
+    # Load existing lore once initially, we will update it as we create new ones
+    existing_lore_map = StorageService.get_all_lore_names_mapping(project_id)
+
     for idx, ch in enumerate(to_scan):
         task.wait_if_paused()
         if task.is_cancelled():
@@ -145,6 +148,16 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             scanned_chapters.append(ch["id"])
             continue
 
+        # Prepare context data
+        existing_names = list(existing_lore_map.keys())
+        known_lore_text = ", ".join(existing_names) if existing_names else "Keine"
+        
+        last_date = "Noch keine Ereignisse"
+        if extract_timeline:
+            current_timeline = StorageService.load_timeline(project_id)
+            if current_timeline:
+                last_date = current_timeline[-1].get("date", "Unbekannt")
+
         prompt = (
             "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
             "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
@@ -152,16 +165,20 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
         )
         if extract_timeline:
             prompt += (
-                "ZUSÄTZLICH extrahiere alle wichtigen chronologischen Ereignisse (timeline_events). Versuche bei Zeitangaben "
-                "erst grob zu schätzen (z.B. '3 Wochen nach Kapitel 1', 'Tag 1') und, falls möglich, ein genaueres "
-                "relatives oder absolutes Datum abzugeben.\n\n"
+                "ZUSÄTZLICH extrahiere alle wichtigen chronologischen Ereignisse (timeline_events). "
+                f"Das letzte bekannte Datum in der Geschichte war: '{last_date}'. "
+                "Schätze die Zeitangaben für neue Ereignisse relativ zu diesem Punkt, falls möglich.\n\n"
             )
             
         prompt += (
             "REGELN:\n"
             "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
             "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
-            "- Bewerte die Wichtigkeit jedes Lore-Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n\n"
+            "- Extrahiere KEINE generischen Alltagsgegenstände (wie Autos, Uhren, Dächer, Einkaufslisten). Extrahiere NUR Gegenstände, Orte und Figuren, die einzigartig, plot-relevant oder Eigennamen sind (wie z.B. 'Das Schwert des Schicksals' oder 'Hauptquartier').\n"
+            "- Bewerte die Wichtigkeit jedes Lore-Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n"
+            "- WICHTIG: Schreibe den 'name' der Entität IMMER auf Deutsch, selbst wenn der Text in einer anderen Sprache ist.\n"
+            f"- WICHTIG: Hier ist eine Liste bereits bekannter Entitäten in diesem Projekt: [{known_lore_text}]. "
+            "Wenn die Person, der Ort oder der Gegenstand im Text zu einem dieser Namen passt (auch wenn er leicht anders geschrieben wird), benutze zwingend EXAKT den bereits bekannten Namen!\n\n"
             "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
             "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
             "{\n"
@@ -180,7 +197,7 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             prompt += (
                 ",\n  \"timeline_events\": [\n"
                 "    {\n"
-                "      \"date\": \"Geschätzter Zeitpunkt (z.B. 'Tag 1', '3 Wochen später', '2018-08-01')\",\n"
+                "      \"date\": \"Geschätzter Zeitpunkt relativ zum letzten bekannten Datum (z.B. 'Tag 2', '3 Wochen später', '2024-05-03')\",\n"
                 "      \"description\": \"Kurze Beschreibung des Ereignisses im Kapitel\"\n"
                 "    }\n"
                 "  ]\n"
@@ -213,11 +230,10 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                 entities = parsed.get("entities", [])
                 timeline_events = parsed.get("timeline_events", [])
 
-            existing_lore_map = StorageService.get_all_lore_names_mapping(project_id)
-
             for ent in entities:
                 score = ent.get("relevance_score", 0)
-                if score < 5:
+                # Erhöht auf 7 um generischen Müll zu filtern
+                if score < 7:
                     continue
                 name_key = ent.get("name", "").lower()
                 if not name_key:
@@ -238,7 +254,7 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                         _auto_translate_lore_sync(project_id, new_ent, settings)
 
             if extract_timeline and timeline_events:
-                current_timeline = StorageService.load_timeline(project_id)
+                # current_timeline was already loaded before the prompt
                 for event in timeline_events:
                     event["id"] = str(uuid.uuid4())
                     event["chapter_id"] = ch["id"]
