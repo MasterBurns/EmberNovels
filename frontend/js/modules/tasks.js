@@ -20,7 +20,7 @@ window.TasksModule = {
 
     fetchTasks: async function() {
         try {
-            const res = await window.apiFetch('/tasks/');
+            const res = await fetch(API_URL + '/tasks/');
             if (!res.ok) return;
             const tasks = await res.json();
             this.renderTasks(tasks);
@@ -105,19 +105,21 @@ window.TasksModule = {
     },
 
     pauseTask: async function(id) {
-        await window.apiFetch('/tasks/' + id + '/pause', { method: 'POST' });
+        await fetch(API_URL + '/tasks/' + id + '/pause', { method: 'POST' });
         this.fetchTasks();
     },
 
     resumeTask: async function(id) {
-        await window.apiFetch('/tasks/' + id + '/resume', { method: 'POST' });
+        await fetch(API_URL + '/tasks/' + id + '/resume', { method: 'POST' });
         this.fetchTasks();
     },
 
     cancelTask: async function(id) {
-        if(confirm("Diesen Prozess wirklich abbrechen?")) {
-            await window.apiFetch('/tasks/' + id, { method: 'DELETE' });
-            this.fetchTasks();
+        if (window.showConfirm) {
+            window.showConfirm("Aufgabe abbrechen", "Diesen Prozess wirklich abbrechen?", async () => {
+                await fetch(API_URL + '/tasks/' + id, { method: 'DELETE' });
+                this.fetchTasks();
+            });
         }
     }
 };

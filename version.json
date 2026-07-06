@@ -1,12 +1,12 @@
 {
-    "version": "0.3.8.14",
+    "version": "0.3.8.15",
     "release_notes": {
-        "de": "Version 0.3.8.13 - Editor Update & Bugfixes.\n- ✨ Feature: Neuer Hybrid-Markdown Editor (EmberEditor) integriert.\n- ✨ Feature: Zoom-Funktion im Editor (Toolbar-Slider und Strg+Mausrad).\n- 🐛 Fix: Layout-Verschachtelungen im DOM behoben.",
-        "en": "Version 0.3.8.13 - Editor Update & Bugfixes.\n- ✨ Feature: Integrated new Hybrid Markdown Editor (EmberEditor).\n- ✨ Feature: Zoom functionality in editor (toolbar slider and Ctrl+Mousewheel).\n- 🐛 Fix: Fixed DOM layout nesting issues.",
-        "es": "Versión 0.3.8.13 - Actualización del Editor y Bugfixes.\n- ✨ Función: Nuevo Editor Hybrid Markdown (EmberEditor) integrado.\n- ✨ Función: Función de zoom en el editor (deslizador en la barra de herramientas y Ctrl+Rueda del ratón).\n- 🐛 Solución: Se corrigieron los problemas de anidamiento de diseño en el DOM.",
-        "fr": "Version 0.3.8.13 - Mise à jour de l'Éditeur & Corrections de bugs.\n- ✨ Nouveauté : Intégration du nouvel Éditeur Hybrid Markdown (EmberEditor).\n- ✨ Nouveauté : Fonction de zoom dans l'éditeur (curseur dans la barre d'outils et Ctrl+Molette).\n- 🐛 Correctif : Résolution des problèmes d'imbrication du layout dans le DOM.",
-        "it": "Versione 0.3.8.13 - Aggiornamento Editor e Bugfix.\n- ✨ Novità: Integrato il nuovo Editor Hybrid Markdown (EmberEditor).\n- ✨ Novità: Funzione di zoom nell'editor (slider nella barra degli strumenti e Ctrl+Rotellina del mouse).\n- 🐛 Fix: Risolti i problemi di annidamento del layout nel DOM.",
-        "ja": "バージョン 0.3.8.13 - エディター更新とバグ修正。\n- ✨ 機能: 新しいハイブリッドMarkdownエディター(EmberEditor)を統合。\n- ✨ 機能: エディター内のズーム機能(ツールバーのスライダーとCtrl+マウスホイール)。\n- 🐛 修正: DOMのレイアウトのネスト問題を修正。",
-        "zh": "版本 0.3.8.13 - 编辑器更新与问题修复。\n- ✨ 增强: 整合了全新的混合 Markdown 编辑器 (EmberEditor)。\n- ✨ 增强: 编辑器内缩放功能 (工具栏滑块和 Ctrl+鼠标滚轮)。\n- 🐛 修复: 修复了 DOM 布局嵌套问题。"
+        "de": "Version 0.3.8.15 - Editor Update & Bugfixes.\n- ✨ Feature: Neuer Hybrid-Markdown Editor (EmberEditor) integriert.\n- ✨ Feature: Zoom-Funktion im Editor (Toolbar-Slider und Strg+Mausrad).\n- 🐛 Fix: Layout-Verschachtelungen im DOM behoben.\n- 🐛 Fix: Task-Anzeige im Hintergrund funktioniert wieder.",
+        "en": "Version 0.3.8.15 - Editor Update & Bugfixes.\n- ✨ Feature: Integrated new Hybrid Markdown Editor (EmberEditor).\n- ✨ Feature: Zoom functionality in editor (toolbar slider and Ctrl+Mousewheel).\n- 🐛 Fix: Fixed DOM layout nesting issues.\n- 🐛 Fix: Background tasks are visible again.",
+        "es": "Versión 0.3.8.15 - Actualización del Editor y Bugfixes.\n- ✨ Función: Nuevo Editor Hybrid Markdown (EmberEditor) integrado.\n- ✨ Función: Función de zoom en el editor (deslizador en la barra de herramientas y Ctrl+Rueda del ratón).\n- 🐛 Solución: Se corrigieron los problemas de anidamiento de diseño en el DOM.\n- 🐛 Solución: Las tareas en segundo plano vuelven a ser visibles.",
+        "fr": "Version 0.3.8.15 - Mise à jour de l'Éditeur & Corrections de bugs.\n- ✨ Nouveauté : Intégration du nouvel Éditeur Hybrid Markdown (EmberEditor).\n- ✨ Nouveauté : Fonction de zoom dans l'éditeur (curseur dans la barre d'outils et Ctrl+Molette).\n- 🐛 Correctif : Résolution des problèmes d'imbrication du layout dans le DOM.\n- 🐛 Correctif : Les tâches en arrière-plan sont à nouveau visibles.",
+        "it": "Versione 0.3.8.15 - Aggiornamento Editor e Bugfix.\n- ✨ Novità: Integrato il nuovo Editor Hybrid Markdown (EmberEditor).\n- ✨ Novità: Funzione di zoom nell'editor (slider nella barra degli strumenti e Ctrl+Rotellina del mouse).\n- 🐛 Fix: Risolti i problemi di annidamento del layout nel DOM.\n- 🐛 Fix: Le attività in background sono di nuovo visibili.",
+        "ja": "バージョン 0.3.8.15 - エディター更新とバグ修正。\n- ✨ 機能: 新しいハイブリッドMarkdownエディター(EmberEditor)を統合。\n- ✨ 機能: エディター内のズーム機能(ツールバーのスライダーとCtrl+マウスホイール)。\n- 🐛 修正: DOMのレイアウトのネスト問題を修正。\n- 🐛 修正: バックグラウンドタスクが再び表示されるようになりました。",
+        "zh": "版本 0.3.8.15 - 编辑器更新与问题修复。\n- ✨ 增强: 整合了全新的混合 Markdown 编辑器 (EmberEditor)。\n- ✨ 增强: 编辑器内缩放功能 (工具栏滑块和 Ctrl+鼠标滚轮)。\n- 🐛 修复: 修复了 DOM 布局嵌套问题。\n- 🐛 修复: 后台任务再次可见。"
     }
 }
