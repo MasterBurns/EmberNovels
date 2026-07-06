@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.11",
+    "version": "0.3.8.12",
     "release_notes": {
-        "de": "Version 0.3.8.11 - Bugfix & Tooling Update.\n- ✨ Neu: Ein Zurücksetzen-Button im Lore-Scan Bereich. Falls ein vorheriger Scan fehlgeschlagen ist und Kapitel übersprungen hat, kannst du ihn nun manuell zurücksetzen.\n- 🐛 Fix: Bessere Fehlerausgabe für Hintergrundprozesse (wird nun zusätzlich in tasks_debug.log gespeichert).",
-        "en": "Version 0.3.8.11 - Bugfix & Tooling Update.\n- ✨ New: A reset button in the Lore Scan section. If a previous scan failed and skipped chapters, you can now reset the progress manually.\n- 🐛 Fix: Better error logging for background processes (now additionally saved to tasks_debug.log)."
+        "de": "Version 0.3.8.12 - Updater & UI Bugfix.\n- 🐛 Fix: Behebt das Problem, dass der Updater die 'alte Version' startete, wenn das Update direkt nach dem Release gedrückt wurde (Race Condition mit GitHub Actions).\n- ✨ Fix: Der Reset-Button für den Lore-Scan ist nun korrekt in der Lore-Datenbank (Wiki) zu finden statt in der Kapitelübersicht.",
+        "en": "Version 0.3.8.12 - Updater & UI Bugfix.\n- 🐛 Fix: Fixes an issue where the updater restarted the 'old version' when updating immediately after a release (GitHub Actions race condition).\n- ✨ Fix: The Lore Scan Reset button is now correctly placed in the Lore Database (Wiki) instead of the Chapters overview."
     }
 }

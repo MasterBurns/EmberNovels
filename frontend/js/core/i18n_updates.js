@@ -141,8 +141,8 @@ async function checkAppUpdates() {
                                 }
                                 
                                 if (!targetAsset) {
-                                    // Fallback for source code installations
-                                    targetAsset = { name: "Quellcode (ZIP)", browser_download_url: releaseData.zipball_url };
+                                    // Wenn die Assets noch nicht da sind, baut GitHub Actions gerade noch.
+                                    throw new Error("Das Update wird gerade im Hintergrund für dein System kompiliert. Bitte warte noch ca. 3-5 Minuten und versuche es dann erneut.");
                                 }
                             }
 
