@@ -69,10 +69,37 @@ window.TasksModule = {
                 `;
             }
 
+            const statusKey = `task_status_${task.status}`;
+            const translatedStatus = window.t ? window.t(statusKey, task.status) : task.status;
+            
+            let subTasksHTML = '';
+            if (task.sub_tasks && task.sub_tasks.length > 0) {
+                const subItems = task.sub_tasks.map(st => {
+                    const stStatus = window.t ? window.t(`task_status_${st.status}`, st.status) : st.status;
+                    let color = 'var(--text-muted)';
+                    if (st.status === 'running') color = 'var(--color-primary)';
+                    else if (st.status === 'completed') color = 'var(--color-success, #28a745)';
+                    else if (st.status === 'failed') color = 'var(--color-danger)';
+                    return `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; padding: 4px; background: var(--bg-base); border-radius: 4px;">
+                        <span>${window.escapeHtml(st.name)}</span>
+                        <span style="color: ${color}; font-weight: bold;">${stStatus}</span>
+                    </div>`;
+                }).join('');
+                
+                subTasksHTML = `
+                    <details style="margin-top: 8px;">
+                        <summary style="font-size: 13px; color: var(--text-secondary); cursor: pointer; outline: none; user-select: none;">Details einblenden</summary>
+                        <div style="margin-top: 8px; max-height: 200px; overflow-y: auto;">
+                            ${subItems}
+                        </div>
+                    </details>
+                `;
+            }
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <strong>${window.escapeHtml(task.name)}</strong>
-                    <span style="font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">${task.status}</span>
+                    <span style="font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">${translatedStatus}</span>
                 </div>
                 <div style="font-size: 14px; color: var(--text-secondary);">${window.escapeHtml(task.message)}</div>
                 
@@ -84,6 +111,9 @@ window.TasksModule = {
                     <span>${task.current_step} / ${task.total_steps}</span>
                     <span>${task.progress_percent}%</span>
                 </div>
+                </div>
+                
+                ${subTasksHTML}
                 
                 ${controlsHTML}
             `;

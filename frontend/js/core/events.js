@@ -159,6 +159,28 @@ function setupEventListeners() {
         }
         openLoreModal(null, selectedText);
     });
+
+    const scanBtn = document.getElementById('btn-editor-scan-chapter');
+    if (scanBtn) {
+        scanBtn.addEventListener('click', async () => {
+            if (!state.currentProject || !state.currentChapter) return;
+            try {
+                showToast(t('toast_scan_started', 'Scan gestartet...'), 'info');
+                const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/scan-chapter/${state.currentChapter.id}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast(t('toast_scan_running', 'Kapitel-Scan läuft im Hintergrund. Siehe Prozesse.'), 'success');
+                } else {
+                    const errorData = await response.json();
+                    showToast(errorData.detail || 'Fehler beim Starten des Scans', 'error');
+                }
+            } catch (err) {
+                console.error("Scan error", err);
+                showToast('Fehler beim Kommunizieren mit dem Server', 'error');
+            }
+        });
+    }
     
     // Editor keyword event delegation click listener
     const editorContainer = document.getElementById('editor-container');

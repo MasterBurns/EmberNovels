@@ -1,4 +1,7 @@
 import time
+import uuid
+import json
+import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
@@ -120,10 +123,14 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
     from backend.services.storage import StorageService
     import json, re
 
+    task.sub_tasks = [{"name": ch.get("title", "Unbekannt"), "status": "pending"} for ch in to_scan]
+
     for idx, ch in enumerate(to_scan):
         task.wait_if_paused()
         if task.is_cancelled():
             break
+
+        task.sub_tasks[idx]["status"] = "running"
 
         task.update_progress(idx + 1, f"Analysiere Kapitel: {ch.get('title', 'Unbekannt')}")
         
@@ -188,9 +195,12 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                     StorageService.save_lore(project_id, ent["id"], ent)
                     existing_lore[name_key] = ent
 
+            task.sub_tasks[idx]["status"] = "completed"
         except json.JSONDecodeError as e:
+            task.sub_tasks[idx]["status"] = "failed"
             print(f"JSON Parse Fehler bei Kapitel {ch['id']}: {e}\nRaw Response:\n{raw_res}")
         except Exception as e:
+            task.sub_tasks[idx]["status"] = "failed"
             print(f"Fehler bei Lore-Extrahierung für Kapitel {ch['id']}: {e}")
             import traceback
             traceback.print_exc()
@@ -247,3 +257,27 @@ def reset_lore_scan(project_id: str):
     meta["scanned_chapters"] = []
     StorageService.update_project_metadata(project_id, meta)
     return {"message": "Der Scan-Fortschritt wurde zurückgesetzt. Alle Kapitel können nun neu gescannt werden."}
+
+@router.post("/scan-chapter/{chapter_id}")
+def scan_single_chapter(project_id: str, chapter_id: str):
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    chapters = StorageService.list_chapters(project_id)
+    ch = next((c for c in chapters if c["id"] == chapter_id), None)
+    if not ch:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+
+    from backend.services.ai import AIService
+    settings = AIService.load_settings()
+    if settings.get("ai_provider", "none") == "none":
+        raise HTTPException(
+            status_code=400, 
+            detail="Kein aktiver KI-Anbieter konfiguriert."
+        )
+
+    scanned_chapters = meta.get("scanned_chapters", [])
+    task = TaskManager.create_task(f"KI Scan: {ch.get('title', chapter_id)}", 1, _lore_scan_job, (project_id, [ch], scanned_chapters, settings))
+    task.start()
+    return {"message": f"Scan für {ch.get('title', chapter_id)} gestartet.", "task_id": task.id}

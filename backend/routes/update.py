@@ -138,6 +138,8 @@ def perform_hot_update(download_url: str):
 
                 if is_frozen:
                     f.write(f'echo "Starting new binary..."\n')
+                    f.write(f'unset _MEIPASS\n')
+                    f.write(f'unset _MEIPASS2\n')
                     f.write(f'exec "{current_exe}" --no-browser\n')
                 else:
                     python_exe = sys.executable

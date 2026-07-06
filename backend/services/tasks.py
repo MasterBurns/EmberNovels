@@ -19,6 +19,7 @@ class BackgroundTask:
         self.current_step = 0
         self.status = TaskState.PENDING
         self.message = "Initialisiere..."
+        self.sub_tasks = []
         self.error = None
         self._func = func
         self._args = args
@@ -100,7 +101,8 @@ class BackgroundTask:
             "status": self.status,
             "message": self.message,
             "error": self.error,
-            "progress_percent": int((self.current_step / self.total_steps) * 100) if self.total_steps > 0 else 0
+            "progress_percent": int((self.current_step / self.total_steps) * 100) if self.total_steps > 0 else 0,
+            "sub_tasks": self.sub_tasks
         }
 
 class TaskManager:
