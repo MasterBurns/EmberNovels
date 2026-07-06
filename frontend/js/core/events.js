@@ -548,16 +548,37 @@ function setupEventListeners() {
                 }
                 
                 if (allSuggestions.length > 0) {
-                    setTimeout(() => showTimelineSuggestionsModal(allSuggestions), 300);
+                    showToast(`${allSuggestions.length} zeitliche Bezüge in den gescannten Kapiteln gefunden!`, "info");
                 }
             } catch (e) {
-                showToast("Fehler beim Lore-Scan: " + e.message, "danger");
+                console.error("Scan-Fehler:", e);
+                showToast(e.message, "error");
             } finally {
                 btnWikiScan.disabled = false;
                 btnWikiScan.textContent = originalText;
+                if (typeof window.TasksModule !== 'undefined') window.TasksModule.fetchTasks();
+            }
+        });
+    }
+
+    const btnWikiReset = document.getElementById('btn-wiki-reset');
+    if (btnWikiReset) {
+        btnWikiReset.addEventListener('click', async () => {
+            if (!state.currentProject) return;
+            if (!confirm("Willst du den Scan-Fortschritt wirklich zurücksetzen? Die KI wird dann beim nächsten Klick auf 'Scannen' wieder alle Kapitel scannen. Bereits gefundenes Lore bleibt aber erhalten.")) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/projects/${state.currentProject.id}/lore/auto-scan/reset`, { method: 'POST' });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, "success");
+                } else {
+                    showToast("Fehler: " + result.detail, "error");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Fehler beim Zurücksetzen.", "error");
             }
         });
     }
 }
-
-

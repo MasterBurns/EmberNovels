@@ -39,15 +39,19 @@ class BackgroundTask:
 
     def _run_wrapper(self):
         try:
-            # The target function should periodically check task.is_cancelled() and task.wait_if_paused()
+            with open("tasks_debug.log", "a", encoding="utf-8") as f: f.write(f"Task {self.name} started.\n")
             self._func(self, *self._args)
             if not self._cancel_flag:
                 self.status = TaskState.COMPLETED
                 self.message = "Abgeschlossen"
+            with open("tasks_debug.log", "a", encoding="utf-8") as f: f.write(f"Task {self.name} ended with status {self.status}.\n")
         except Exception as e:
             self.status = TaskState.FAILED
             self.error = str(e)
             self.message = f"Fehler: {str(e)}"
+            with open("tasks_debug.log", "a", encoding="utf-8") as f:
+                import traceback
+                f.write(f"Task {self.name} CRASHED: {e}\n{traceback.format_exc()}\n")
 
     def wait_if_paused(self):
         # Pause logic based on batch limit

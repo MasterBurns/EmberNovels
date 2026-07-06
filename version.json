@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.10",
+    "version": "0.3.8.11",
     "release_notes": {
-        "de": "Version 0.3.8.10 - Bugfix Release.\n- 🐛 Fix: Lokale KI (llama.cpp / LM Studio) gibt manchmal Text vor oder nach dem JSON aus, was den Lore-Scanner bisher stillschweigend zum Absturz brachte. Das JSON wird nun extrem robust extrahiert.\n- 🐛 Fix: Fehlgeschlagene KI-Scans werden nun im Terminal/Log ausgegeben statt sie komplett zu ignorieren.",
-        "en": "Version 0.3.8.10 - Bugfix Release.\n- 🐛 Fix: Local AI (llama.cpp / LM Studio) sometimes outputs text before or after the JSON, which caused the Lore Scanner to silently crash. The JSON is now extracted very robustly.\n- 🐛 Fix: Failed AI scans are now printed to the terminal/log instead of being completely ignored."
+        "de": "Version 0.3.8.11 - Bugfix & Tooling Update.\n- ✨ Neu: Ein Zurücksetzen-Button im Lore-Scan Bereich. Falls ein vorheriger Scan fehlgeschlagen ist und Kapitel übersprungen hat, kannst du ihn nun manuell zurücksetzen.\n- 🐛 Fix: Bessere Fehlerausgabe für Hintergrundprozesse (wird nun zusätzlich in tasks_debug.log gespeichert).",
+        "en": "Version 0.3.8.11 - Bugfix & Tooling Update.\n- ✨ New: A reset button in the Lore Scan section. If a previous scan failed and skipped chapters, you can now reset the progress manually.\n- 🐛 Fix: Better error logging for background processes (now additionally saved to tasks_debug.log)."
     }
 }

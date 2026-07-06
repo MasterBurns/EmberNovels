@@ -235,5 +235,14 @@ def auto_scan_lore(project_id: str):
     task.delay_between_steps = ai_rate_limit
     
     task.start()
-    
     return {"message": f"Scan gestartet. {len(to_scan)} Kapitel werden im Hintergrund verarbeitet.", "task_id": task.id}
+
+@router.post("/auto-scan/reset")
+def reset_lore_scan(project_id: str):
+    from backend.services.storage import StorageService
+    meta = StorageService.get_project_metadata(project_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Project not found")
+    meta["scanned_chapters"] = []
+    StorageService.save_project_metadata(project_id, meta)
+    return {"message": "Der Scan-Fortschritt wurde zurückgesetzt. Alle Kapitel können nun neu gescannt werden."}
