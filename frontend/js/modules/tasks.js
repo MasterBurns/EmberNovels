@@ -34,6 +34,12 @@ window.TasksModule = {
         const container = document.getElementById('tasks-list');
         if (!container) return;
 
+        // Preserve details open state
+        const openDetails = new Set();
+        container.querySelectorAll('details[data-task-id]').forEach(d => {
+            if (d.open) openDetails.add(d.getAttribute('data-task-id'));
+        });
+
         if (!tasks || tasks.length === 0) {
             container.innerHTML = `
                 <div style="padding: 24px; text-align: center; color: var(--text-muted); background: var(--bg-surface); border-radius: 8px; border: 1px dashed var(--border-color);">
@@ -86,8 +92,9 @@ window.TasksModule = {
                     </div>`;
                 }).join('');
                 
+                const isOpen = openDetails.has(task.id) ? 'open' : '';
                 subTasksHTML = `
-                    <details style="margin-top: 8px;">
+                    <details data-task-id="${task.id}" style="margin-top: 8px;" ${isOpen}>
                         <summary style="font-size: 13px; color: var(--text-secondary); cursor: pointer; outline: none; user-select: none;">Details einblenden</summary>
                         <div style="margin-top: 8px; max-height: 200px; overflow-y: auto;">
                             ${subItems}

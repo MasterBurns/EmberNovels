@@ -191,9 +191,15 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                     continue
                     
                 if name_key not in existing_lore:
-                    ent["id"] = f"lore_{int(time.time()*1000)}_{uuid.uuid4().hex[:6]}"
-                    StorageService.save_lore(project_id, ent["id"], ent)
-                    existing_lore[name_key] = ent
+                    new_ent = StorageService.create_lore(
+                        project_id=project_id,
+                        name=ent.get("name", ""),
+                        category=ent.get("category", "lore"),
+                        short_description=ent.get("short_description", ""),
+                        description=ent.get("description", ""),
+                        keywords=ent.get("keywords", [])
+                    )
+                    existing_lore[name_key] = new_ent
 
             task.sub_tasks[idx]["status"] = "completed"
         except json.JSONDecodeError as e:
