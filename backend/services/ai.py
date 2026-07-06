@@ -107,11 +107,17 @@ class AIService:
 
     @classmethod
     def _call_ollama(cls, settings: Dict[str, Any], prompt: str) -> str:
-        url = f"{settings.get('ollama_url', 'http://localhost:11434')}/api/generate"
+        base_url = settings.get('ollama_url', 'http://localhost:11434').rstrip('/')
+        if not base_url.endswith('/v1'):
+            base_url += '/v1'
+        url = f"{base_url}/chat/completions"
+        
         payload = {
             "model": settings.get("ollama_model", "llama3"),
-            "prompt": prompt,
-            "stream": False
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7
         }
         
         req = urllib.request.Request(
@@ -119,9 +125,9 @@ class AIService:
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with cls._safe_urlopen(req, timeout=30) as response:
+        with cls._safe_urlopen(req, timeout=120) as response:
             res = json.loads(response.read().decode('utf-8'))
-            return res.get("response", "").strip()
+            return res["choices"][0]["message"]["content"].strip()
 
     @classmethod
     def _call_gemini(cls, settings: Dict[str, Any], prompt: str) -> str:

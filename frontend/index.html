@@ -769,7 +769,7 @@
                                 <label class="form-label" for="setting-ai-provider" data-i18n="settings_ai_provider">Aktiver KI-Anbieter</label>
                                 <select id="setting-ai-provider" class="form-input" style="height: auto;">
                                     <option value="none" data-i18n="settings_provider_none">Keine (Google Translate Free für Übersetzung)</option>
-                                    <option value="ollama" data-i18n="settings_provider_ollama">Lokal: Ollama (z.B. Llama 3)</option>
+                                    <option value="ollama" data-i18n="settings_provider_ollama">Lokal: Ollama / LM Studio / llama.cpp</option>
                                     <option value="gemini" data-i18n="settings_provider_gemini">Google Gemini API</option>
                                     <option value="openai" data-i18n="settings_provider_openai">OpenAI API (GPT-4o-mini)</option>
                                     <option value="anthropic" data-i18n="settings_provider_anthropic">Anthropic Claude API</option>
@@ -781,7 +781,7 @@
                                 <div data-i18n-html="settings_ollama_help" style="font-size: 0.85em; color: var(--text-muted); background: var(--surface-bg-alt); padding: 8px; border-radius: 4px;">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="setting-ollama-url" data-i18n="settings_ollama_url">Ollama Server URL</label>
+                                    <label class="form-label" for="setting-ollama-url" data-i18n="settings_ollama_url">Server URL (Basis)</label>
                                     <input type="text" id="setting-ollama-url" class="form-input" value="http://localhost:11434">
                                 </div>
                                 <div class="form-group">
@@ -790,6 +790,7 @@
                                         <button type="button" class="btn btn-secondary btn-load-models" data-provider="ollama" style="padding: 2px 8px; font-size: 11px;">Modelle laden</button>
                                     </div>
                                     <select id="setting-ollama-model" class="form-input">
+                                        <option value="local">Standard / Eingebautes Modell</option>
                                         <option value="llama3">llama3</option>
                                     </select>
                                 </div>

@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.8",
+    "version": "0.3.8.9",
     "release_notes": {
-        "de": "Version 0.3.8.8 - Bugfix Release.\n- 🐛 Fix: Der Updater kopiert Dateien nun erzwungen (`/bin/cp -rf`), um Timing/Berechtigungsprobleme (Teil-Updates) zu vermeiden.\n- 🐛 Fix: Der Browser-Cache für Update-Abfragen wurde deaktiviert, damit immer die korrekte neue Version geladen wird.\n- 🐛 Fix: Der Updater schreibt nun ein lokales `update_debug.log`, falls zukünftig noch Fehler auftreten.",
-        "en": "Version 0.3.8.8 - Bugfix Release.\n- 🐛 Fix: The updater now force-copies files (`/bin/cp -rf`) to prevent timing/permission issues (partial updates).\n- 🐛 Fix: Browser cache for update checks has been disabled to ensure the correct new version is always downloaded.\n- 🐛 Fix: The updater now writes a local `update_debug.log` for troubleshooting."
+        "de": "Version 0.3.8.9 - Bugfix Release.\n- ✨ Feature: Die 'Ollama' Integration unterstützt nun standardmäßig auch `llama.cpp` und LM Studio (OpenAI-kompatibler Endpunkt).\n- 🐛 Fix: 404 Fehler bei der Nutzung von lokalen KIs ohne `/api/generate` Endpunkt behoben.",
+        "en": "Version 0.3.8.9 - Bugfix Release.\n- ✨ Feature: The 'Ollama' integration now inherently supports `llama.cpp` and LM Studio (OpenAI-compatible endpoint).\n- 🐛 Fix: Fixed 404 errors when using local AIs without an `/api/generate` endpoint."
     }
 }
