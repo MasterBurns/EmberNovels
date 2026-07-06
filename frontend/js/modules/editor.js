@@ -67,7 +67,7 @@ async function openEditor(projectId, chapterId) {
         // Initialize Editor via EditorManager if not done yet
         if (!state.editor) {
             const container = document.getElementById('editor-container');
-            const engine = state.editorEngine || 'toastui';
+            const engine = state.editorEngine || 'custom';
             
             state.editor = await window.EditorManager.createEditor(container, engine, {
                 hooks: {
@@ -105,6 +105,32 @@ async function openEditor(projectId, chapterId) {
             
             // Setup the mousemove event for inline lore tooltips
             setupLoreTooltip();
+            
+            // Setup Zoom Controls
+            const zoomSlider = document.getElementById('editor-zoom-slider');
+            if (zoomSlider) {
+                zoomSlider.addEventListener('input', (e) => {
+                    const zoomLevel = e.target.value;
+                    if (state.editor && typeof state.editor.setZoom === 'function') {
+                        state.editor.setZoom(zoomLevel);
+                    }
+                });
+                
+                // Wheel Zoom (Ctrl + Scroll)
+                const editorContainer = document.getElementById('editor-container');
+                editorContainer.addEventListener('wheel', (e) => {
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        const direction = e.deltaY > 0 ? -1 : 1;
+                        const step = 0.1;
+                        let newZoom = parseFloat(zoomSlider.value) + (direction * step);
+                        newZoom = Math.min(Math.max(newZoom, 0.5), 3.0);
+                        zoomSlider.value = newZoom;
+                        // trigger input event
+                        zoomSlider.dispatchEvent(new Event('input'));
+                    }
+                }, { passive: false });
+            }
         }
         
         // Make sure theme matches

@@ -335,7 +335,12 @@ class CustomAdapter extends BaseEditor {
         super(container, options);
         if (typeof window.EmberEditorCore !== 'undefined') {
             this.emberEditor = new window.EmberEditorCore(this.container, {
-                onChange: () => this.onChangeCallback()
+                onChange: () => this.onChangeCallback(),
+                onLoreHover: (keyword, event) => {
+                    if (window.showLoreTooltipForKeyword) {
+                        window.showLoreTooltipForKeyword(keyword, event);
+                    }
+                }
             });
             // Hook up onContentChange logic based on the AI's api
             this.emberEditor.onChangeCallback = () => this.onChangeCallback();
@@ -347,6 +352,12 @@ class CustomAdapter extends BaseEditor {
             }
         } else {
             this.container.innerHTML = '<div style="padding: 24px; color: var(--color-danger);">Fehler: EmberEditor.js wurde nicht geladen.</div>';
+        }
+    }
+
+    setZoom(level) {
+        if (this.emberEditor && typeof this.emberEditor.setZoom === 'function') {
+            this.emberEditor.setZoom(level);
         }
     }
 

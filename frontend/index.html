@@ -145,11 +145,11 @@
                                             <option value="original" data-i18n="branch_original">🇩🇪 Original (Deutsch)</option>
                                         </select>
                                     </div>
-                                <button class="btn btn-primary" onclick="LoreModule.startAutoScan()" style="display: flex; align-items: center; gap: 8px;">
-                                    <span class="icon">🔍</span>
-                                    <span>Ganzes Projekt nach Lore scannen</span>
-                                </button>
-                            </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <button class="btn btn-primary" onclick="LoreModule.startAutoScan()" style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="icon">🔍</span>
+                                            <span>Ganzes Projekt nach Lore scannen</span>
+                                        </button>
                                         <button id="btn-open-search-replace" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 500;" title="Suchen und Ersetzen im gesamten Projekt">
                                             🔍 Suchen & Ersetzen
                                         </button>
@@ -319,6 +319,11 @@
                                     </div>
                                 </div>
                                 <div class="toolbar-group" style="align-items: center; margin-left: auto;">
+                                    <div style="display: flex; align-items: center; gap: 4px; margin-right: 12px;">
+                                        <span style="font-size: 14px; cursor: pointer;" title="Zoom Out" onclick="document.getElementById('editor-zoom-slider').stepDown(); document.getElementById('editor-zoom-slider').dispatchEvent(new Event('input'))">➖</span>
+                                        <input type="range" id="editor-zoom-slider" min="0.5" max="3" step="0.1" value="1" style="width: 80px; accent-color: var(--color-primary);" title="Editor Zoom">
+                                        <span style="font-size: 14px; cursor: pointer;" title="Zoom In" onclick="document.getElementById('editor-zoom-slider').stepUp(); document.getElementById('editor-zoom-slider').dispatchEvent(new Event('input'))">➕</span>
+                                    </div>
                                     <span id="editor-word-count" style="font-size: 13px; color: var(--text-muted); margin-right: 12px;">Wörter: 0</span>
                                     <select id="editor-language-select" class="form-input" style="width: auto; height: auto; padding: 4px 8px; font-size: 12px; margin-right: 8px; border-radius: 6px;">
                                         <option value="original">Deutsch (Original)</option>
@@ -750,9 +755,9 @@
                                 
                                 <label class="form-label" for="setting-editor-engine" style="margin-top: 16px;" data-i18n="settings_editor_engine">Editor-Engine (Experimentell)</label>
                                 <select id="setting-editor-engine" class="form-input" style="height: auto;">
-                                    <option value="toastui">ToastUI (Standard)</option>
+                                    <option value="custom">EmberEditor (Standard)</option>
+                                    <option value="toastui">ToastUI (Alt)</option>
                                     <option value="tiptap">TipTap (Beta)</option>
-                                    <option value="custom">EmberEditor (Beta)</option>
                                 </select>
                             </div>
                         </div>
