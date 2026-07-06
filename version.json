@@ -1,5 +1,5 @@
 {
-    "version": "0.3.8.13",
+    "version": "0.3.8.14",
     "release_notes": {
         "de": "Version 0.3.8.13 - Editor Update & Bugfixes.\n- ✨ Feature: Neuer Hybrid-Markdown Editor (EmberEditor) integriert.\n- ✨ Feature: Zoom-Funktion im Editor (Toolbar-Slider und Strg+Mausrad).\n- 🐛 Fix: Layout-Verschachtelungen im DOM behoben.",
         "en": "Version 0.3.8.13 - Editor Update & Bugfixes.\n- ✨ Feature: Integrated new Hybrid Markdown Editor (EmberEditor).\n- ✨ Feature: Zoom functionality in editor (toolbar slider and Ctrl+Mousewheel).\n- 🐛 Fix: Fixed DOM layout nesting issues.",

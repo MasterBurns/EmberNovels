@@ -200,7 +200,7 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
         meta = StorageService.get_project_metadata(project_id)
         if meta:
             meta["scanned_chapters"] = scanned_chapters
-            StorageService.save_project_metadata(project_id, meta)
+            StorageService.update_project_metadata(project_id, meta)
             
         task.sleep_delay() # Rate limit
 
@@ -244,5 +244,5 @@ def reset_lore_scan(project_id: str):
     if not meta:
         raise HTTPException(status_code=404, detail="Project not found")
     meta["scanned_chapters"] = []
-    StorageService.save_project_metadata(project_id, meta)
+    StorageService.update_project_metadata(project_id, meta)
     return {"message": "Der Scan-Fortschritt wurde zurückgesetzt. Alle Kapitel können nun neu gescannt werden."}

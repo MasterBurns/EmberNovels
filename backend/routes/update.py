@@ -151,8 +151,9 @@ def perform_hot_update(download_url: str):
             sys.stderr.flush()
             
             clean_env = dict(os.environ)
-            if 'LD_LIBRARY_PATH' in clean_env:
-                del clean_env['LD_LIBRARY_PATH']
+            for key in list(clean_env.keys()):
+                if key.startswith('_MEIPASS') or key == 'LD_LIBRARY_PATH':
+                    del clean_env[key]
                 
             os.execvpe("bash", ["bash", update_script], clean_env)
             # os.execvpe does not return.
