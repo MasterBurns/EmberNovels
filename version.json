@@ -1,7 +1,7 @@
 {
-    "version": "0.3.8.9",
+    "version": "0.3.8.10",
     "release_notes": {
-        "de": "Version 0.3.8.9 - Bugfix Release.\n- ✨ Feature: Die 'Ollama' Integration unterstützt nun standardmäßig auch `llama.cpp` und LM Studio (OpenAI-kompatibler Endpunkt).\n- 🐛 Fix: 404 Fehler bei der Nutzung von lokalen KIs ohne `/api/generate` Endpunkt behoben.",
-        "en": "Version 0.3.8.9 - Bugfix Release.\n- ✨ Feature: The 'Ollama' integration now inherently supports `llama.cpp` and LM Studio (OpenAI-compatible endpoint).\n- 🐛 Fix: Fixed 404 errors when using local AIs without an `/api/generate` endpoint."
+        "de": "Version 0.3.8.10 - Bugfix Release.\n- 🐛 Fix: Lokale KI (llama.cpp / LM Studio) gibt manchmal Text vor oder nach dem JSON aus, was den Lore-Scanner bisher stillschweigend zum Absturz brachte. Das JSON wird nun extrem robust extrahiert.\n- 🐛 Fix: Fehlgeschlagene KI-Scans werden nun im Terminal/Log ausgegeben statt sie komplett zu ignorieren.",
+        "en": "Version 0.3.8.10 - Bugfix Release.\n- 🐛 Fix: Local AI (llama.cpp / LM Studio) sometimes outputs text before or after the JSON, which caused the Lore Scanner to silently crash. The JSON is now extracted very robustly.\n- 🐛 Fix: Failed AI scans are now printed to the terminal/log instead of being completely ignored."
     }
 }

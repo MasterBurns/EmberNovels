@@ -149,12 +149,28 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
         try:
             raw_res = AIService.generate_completion(prompt)
             cleaned = raw_res.strip()
-            if cleaned.startswith("```"):
-                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
-                cleaned = re.sub(r"\n```$", "", cleaned)
-                cleaned = cleaned.strip()
-
+            
+            # Robust JSON extraction: Find the first [ or { and the last ] or }
+            start_idx = -1
+            end_idx = -1
+            
+            # Look for JSON array or object
+            match_array = re.search(r'\[.*\]', cleaned, re.DOTALL)
+            match_obj = re.search(r'\{.*\}', cleaned, re.DOTALL)
+            
+            if match_array:
+                cleaned = match_array.group(0)
+            elif match_obj:
+                cleaned = f"[{match_obj.group(0)}]"
+            
             entities = json.loads(cleaned)
+            
+            # If it's a dict with an 'entities' key (common fallback)
+            if isinstance(entities, dict) and "entities" in entities:
+                entities = entities["entities"]
+            elif isinstance(entities, dict):
+                entities = [entities]
+
             existing_lore = {e["name"].lower(): e for e in StorageService.list_lore(project_id)}
 
             for ent in entities:
@@ -162,15 +178,21 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
                 score = ent.get("relevance_score", 0)
                 if score < 5:
                     continue
-                name_key = ent["name"].lower()
+                name_key = ent.get("name", "").lower()
+                if not name_key:
+                    continue
+                    
                 if name_key not in existing_lore:
                     ent["id"] = f"lore_{int(time.time()*1000)}_{uuid.uuid4().hex[:6]}"
                     StorageService.save_lore(project_id, ent["id"], ent)
                     existing_lore[name_key] = ent
 
+        except json.JSONDecodeError as e:
+            print(f"JSON Parse Fehler bei Kapitel {ch['id']}: {e}\nRaw Response:\n{raw_res}")
         except Exception as e:
-            # Continue with next chapter on error
-            pass
+            print(f"Fehler bei Lore-Extrahierung für Kapitel {ch['id']}: {e}")
+            import traceback
+            traceback.print_exc()
 
         scanned_chapters.append(ch["id"])
         
