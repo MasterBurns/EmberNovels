@@ -131,8 +131,13 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
 
     task.sub_tasks = [{"name": ch.get("title", "Unbekannt"), "status": "pending"} for ch in to_scan]
 
-    # Load existing lore once initially, we will update it as we create new ones
-    existing_lore_map = StorageService.get_all_lore_names_mapping(project_id)
+    existing_lore_entries = StorageService.list_lore(project_id)
+    existing_lore_map = {entry.get("name", "").lower(): entry for entry in existing_lore_entries}
+
+    # Truncate descriptions to keep AI context manageable
+    for entry in existing_lore_entries:
+        entry["description"] = entry.get("description", "")[:1000]
+        entry["short_description"] = entry.get("short_description", "")[:300]
 
     for idx, ch in enumerate(to_scan):
         task.wait_if_paused()
@@ -148,47 +153,53 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             scanned_chapters.append(ch["id"])
             continue
 
-        # Prepare context data
-        existing_names = list(existing_lore_map.keys())
-        known_lore_text = ", ".join(existing_names) if existing_names else "Keine"
-        
+        current_timeline = StorageService.load_timeline(project_id) if extract_timeline else []
         last_date = "Noch keine Ereignisse"
-        if extract_timeline:
-            current_timeline = StorageService.load_timeline(project_id)
-            if current_timeline:
-                last_date = current_timeline[-1].get("date", "Unbekannt")
+        if extract_timeline and current_timeline:
+            last_date = current_timeline[-1].get("date", "Unbekannt")
+
+        # Prepare compact context for AI
+        existing_lore_json = json.dumps(existing_lore_entries, ensure_ascii=False, indent=2)
+        existing_timeline_json = json.dumps(current_timeline, ensure_ascii=False, indent=2)
 
         prompt = (
-            "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext einer Geschichte. "
-            "Extrahiere AUSSCHLIESSLICH WICHTIGE Charaktere (category: character), Orte (category: location) "
-            "und Gegenstände (category: item), die im Text vorkommen.\n\n"
+            "Du bist ein literarischer Analyst für Worldbuilding. Analysiere den folgenden Kapiteltext. "
+            "Aktualisiere existierende Lore-Einträge, extrahiere neue wichtige Entitäten und füge chronologische Ereignisse hinzu.\n\n"
         )
         if extract_timeline:
-            prompt += (
-                "ZUSÄTZLICH extrahiere alle wichtigen chronologischen Ereignisse (timeline_events). "
-                f"Das letzte bekannte Datum in der Geschichte war: '{last_date}'. "
-                "Schätze die Zeitangaben für neue Ereignisse relativ zu diesem Punkt, falls möglich.\n\n"
-            )
+            prompt += f"Das letzte bekannte Datum war: '{last_date}'. Schätze neue Zeitangaben relativ dazu.\n\n"
             
         prompt += (
+            f"EXISTIERENDE LORE-EINTRAEGE:\n{existing_lore_json}\n\n"
+        )
+        if extract_timeline:
+            prompt += f"AKTUELLE ZEITLEISTE:\n{existing_timeline_json}\n\n"
+
+        prompt += (
             "REGELN:\n"
-            "- Ignoriere unwichtige Nebenfiguren (z.B. Komparsen ohne Namen, die nur in Nebensätzen vorkommen).\n"
-            "- Ignoriere Orte, die keine echte Rolle spielen oder nur als flüchtige Richtungsangabe dienen.\n"
-            "- Extrahiere KEINE generischen Alltagsgegenstände (wie Autos, Uhren, Dächer, Einkaufslisten). Extrahiere NUR Gegenstände, Orte und Figuren, die einzigartig, plot-relevant oder Eigennamen sind (wie z.B. 'Das Schwert des Schicksals' oder 'Hauptquartier').\n"
-            "- Bewerte die Wichtigkeit jedes Lore-Eintrags zwingend mit einem 'relevance_score' von 1 (völlig unwichtig) bis 10 (Hauptcharakter/Hauptort).\n"
-            "- WICHTIG: Schreibe den 'name' der Entität IMMER auf Deutsch, selbst wenn der Text in einer anderen Sprache ist.\n"
-            f"- WICHTIG: Hier ist eine Liste bereits bekannter Entitäten in diesem Projekt: [{known_lore_text}]. "
-            "Wenn die Person, der Ort oder der Gegenstand im Text zu einem dieser Namen passt (auch wenn er leicht anders geschrieben wird), benutze zwingend EXAKT den bereits bekannten Namen!\n\n"
-            "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. "
-            "Keine Einleitung, keine Kommentare, kein Markdown außer dem JSON selbst:\n"
+            "- Aktualisiere EXISTIERENDE Einträge, wenn sich Charaktere weiterentwickeln, neue Details hinzukommen oder Beschreibungen erweitert werden müssen.\n"
+            "- Erstelle NUR wirklich NEUE Einträge für Entitäten, die noch nicht existieren.\n"
+            "- Bewerte die Wichtigkeit mit 'relevance_score' (1-10). Filtere alles unter 7.\n"
+            "- Ignoriere generische Alltagsgegenstände.\n"
+            "- Vermeide Duplikate in der Zeitleiste. Füge nur Ereignisse hinzu, die nicht bereits identisch erfasst sind.\n"
+            "- Schreibe Entitätsnamen IMMER auf Deutsch.\n\n"
+            "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format zurück. Keine Einleitung, kein Markdown:\n"
             "{\n"
-            "  \"entities\": [\n"
+            "  \"updated_entities\": [\n"
             "    {\n"
-            "      \"name\": \"Name der Entität\",\n"
+            "      \"id\": \"bestehende_lore_id\",\n"
+            "      \"name\": \"Name\",\n"
+            "      \"description\": \"Aktualisierte Beschreibung...\",\n"
+            "      ...alle aktualisierten Felder...\n"
+            "    }\n"
+            "  ],\n"
+            "  \"new_entities\": [\n"
+            "    {\n"
+            "      \"name\": \"Neuer Name\",\n"
             "      \"category\": \"character\",\n"
-            "      \"short_description\": \"1-2 Sätze Kurzbeschreibung\",\n"
-            "      \"description\": \"Ausführliche Beschreibung basierend auf dem Text\",\n"
-            "      \"keywords\": [\"Alias\", \"Variationen\", \"Name\"],\n"
+            "      \"short_description\": \"...\",\n"
+            "      \"description\": \"...\",\n"
+            "      \"keywords\": [...],\n"
             "      \"relevance_score\": 8\n"
             "    }\n"
             "  ]"
@@ -197,8 +208,8 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             prompt += (
                 ",\n  \"timeline_events\": [\n"
                 "    {\n"
-                "      \"date\": \"Geschätzter Zeitpunkt relativ zum letzten bekannten Datum (z.B. 'Tag 2', '3 Wochen später', '2024-05-03')\",\n"
-                "      \"description\": \"Kurze Beschreibung des Ereignisses im Kapitel\"\n"
+                "      \"date\": \"...\",\n"
+                "      \"description\": \"...\"\n"
                 "    }\n"
                 "  ]\n"
             )
@@ -212,55 +223,72 @@ def _lore_scan_job(task: BackgroundTask, project_id: str, to_scan: list, scanned
             cleaned = raw_res.strip()
             
             match_obj = re.search(r'\{.*\}', cleaned, re.DOTALL)
-            match_array = re.search(r'\[.*\]', cleaned, re.DOTALL)
-            
             if match_obj:
                 cleaned = match_obj.group(0)
-            elif match_array:
-                cleaned = match_array.group(0)
             
             parsed = json.loads(cleaned)
-            
-            entities = []
-            timeline_events = []
-            
-            if isinstance(parsed, list):
-                entities = parsed
-            elif isinstance(parsed, dict):
-                entities = parsed.get("entities", [])
-                timeline_events = parsed.get("timeline_events", [])
+            if not isinstance(parsed, dict):
+                parsed = {"updated_entities": [], "new_entities": parsed if isinstance(parsed, list) else []}
 
-            for ent in entities:
+            updated_entities = parsed.get("updated_entities", [])
+            new_entities = parsed.get("new_entities", [])
+            timeline_events = parsed.get("timeline_events", [])
+
+            # 1. Update existing lore with developments/new details
+            for update in updated_entities:
+                lore_id = update.get("id")
+                if not lore_id:
+                    continue
+                    
+                # Preserve existing project links so we don't accidentally desync entries
+                original = next((e for e in existing_lore_entries if e["id"] == lore_id), None)
+                if original:
+                    update["project_ids"] = original.get("project_ids", [])
+                
+                StorageService.update_lore(project_id, lore_id, update)
+                # Update our local map so new entity creation checks are accurate
+                name_key = update.get("name", "").lower()
+                if name_key:
+                    existing_lore_map[name_key] = update
+
+            # 2. Create strictly new entities
+            for ent in new_entities:
                 score = ent.get("relevance_score", 0)
-                # Erhöht auf 7 um generischen Müll zu filtern
                 if score < 7:
                     continue
                 name_key = ent.get("name", "").lower()
-                if not name_key:
+                if not name_key or name_key in existing_lore_map:
                     continue
                     
-                if name_key not in existing_lore_map:
-                    new_ent = StorageService.create_lore(
-                        project_id=project_id,
-                        name=ent.get("name", ""),
-                        category=ent.get("category", "lore"),
-                        short_description=ent.get("short_description", ""),
-                        description=ent.get("description", ""),
-                        keywords=ent.get("keywords", [])
-                    )
-                    existing_lore_map[name_key] = new_ent["id"]
-                    
-                    if auto_translate_lore:
-                        _auto_translate_lore_sync(project_id, new_ent, settings)
+                new_ent = StorageService.create_lore(
+                    project_id=project_id,
+                    name=ent.get("name", ""),
+                    category=ent.get("category", "lore"),
+                    short_description=ent.get("short_description", ""),
+                    description=ent.get("description", ""),
+                    keywords=ent.get("keywords", [])
+                )
+                existing_lore_map[name_key] = new_ent
+                
+                if auto_translate_lore:
+                    _auto_translate_lore_sync(project_id, new_ent, settings)
 
+            # 3. Merge timeline intelligently
             if extract_timeline and timeline_events:
-                # current_timeline was already loaded before the prompt
                 for event in timeline_events:
-                    event["id"] = str(uuid.uuid4())
-                    event["chapter_id"] = ch["id"]
-                    event["created_at"] = time.time()
-                    event["title"] = event.get("description", "Ereignis")[:50] + "..."
-                    current_timeline.append(event)
+                    title = event.get("description", "Ereignis")[:50] + "..."
+                    # Simple deduplication: skip if identical title already exists for this chapter
+                    is_duplicate = any(
+                        e.get("title") == title and e.get("chapter_id") == ch["id"]
+                        for e in current_timeline
+                    )
+                    if not is_duplicate:
+                        event["id"] = str(uuid.uuid4())
+                        event["chapter_id"] = ch["id"]
+                        event["created_at"] = time.time()
+                        event["title"] = title
+                        current_timeline.append(event)
+                
                 StorageService.save_timeline(project_id, current_timeline)
 
             task.sub_tasks[idx]["status"] = "completed"
